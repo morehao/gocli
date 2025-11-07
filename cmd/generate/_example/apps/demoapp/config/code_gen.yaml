@@ -1,7 +1,10 @@
 mysql_dsn: root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local
-#layer_parent_dir_map:
-#  model: model
-#  dao: dao
+layer_parent_dir_map:
+  model: model
+  dao: dao
+  controller: internal
+  service: internal
+  dto: internal
 #layer_name_map:
 #  model: mysqlmodel
 #  dao: mysqldao

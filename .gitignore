@@ -1,5 +1,5 @@
 # If you prefer the allow list template instead of the deny list, see community template:
-# https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
+# https:/github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
 #
 # Binaries for programs and plugins
 *.exe
@@ -30,19 +30,19 @@ g
 .history
 
 # 忽略 demoapp 下所有内容
-cmd/generate/_example/internal/apps/demoapp/*
+cmd/generate/_example/apps/demoapp/*
 
 # 但不忽略 config 目录
-!cmd/generate/_example/internal/apps/demoapp/config/
+!cmd/generate/_example/apps/demoapp/config/
 
 # 不忽略 router/enter.go（注意先保 router 再保文件）
-!cmd/generate/_example/internal/apps/demoapp/router/
-!cmd/generate/_example/internal/apps/demoapp/router/enter.go
+!cmd/generate/_example/apps/demoapp/router/
+!cmd/generate/_example/apps/demoapp/router/enter.go
 
 # 不忽略 code/enter.go（注意先保 code 再保文件）
-!cmd/generate/_example/internal/apps/demoapp/code/
-!cmd/generate/_example/internal/apps/demoapp/code/enter.go
+!cmd/generate/_example/apps/demoapp/code/
+!cmd/generate/_example/apps/demoapp/code/enter.go
 
 # 不忽略 generate_test.go
-!cmd/generate/_example/internal/apps/demoapp/generate_test.go
+!cmd/generate/_example/apps/demoapp/generate_test.go
 
