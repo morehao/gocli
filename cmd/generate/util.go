@@ -95,36 +95,55 @@ func CopyEmbeddedTemplatesToTempDir(embeddedFS embed.FS, root string) (string, e
 }
 
 // GetAppInfo 应用模块路径信息
-// 输入示例：/Users/morehao/xxx/go-gin-web/internal/apps/demo
+// 输入示例：/Users/morehao/xxx/go-gin-web/apps/demoapp
+// 或者：/Users/morehao/xxx/gocli/cmd/generate/_example/apps/demoapp
 func GetAppInfo(workDir string) (*AppInfo, error) {
 	cleanPath := filepath.Clean(workDir)
 	segments := strings.Split(cleanPath, string(filepath.Separator))
 
-	// 查找 "internal/apps/{appName}" 结构
-	var internalIndex = -1
-	for i := 0; i < len(segments)-2; i++ {
-		if segments[i] == "internal" && segments[i+1] == "apps" {
-			internalIndex = i
+	// 查找 "apps/{appName}" 结构
+	var appsIndex = -1
+	for i := 0; i < len(segments)-1; i++ {
+		if segments[i] == "apps" {
+			appsIndex = i
 			break
 		}
 	}
-	if internalIndex == -1 {
-		return nil, fmt.Errorf("invalid structure: path does not contain /internal/apps/{appName}")
+	if appsIndex == -1 {
+		return nil, fmt.Errorf("invalid structure: path does not contain /apps/{appName}")
 	}
 
-	// 解析项目名、app名、相对路径
-	projectNameIndex := internalIndex - 1
-	if projectNameIndex < 0 {
-		return nil, fmt.Errorf("cannot determine project name from path: %s", workDir)
+	// apps 目录前面至少需要有一个父级目录（projectName）
+	if appsIndex < 1 {
+		return nil, fmt.Errorf("invalid structure: apps directory must have at least one parent directory")
 	}
-	projectName := segments[projectNameIndex]
-	appName := segments[internalIndex+2]
-	appPathInProject := filepath.Join(projectName, "internal", "apps", appName)
+
+	// 解析 app 名称
+	appName := segments[appsIndex+1]
+
+	// 解析项目名和相对路径
+	// 项目名是 apps 的直接父目录
+	projectName := segments[appsIndex-1]
+
+	// 构建从项目根到app的相对路径
+	// 如果 apps 直接在项目根下：go-gin-web/apps/demoapp
+	// 如果 apps 在子目录下：generate/_example/apps/demoapp
+	appPathInProject := filepath.Join(projectName, "apps", appName)
+
+	// 获取项目根目录的绝对路径
+	// 项目根目录是 apps 的父目录
+	projectRootPath := filepath.Join(segments[:appsIndex]...)
+	if len(projectRootPath) == 0 {
+		projectRootPath = string(filepath.Separator)
+	} else {
+		projectRootPath = string(filepath.Separator) + projectRootPath
+	}
 
 	return &AppInfo{
 		AppPathInProject: appPathInProject,
 		ProjectName:      projectName,
 		AppName:          appName,
+		ProjectRootPath:  projectRootPath,
 	}, nil
 }
 

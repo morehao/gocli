@@ -36,11 +36,9 @@ cmd/generate/_example/apps/demoapp/*
 !cmd/generate/_example/apps/demoapp/config/
 
 # 不忽略 router/enter.go（注意先保 router 再保文件）
-!cmd/generate/_example/apps/demoapp/router/
 !cmd/generate/_example/apps/demoapp/router/enter.go
 
 # 不忽略 code/enter.go（注意先保 code 再保文件）
-!cmd/generate/_example/apps/demoapp/code/
 !cmd/generate/_example/apps/demoapp/code/enter.go
 
 # 不忽略 generate_test.go

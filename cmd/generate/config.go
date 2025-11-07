@@ -18,6 +18,7 @@ type AppInfo struct {
 	AppPathInProject string // go-gin-web/internal/apps/demoapp
 	ProjectName      string // go-gin-web
 	AppName          string // demoapp
+	ProjectRootPath  string // /Users/morehao/xxx/go-gin-web (项目根目录绝对路径)
 }
 
 type CodeGen struct {
