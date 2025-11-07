@@ -1,7 +1,9 @@
 package svc{{.PackageName}}
 
 import (
-	"{{.AppPathInProject}}/pkg/code"
+	"time"
+
+	"{{.ProjectName}}/pkg/code"
     {{- if isDefaultDaoLayer .DaoLayerName}}
     "{{.AppPathInProject}}/dao/dao{{.PackageName}}"
     {{- else}}

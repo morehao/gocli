@@ -54,6 +54,7 @@ func genModule() error {
 			daoLayerName = v.LayerName
 		}
 	}
+	appInfo := cfg.appInfo
 
 	var genParamsList []codegen.GenParamsItem
 	var codeLayerItem *codegen.ModuleTplAnalysisItem
@@ -64,7 +65,7 @@ func genModule() error {
 			codeLayerItem = &tmpV
 			continue
 		}
-		
+
 		var modelFields []ModelField
 		for _, field := range v.ModelFields {
 			nullableDesc := nullableDefaultDesc
@@ -98,9 +99,9 @@ func genModule() error {
 			Template:       v.Template,
 			ExtraParams: ModuleExtraParams{
 				AppInfo: AppInfo{
-					ProjectName:      cfg.appInfo.ProjectName,
-					AppPathInProject: cfg.appInfo.AppPathInProject,
-					AppName:          cfg.appInfo.AppName,
+					ProjectName:      appInfo.ProjectName,
+					AppPathInProject: appInfo.AppPathInProject,
+					AppName:          appInfo.AppName,
 				},
 				PackageName:          analysisRes.PackageName,
 				TableName:            analysisRes.TableName,
@@ -161,9 +162,9 @@ func genModule() error {
 
 		codeExtraParams := ModuleExtraParams{
 			AppInfo: AppInfo{
-				ProjectName:      cfg.appInfo.ProjectName,
-				AppPathInProject: cfg.appInfo.AppPathInProject,
-				AppName:          cfg.appInfo.AppName,
+				ProjectName:      appInfo.ProjectName,
+				AppPathInProject: appInfo.AppPathInProject,
+				AppName:          appInfo.AppName,
 			},
 			PackageName:          analysisRes.PackageName,
 			TableName:            analysisRes.TableName,
