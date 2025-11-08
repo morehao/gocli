@@ -41,7 +41,6 @@ func New{{.StructName}}Svc() {{.StructName}}Svc {
 
 // Create 创建{{.Description}}
 func (svc *{{.StructNameLowerCamel}}Svc) Create(ctx *gin.Context, req *dto{{.PackageName}}.{{.StructName}}CreateReq) (*dto{{.PackageName}}.{{.StructName}}CreateResp, error) {
-	userID := gincontext.GetUserID(ctx)
 	insertEntity := &{{.ModelLayerName}}.{{.StructName}}Entity{
 {{- range .ModelFields}}
 	{{- if isSysField .FieldName}}
@@ -77,7 +76,6 @@ func (svc *{{.StructNameLowerCamel}}Svc) Delete(ctx *gin.Context, req *dto{{.Pac
 
 // Update 更新{{.Description}}
 func (svc *{{.StructNameLowerCamel}}Svc) Update(ctx *gin.Context, req *dto{{.PackageName}}.{{.StructName}}UpdateReq) error {
-    userID := gincontext.GetUserID(ctx)
 
 	updateEntity := &{{.ModelLayerName}}.{{.StructName}}Entity{
     {{- range .ModelFields}}
@@ -159,7 +157,6 @@ func (svc *{{.StructNameLowerCamel}}Svc) PageList(ctx *gin.Context, req *dto{{.P
 		{{- end}}
 			},
 			OperatorBaseInfo: objcommon.OperatorBaseInfo{
-				UpdatedBy: v.UpdatedBy,
 				UpdatedAt: v.UpdatedAt.Unix(),
 			},
 		})

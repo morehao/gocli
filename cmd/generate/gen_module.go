@@ -76,10 +76,13 @@ func genModule() error {
 			if field.DefaultValue == "" {
 				defaultValue = fmt.Sprintf("%s ''", fieldDefaultKeyword)
 			}
-			comment := fmt.Sprintf("%s: %s", fieldCommentKeyword, field.Comment)
+			// GormComment 用于 model 层的 gorm tag，格式为 "comment: xxx"
+			gormComment := fmt.Sprintf("%s: %s", fieldCommentKeyword, field.Comment)
 			if field.Comment == "" {
-				comment = ""
+				gormComment = ""
 			}
+			// Comment 用于 obj 层等其他地方的普通注释，直接使用原始注释
+			comment := field.Comment
 			modelFields = append(modelFields, ModelField{
 				IsPrimaryKey:       field.ColumnKey == codegen.ColumnKeyPRI,
 				FieldName:          gutils.ReplaceIdToID(field.FieldName),
@@ -89,6 +92,7 @@ func genModule() error {
 				ColumnType:         field.ColumnType,
 				NullableDesc:       nullableDesc,
 				DefaultValue:       defaultValue,
+				GormComment:        gormComment,
 				Comment:            comment,
 			})
 		}
@@ -145,10 +149,13 @@ func genModule() error {
 			if field.DefaultValue == "" {
 				defaultValue = fmt.Sprintf("%s ''", fieldDefaultKeyword)
 			}
-			comment := fmt.Sprintf("%s: %s", fieldCommentKeyword, field.Comment)
+			// GormComment 用于 model 层的 gorm tag，格式为 "comment: xxx"
+			gormComment := fmt.Sprintf("%s: %s", fieldCommentKeyword, field.Comment)
 			if field.Comment == "" {
-				comment = ""
+				gormComment = ""
 			}
+			// Comment 用于 obj 层等其他地方的普通注释，直接使用原始注释
+			comment := field.Comment
 			modelFields = append(modelFields, ModelField{
 				IsPrimaryKey:       field.ColumnKey == codegen.ColumnKeyPRI,
 				FieldName:          gutils.ReplaceIdToID(field.FieldName),
@@ -158,6 +165,7 @@ func genModule() error {
 				ColumnType:         field.ColumnType,
 				NullableDesc:       nullableDesc,
 				DefaultValue:       defaultValue,
+				GormComment:        gormComment,
 				Comment:            comment,
 			})
 		}

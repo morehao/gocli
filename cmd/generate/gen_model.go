@@ -71,10 +71,13 @@ func genModel() error {
 			if field.DefaultValue == "" {
 				defaultValue = fmt.Sprintf("%s ''", fieldDefaultKeyword)
 			}
-			comment := fmt.Sprintf("%s: %s", fieldCommentKeyword, field.Comment)
+			// GormComment 用于 model 层的 gorm tag，格式为 "comment: xxx"
+			gormComment := fmt.Sprintf("%s: %s", fieldCommentKeyword, field.Comment)
 			if field.Comment == "" {
-				comment = ""
+				gormComment = ""
 			}
+			// Comment 用于 obj 层等其他地方的普通注释，直接使用原始注释
+			comment := field.Comment
 			modelFields = append(modelFields, ModelField{
 				IsPrimaryKey:       field.ColumnKey == codegen.ColumnKeyPRI,
 				FieldName:          gutils.ReplaceIdToID(field.FieldName),
@@ -84,6 +87,7 @@ func genModel() error {
 				ColumnType:         field.ColumnType,
 				NullableDesc:       nullableDesc,
 				DefaultValue:       defaultValue,
+				GormComment:        gormComment,
 				Comment:            comment,
 			})
 		}
@@ -130,7 +134,8 @@ type ModelField struct {
 	ColumnType         string // 列数据类型，如varchar(255)
 	NullableDesc       string // 是否允许为空描述，如 NOT NULL
 	DefaultValue       string // 默认值,如 DEFAULT 0
-	Comment            string // 字段注释
+	GormComment        string // gorm tag中的注释，格式为 "comment: xxx"，用于 model 层
+	Comment            string // 普通注释，用于 obj 层等其他地方
 }
 
 type ModelExtraParams struct {
