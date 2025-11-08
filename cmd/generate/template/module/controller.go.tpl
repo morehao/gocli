@@ -1,10 +1,9 @@
 package ctr{{.PackageName}}
 
 import (
+    "github.com/gin-gonic/gin"
     "{{.ModulePath}}/{{.AppPathInProject}}/internal/dto/dto{{.PackageName}}"
     "{{.ModulePath}}/{{.AppPathInProject}}/internal/service/svc{{.PackageName}}"
-
-    "github.com/gin-gonic/gin"
     "github.com/morehao/golib/gcontext/gincontext"
 )
 

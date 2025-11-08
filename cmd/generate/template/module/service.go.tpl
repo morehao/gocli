@@ -1,6 +1,7 @@
 package svc{{.PackageName}}
 
 import (
+	"github.com/gin-gonic/gin"
     {{- if isDefaultDaoLayer .DaoLayerName}}
     "{{.ModulePath}}/{{.AppPathInProject}}/dao/dao{{.PackageName}}"
     {{- else}}
@@ -12,11 +13,9 @@ import (
     {{- else}}
     "{{.ModulePath}}/{{.AppPathInProject}}/model/{{.ModelLayerName}}"
     {{- end}}
-	"{{.ModulePath}}/{{.AppPathInProject}}/object/obj{{.PackageName}}"
 	"{{.ModulePath}}/{{.AppPathInProject}}/object/objcommon"
+	"{{.ModulePath}}/{{.AppPathInProject}}/object/obj{{.PackageName}}"
 	"{{.ModulePath}}/pkg/code"
-
-	"github.com/gin-gonic/gin"
 	"github.com/morehao/golib/gcontext/gincontext"
 	"github.com/morehao/golib/glog"
 	"github.com/morehao/golib/gutils"
