@@ -24,8 +24,8 @@ go install github.com/morehao/gocli@latest
 - 生成的代码会自动进行 `gofmt` 的格式化处理。
 
 ### 命令执行前提
-1. 需要在项目中对应应用的跟路基下执行脚本，项目路径示例`xxxx/go-gin-web/demoapp`，如果要生成`demoapp`下的代码，则需要在`demoapp`路径下执行相关命令。
-2. 需要项目对应应用下有代码生成的配置文件`code_gen.yaml`，示例配置如下：
+1. 需要在项目根目录下执行命令，例如在 `go-gin-web` 目录下执行，通过 `--app` 参数指定要生成代码的应用名称（如 `demoapp`）。
+2. 需要项目对应应用下有代码生成的配置文件`code_gen.yaml`，配置文件路径为 `apps/{appName}/config/code_gen.yaml`，示例配置如下：
 ```yaml
 mysql_dsn: root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local
 #layer_parent_dir_map:
@@ -82,16 +82,23 @@ api:
 | api_doc_tag        | API 文档标签                       | 用户登录记录                           |
 
 ### 命令使用说明
-```
+```bash
+# 在项目根目录（如 go-gin-web）下执行以下命令
+
 ## 生成模块代码
-gocli generate -m module
+gocli generate -m module -a demoapp
 
 ## 生成模型代码
-gocli generate -m model
+gocli generate -m model -a demoapp
 
 ## 生成Api接口代码
-gocli generate -m api
+gocli generate -m api -a demoapp
 ```
+
+**参数说明：**
+- `-m, --mode`：生成模式，可选值：`module`（模块）、`model`（模型）、`api`（接口）
+- `-a, --app`：应用名称，例如：`demoapp`（必填）
+
 相关命令在[go-gin-web](https://github.com/morehao/go-gin-web)项目中的`Makefile`已配置相关脚本。
 
 ## cutter

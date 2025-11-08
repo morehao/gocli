@@ -76,6 +76,8 @@ func genApi() error {
 					ProjectName:      cfg.appInfo.ProjectName,
 					AppPathInProject: cfg.appInfo.AppPathInProject,
 					AppName:          cfg.appInfo.AppName,
+					ProjectRootPath:  cfg.appInfo.ProjectRootPath,
+					ModulePath:       cfg.appInfo.ModulePath,
 				},
 				PackageName:            analysisRes.PackageName,
 				TargetFileExist:        v.TargetFileExist,

@@ -1,22 +1,20 @@
 package svc{{.PackageName}}
 
 import (
-	"time"
-
-	"{{.ProjectName}}/pkg/code"
     {{- if isDefaultDaoLayer .DaoLayerName}}
-    "{{.AppPathInProject}}/dao/dao{{.PackageName}}"
+    "{{.ModulePath}}/{{.AppPathInProject}}/dao/dao{{.PackageName}}"
     {{- else}}
-    "{{.AppPathInProject}}/dao/{{.DaoLayerName}}/dao{{.PackageName}}"
+    "{{.ModulePath}}/{{.AppPathInProject}}/dao/{{.DaoLayerName}}/dao{{.PackageName}}"
     {{- end}}
-	"{{.AppPathInProject}}/dto/dto{{.PackageName}}"
+	"{{.ModulePath}}/{{.AppPathInProject}}/internal/dto/dto{{.PackageName}}"
     {{- if isDefaultModelLayer .ModelLayerName}}
-    "{{.AppPathInProject}}/model"
+    "{{.ModulePath}}/{{.AppPathInProject}}/model"
     {{- else}}
-    "{{.AppPathInProject}}/model/{{.ModelLayerName}}"
+    "{{.ModulePath}}/{{.AppPathInProject}}/model/{{.ModelLayerName}}"
     {{- end}}
-	"{{.AppPathInProject}}/object/objcommon"
-	"{{.AppPathInProject}}/object/obj{{.PackageName}}"
+	"{{.ModulePath}}/{{.AppPathInProject}}/object/obj{{.PackageName}}"
+	"{{.ModulePath}}/{{.AppPathInProject}}/object/objcommon"
+	"{{.ModulePath}}/pkg/code"
 
 	"github.com/gin-gonic/gin"
 	"github.com/morehao/golib/gcontext/gincontext"
@@ -55,8 +53,6 @@ func (svc *{{.StructNameLowerCamel}}Svc) Create(ctx *gin.Context, req *dto{{.Pac
 		{{.FieldName}}: req.{{.FieldName}},
 	{{- end}}
 {{- end}}
-		CreatedBy: userID,
-		UpdatedBy: userID,
 	}
 
 	if err := dao{{.PackageName}}.New{{.StructName}}Dao().Insert(ctx, insertEntity); err != nil {
@@ -94,7 +90,6 @@ func (svc *{{.StructNameLowerCamel}}Svc) Update(ctx *gin.Context, req *dto{{.Pac
         {{.FieldName}}: req.{{.FieldName}},
     {{- end}}
     {{- end}}
-        UpdatedBy:    userID,
     }
     if err := dao{{.PackageName}}.New{{.StructName}}Dao().UpdateByID(ctx, req.ID, updateEntity); err != nil {
         glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}Update] dao{{.StructName}} UpdateByID fail, err:%v, req:%s", err, gutils.ToJsonString(req))
@@ -129,9 +124,7 @@ func (svc *{{.StructNameLowerCamel}}Svc) Detail(ctx *gin.Context, req *dto{{.Pac
 	{{- end}}
 		},
 		OperatorBaseInfo: objcommon.OperatorBaseInfo{
-        	CreatedBy: detailEntity.CreatedBy,
 			CreatedAt: detailEntity.CreatedAt.Unix(),
-			UpdatedBy: detailEntity.UpdatedBy,
 			UpdatedAt: detailEntity.UpdatedAt.Unix(),
 		},
 	}
@@ -166,8 +159,6 @@ func (svc *{{.StructNameLowerCamel}}Svc) PageList(ctx *gin.Context, req *dto{{.P
 		{{- end}}
 			},
 			OperatorBaseInfo: objcommon.OperatorBaseInfo{
-				CreatedBy: v.CreatedBy,
-				CreatedAt: v.CreatedAt.Unix(),
 				UpdatedBy: v.UpdatedBy,
 				UpdatedAt: v.UpdatedAt.Unix(),
 			},

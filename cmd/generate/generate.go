@@ -33,33 +33,54 @@ var Cmd = &cobra.Command{
 	Short: "Generate code based on templates",
 	Long:  `Generate code for different layers like module, model, and API based on predefined templates.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		// 获取当前工作目录（项目根目录）
+		projectRootDir, _ := os.Getwd()
+		
+		// 获取 app 名称
+		appName, _ := cmd.Flags().GetString("app")
+		if appName == "" {
+			fmt.Println("Please provide an app name using --app flag")
+			return
+		}
+
+		// 构建 app 的完整路径
+		workDir = filepath.Join(projectRootDir, "apps", appName)
+		
+		// 检查 app 目录是否存在
+		if _, err := os.Stat(workDir); os.IsNotExist(err) {
+			fmt.Printf("App directory does not exist: %s\n", workDir)
+			return
+		}
+
 		// 初始化配置和 MySQL 客户端
-		currentDir, _ := os.Getwd()
-		workDir = currentDir
 		if cfg == nil {
+			// 配置文件路径：apps/{appName}/config/code_gen.yaml
 			configFilepath := filepath.Join(workDir, "config", "code_gen.yaml")
+			if _, err := os.Stat(configFilepath); os.IsNotExist(err) {
+				fmt.Printf("Config file does not exist: %s\n", configFilepath)
+				return
+			}
+			
 			conf.LoadConfig(configFilepath, &cfg)
 			appInfo, getAppInfoErr := GetAppInfo(workDir)
 			if getAppInfoErr != nil {
-				panic("get app info error")
+				fmt.Printf("Get app info error: %v\n", getAppInfoErr)
+				return
 			}
 			cfg.appInfo = *appInfo
 		}
+		
 		// 延迟初始化 Mysql 客户端
 		if MysqlClient == nil {
 			mysqlClient, getMysqlClientErr := gorm.Open(mysql.Open(cfg.MysqlDSN), &gorm.Config{})
 			if getMysqlClientErr != nil {
-				panic("get mysql client error")
+				fmt.Printf("Get mysql client error: %v\n", getMysqlClientErr)
+				return
 			}
 			MysqlClient = mysqlClient
 		}
 
 		mode, _ := cmd.Flags().GetString("mode")
-
-		if workDir == "" {
-			fmt.Println("Please provide a working directory using --workdir flag")
-			return
-		}
 
 		switch mode {
 		case "module":
@@ -91,4 +112,5 @@ var Cmd = &cobra.Command{
 func init() {
 	// 定义 generate 命令的参数
 	Cmd.Flags().StringP("mode", "m", "", "Mode of code generation (module, model, api)")
+	Cmd.Flags().StringP("app", "a", "", "App name to generate code for (e.g., demoapp)")
 }

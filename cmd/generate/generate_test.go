@@ -25,8 +25,8 @@ func TestLoadTemplates(t *testing.T) {
 
 // 测试配置加载
 func TestConfigLoading(t *testing.T) {
-	// 执行命令
-	_, err := ExecuteCommand(Cmd, "--mode", "model")
+	// 执行命令，需要指定 app 名称
+	_, err := ExecuteCommand(Cmd, "--mode", "model", "--app", "demoapp")
 	if err != nil {
 		t.Errorf("Failed to execute command with config: %v", err)
 	}

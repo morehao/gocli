@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"time"
 	
-    "{{.AppPathInProject}}/code"
+    "{{.ModulePath}}/pkg/code"
 
     {{- if isDefaultDaoLayer .DaoLayerName}}
-    "{{.AppPathInProject}}/dao"
+    "{{.ModulePath}}/{{.AppPathInProject}}/dao"
     {{- else}}
-    "{{.AppPathInProject}}/dao/{{.DaoLayerName}}"
+    "{{.ModulePath}}/{{.AppPathInProject}}/dao/{{.DaoLayerName}}"
     {{- end}}
     {{- if isDefaultModelLayer .ModelLayerName}}
-    "{{.AppPathInProject}}/model"
+    "{{.ModulePath}}/{{.AppPathInProject}}/model"
     {{- else}}
-    "{{.AppPathInProject}}/model/{{.ModelLayerName}}"
+    "{{.ModulePath}}/{{.AppPathInProject}}/model/{{.ModelLayerName}}"
     {{- end}}
 
     "github.com/gin-gonic/gin"
@@ -186,6 +186,4 @@ func (d *{{.StructName}}Dao) BuildCondition(db *gorm.DB, cond *{{.StructName}}Co
 	if cond.OrderField != "" {
 		db.Order(cond.OrderField)
 	}
-
-	return
 } 

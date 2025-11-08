@@ -26,8 +26,8 @@ go install github.com/morehao/gocli@latest
 
 ### Prerequisites
 
-1. Run the command in the root directory of the corresponding application, e.g., `xxxx/go-gin-web/demoapp`. To generate code under `demoapp`, execute the command inside that folder.
-2. Ensure that the application contains a configuration file named `code_gen.yaml`. Example:
+1. Run the command in the project root directory (e.g., `go-gin-web`), and specify the application name using the `--app` parameter (e.g., `demoapp`).
+2. Ensure that the application contains a configuration file named `code_gen.yaml` at the path `apps/{appName}/config/code_gen.yaml`. Example:
 
 ```yaml
 mysql_dsn: root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local
@@ -95,15 +95,21 @@ api:
 ### Command Usage
 
 ```bash
+# Run the following commands in the project root directory (e.g., go-gin-web)
+
 # Generate module code
-gocli generate -m module
+gocli generate -m module -a demoapp
 
 # Generate model code
-gocli generate -m model
+gocli generate -m model -a demoapp
 
 # Generate API interface code
-gocli generate -m api
+gocli generate -m api -a demoapp
 ```
+
+**Parameter Description:**
+- `-m, --mode`: Generation mode, options: `module`, `model`, `api` (required)
+- `-a, --app`: Application name, e.g., `demoapp` (required)
 
 The [go-gin-web](https://github.com/morehao/go-gin-web) project contains example usage in its `Makefile`.
 

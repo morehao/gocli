@@ -1,6 +1,7 @@
 package generate
 
 import (
+	"bufio"
 	"bytes"
 	"embed"
 	"fmt"
@@ -126,9 +127,8 @@ func GetAppInfo(workDir string) (*AppInfo, error) {
 	projectName := segments[appsIndex-1]
 
 	// 构建从项目根到app的相对路径
-	// 如果 apps 直接在项目根下：go-gin-web/apps/demoapp
-	// 如果 apps 在子目录下：generate/_example/apps/demoapp
-	appPathInProject := filepath.Join(projectName, "apps", appName)
+	// 如果 apps 直接在项目根下：apps/demoapp
+	appPathInProject := filepath.Join("apps", appName)
 
 	// 获取项目根目录的绝对路径
 	// 项目根目录是 apps 的父目录
@@ -139,12 +139,47 @@ func GetAppInfo(workDir string) (*AppInfo, error) {
 		projectRootPath = string(filepath.Separator) + projectRootPath
 	}
 
+	// 读取 go.mod 文件获取模块路径
+	modulePath, err := getModulePath(projectRootPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get module path: %v", err)
+	}
+
 	return &AppInfo{
 		AppPathInProject: appPathInProject,
 		ProjectName:      projectName,
 		AppName:          appName,
 		ProjectRootPath:  projectRootPath,
+		ModulePath:       modulePath,
 	}, nil
+}
+
+// getModulePath 从 go.mod 文件中读取模块路径
+func getModulePath(projectRootPath string) (string, error) {
+	goModPath := filepath.Join(projectRootPath, "go.mod")
+	
+	file, err := os.Open(goModPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to open go.mod: %v", err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if strings.HasPrefix(line, "module ") {
+			// 提取模块路径，格式：module github.com/morehao/go-gin-web
+			modulePath := strings.TrimPrefix(line, "module ")
+			modulePath = strings.TrimSpace(modulePath)
+			return modulePath, nil
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return "", fmt.Errorf("error reading go.mod: %v", err)
+	}
+
+	return "", fmt.Errorf("module declaration not found in go.mod")
 }
 
 // ExecuteCommand 执行命令并捕获输出

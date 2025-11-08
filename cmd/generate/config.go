@@ -15,10 +15,11 @@ type Config struct {
 
 // AppInfo 应用信息，示例路径：go-gin-web/internal/apps/demoapp
 type AppInfo struct {
-	AppPathInProject string // go-gin-web/internal/apps/demoapp
+	AppPathInProject string // apps/demoapp
 	ProjectName      string // go-gin-web
 	AppName          string // demoapp
 	ProjectRootPath  string // /Users/morehao/xxx/go-gin-web (项目根目录绝对路径)
+	ModulePath       string // github.com/morehao/go-gin-web (从 go.mod 读取的完整模块路径)
 }
 
 type CodeGen struct {

@@ -1,7 +1,7 @@
 package svc{{.PackageName}}
 
 import (
-	"{{.AppPathInProject}}/dto/dto{{.PackageName}}"
+	"{{.ModulePath}}/{{.AppPathInProject}}/internal/dto/dto{{.PackageName}}"
 
 	"github.com/gin-gonic/gin"
 )

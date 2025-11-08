@@ -1,8 +1,8 @@
 package dto{{.PackageName}}
 
 import (
-	"{{.AppPathInProject}}/object/objcommon"
-	"{{.AppPathInProject}}/object/objuser"
+	"{{.ModulePath}}/{{.AppPathInProject}}/object/objcommon"
+	"{{.ModulePath}}/{{.AppPathInProject}}/object/obj{{.PackageName}}"
 )
 
 type {{.StructName}}CreateResp struct {
