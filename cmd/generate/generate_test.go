@@ -27,11 +27,11 @@ func TestLoadTemplates(t *testing.T) {
 
 // 测试配置加载
 func TestConfigLoading(t *testing.T) {
-	// 切换到 _example 目录作为项目根目录
-	exampleDir, _ := filepath.Abs("_example")
+	// 切换到 example 目录作为项目根目录
+	exampleDir, _ := filepath.Abs("example")
 	originalDir, _ := os.Getwd()
 	if err := os.Chdir(exampleDir); err != nil {
-		t.Skipf("Skipping test: _example directory not found: %v", err)
+		t.Skipf("Skipping test: example directory not found: %v", err)
 		return
 	}
 	defer os.Chdir(originalDir)
@@ -47,14 +47,14 @@ func TestConfigLoading(t *testing.T) {
 // TestGenerateModelCode 测试生成 model 层代码
 // 运行前请确保：
 // 1. MySQL 数据库可访问
-// 2. _example/apps/demoapp/config/code_gen.yaml 中的配置正确
-// 3. _example 目录存在并包含完整的示例项目结构
+// 2. example/apps/demoapp/config/code_gen.yaml 中的配置正确
+// 3. example 目录存在并包含完整的示例项目结构
 func TestGenerateModelCode(t *testing.T) {
-	// 切换到 _example 目录作为项目根目录
-	exampleDir, _ := filepath.Abs("_example")
+	// 切换到 example 目录作为项目根目录
+	exampleDir, _ := filepath.Abs("example")
 	originalDir, _ := os.Getwd()
 	if err := os.Chdir(exampleDir); err != nil {
-		t.Skipf("Skipping test: _example directory not found: %v", err)
+		t.Skipf("Skipping test: example directory not found: %v", err)
 		return
 	}
 	defer os.Chdir(originalDir)
@@ -68,13 +68,13 @@ func TestGenerateModelCode(t *testing.T) {
 // TestGenerateModuleCode 测试生成完整模块代码
 // 运行前请确保：
 // 1. MySQL 数据库可访问
-// 2. _example/apps/demoapp/config/code_gen.yaml 中的配置正确
-// 3. _example 目录存在并包含完整的示例项目结构
+// 2. example/apps/demoapp/config/code_gen.yaml 中的配置正确
+// 3. example 目录存在并包含完整的示例项目结构
 func TestGenerateModuleCode(t *testing.T) {
-	exampleDir, _ := filepath.Abs("_example")
+	exampleDir, _ := filepath.Abs("example")
 	originalDir, _ := os.Getwd()
 	if err := os.Chdir(exampleDir); err != nil {
-		t.Skipf("Skipping test: _example directory not found: %v", err)
+		t.Skipf("Skipping test: example directory not found: %v", err)
 		return
 	}
 	defer os.Chdir(originalDir)
@@ -88,13 +88,13 @@ func TestGenerateModuleCode(t *testing.T) {
 // TestGenerateApiCode 测试生成 API 代码
 // 运行前请确保：
 // 1. MySQL 数据库可访问
-// 2. _example/apps/demoapp/config/code_gen.yaml 中的配置正确
-// 3. _example 目录存在并包含完整的示例项目结构
+// 2. example/apps/demoapp/config/code_gen.yaml 中的配置正确
+// 3. example 目录存在并包含完整的示例项目结构
 func TestGenerateApiCode(t *testing.T) {
-	exampleDir, _ := filepath.Abs("_example")
+	exampleDir, _ := filepath.Abs("example")
 	originalDir, _ := os.Getwd()
 	if err := os.Chdir(exampleDir); err != nil {
-		t.Skipf("Skipping test: _example directory not found: %v", err)
+		t.Skipf("Skipping test: example directory not found: %v", err)
 		return
 	}
 	defer os.Chdir(originalDir)

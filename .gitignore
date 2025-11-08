@@ -31,6 +31,7 @@ g
 
 # 忽略 demoapp 下所有内容
 cmd/generate/_example/apps/demoapp/*
+cmd/generate/_example/apps/demoapp/dao/*
 
 # 但不忽略的文件
 !cmd/generate/example/apps/demoapp/config/
