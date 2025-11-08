@@ -4,14 +4,12 @@ go 1.23.3
 
 require (
 	github.com/morehao/go-gitignore v0.0.0-20240726143401-bffa9ffa53e3
-	github.com/morehao/golib v1.2.14
+	github.com/morehao/golib v1.2.17
 	github.com/spf13/cobra v1.9.1
 	golang.org/x/mod v0.25.0
 	gorm.io/driver/mysql v1.6.0
 	gorm.io/gorm v1.30.0
 )
-
-replace github.com/morehao/golib => /Users/morehao/Documents/practice/go/golib
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
