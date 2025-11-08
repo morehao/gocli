@@ -32,15 +32,9 @@ g
 # 忽略 demoapp 下所有内容
 cmd/generate/_example/apps/demoapp/*
 
-# 但不忽略 config 目录
-!cmd/generate/_example/apps/demoapp/config/
-
-# 不忽略 router/enter.go（注意先保 router 再保文件）
-!cmd/generate/_example/apps/demoapp/router/enter.go
-
-# 不忽略 code/enter.go（注意先保 code 再保文件）
-!cmd/generate/_example/apps/demoapp/code/enter.go
-
-# 不忽略 generate_test.go
-!cmd/generate/_example/apps/demoapp/generate_test.go
+# 但不忽略的文件
+!cmd/generate/example/apps/demoapp/config/
+!cmd/generate/example/apps/demoapp/dao/base.go
+!cmd/generate/example/apps/demoapp/router/enter.go
+!cmd/generate/example/apps/demoapp/pkg/code/enter.go
 
