@@ -145,22 +145,42 @@ func modifyGoMod(dstDir, moduleName string) error {
 		return err
 	}
 
-	// 修改模块名称
-	if err := modFile.AddModuleStmt(moduleName); err != nil {
-		return err
+	// 获取旧的模块名
+	oldModuleName := modFile.Module.Mod.Path
+
+	// 构造新的模块名
+	var newModuleName string
+
+	// 判断传入的 moduleName 是完整路径还是简单名称
+	isFullPath := strings.Contains(moduleName, "/")
+
+	// 判断源模块名是完整路径还是简单名称
+	oldIsFullPath := strings.Contains(oldModuleName, "/")
+
+	if isFullPath {
+		// 如果传入的是完整路径，直接使用
+		newModuleName = moduleName
+	} else if oldIsFullPath {
+		// 如果传入的是简单名称，但源是完整路径，则保留路径前缀
+		lastSlash := strings.LastIndex(oldModuleName, "/")
+		newModuleName = oldModuleName[:lastSlash+1] + moduleName
+	} else {
+		// 如果传入的是简单名称，源也是简单名称，直接使用
+		newModuleName = moduleName
 	}
 
-	// 将修改后的内容格式化回字节切片
-	newContent, err := modFile.Format()
-	if err != nil {
-		return err
-	}
+	// 直接使用字符串替换修改模块名
+	newContent := strings.Replace(string(content),
+		fmt.Sprintf("module %s", oldModuleName),
+		fmt.Sprintf("module %s", newModuleName),
+		1)
 
 	// 写入新的go.mod文件
-	err = os.WriteFile(modFilepath, newContent, 0644)
+	err = os.WriteFile(modFilepath, []byte(newContent), 0644)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -173,4 +193,3 @@ func removeGitDir(dstDir string) error {
 	}
 	return nil
 }
-
