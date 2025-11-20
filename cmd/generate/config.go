@@ -35,12 +35,14 @@ type ModuleConfig struct {
 	PackageName string `yaml:"package_name"` // 包名
 	Description string `yaml:"description"`  // 描述
 	TableName   string `yaml:"table_name"`   // 表名
+	TablePrefix string `yaml:"table_prefix"` // 表名前缀，生成结构体名时会去除此前缀，如 iam_
 }
 
 type ModelConfig struct {
 	PackageName string `yaml:"package_name"` // 包名
 	Description string `yaml:"description"`  // 描述
 	TableName   string `yaml:"table_name"`   // 表名
+	TablePrefix string `yaml:"table_prefix"` // 表名前缀，生成结构体名时会去除此前缀，如 iam_
 }
 
 type ApiConfig struct {

@@ -1,4 +1,4 @@
-package model
+package {{.ModelLayerName}}
 
 import (
 	"gorm.io/gorm"

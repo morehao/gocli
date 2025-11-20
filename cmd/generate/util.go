@@ -53,6 +53,93 @@ func IsDefaultDaoLayer(name string) bool {
 	return name == "dao"
 }
 
+// RemoveTablePrefixFromStructName 从结构体名中去除表名前缀
+// 例如：表名 iam_users，前缀 iam_，结构体名 IamUsers -> Users
+// 参数：
+//   - structName: 原始结构体名（如 IamUsers）
+//   - tableName: 原始表名（如 iam_users）
+//   - prefix: 要去除的前缀（如 iam_）
+// 返回：去除前缀后的结构体名（如 Users）
+func RemoveTablePrefixFromStructName(structName, tableName, prefix string) string {
+	if prefix == "" {
+		return structName
+	}
+	
+	// 如果表名以指定前缀开头，则从结构体名中去除对应的前缀部分
+	if strings.HasPrefix(tableName, prefix) {
+		// 将前缀转换为对应的结构体名格式（去除下划线，每个单词首字母大写）
+		// 例如：iam_ -> Iam, sys_ -> Sys
+		prefixWithoutUnderscore := strings.TrimSuffix(prefix, "_")
+		if prefixWithoutUnderscore == "" {
+			return structName
+		}
+		
+		// 将前缀转换为 PascalCase
+		prefixParts := strings.Split(prefixWithoutUnderscore, "_")
+		var prefixStructName string
+		for _, part := range prefixParts {
+			if part != "" {
+				// 将每个部分的首字母大写，其余小写
+				if len(part) > 0 {
+					prefixStructName += strings.ToUpper(part[:1]) + strings.ToLower(part[1:])
+				}
+			}
+		}
+		
+		// 如果结构体名以此前缀开头，则去除
+		if strings.HasPrefix(structName, prefixStructName) {
+			remaining := strings.TrimPrefix(structName, prefixStructName)
+			// 确保剩余部分首字母大写
+			if remaining != "" {
+				return strings.ToUpper(remaining[:1]) + remaining[1:]
+			}
+			// 如果去除前缀后为空，返回原结构体名（这种情况不应该发生，但为了安全）
+			return structName
+		}
+	}
+	
+	return structName
+}
+
+// RemoveTablePrefixFromFilename 从文件名中去除表名前缀
+// 例如：文件名 iam_user.go，前缀 iam_，处理后 -> user.go
+// 参数：
+//   - filename: 原始文件名（如 iam_user.go）
+//   - tableName: 原始表名（如 iam_users）
+//   - prefix: 要去除的前缀（如 iam_）
+// 返回：去除前缀后的文件名（如 user.go）
+func RemoveTablePrefixFromFilename(filename, tableName, prefix string) string {
+	if prefix == "" {
+		return filename
+	}
+	
+	// 如果表名以指定前缀开头，则从文件名中去除对应的前缀部分
+	if strings.HasPrefix(tableName, prefix) {
+		// 分离文件名和扩展名
+		ext := filepath.Ext(filename)
+		nameWithoutExt := strings.TrimSuffix(filename, ext)
+		
+		// 将前缀转换为文件名格式（去除下划线）
+		prefixWithoutUnderscore := strings.TrimSuffix(prefix, "_")
+		if prefixWithoutUnderscore == "" {
+			return filename
+		}
+		
+		// 构建前缀在文件名中的形式（snake_case）
+		prefixInFilename := prefixWithoutUnderscore + "_"
+		
+		// 如果文件名以此前缀开头，则去除
+		if strings.HasPrefix(nameWithoutExt, prefixInFilename) {
+			remaining := strings.TrimPrefix(nameWithoutExt, prefixInFilename)
+			if remaining != "" {
+				return remaining + ext
+			}
+		}
+	}
+	
+	return filename
+}
+
 // CopyEmbeddedTemplatesToTempDir 将嵌入的模板文件复制到临时目录，并返回该目录的路径。
 func CopyEmbeddedTemplatesToTempDir(embeddedFS embed.FS, root string) (string, error) {
 	// 创建一个临时目录来存放模板文件

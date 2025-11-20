@@ -35,7 +35,7 @@ func New{{.StructName}}Ctr() {{.StructName}}Ctr {
 // @Produce application/json
 // @Param req body dto{{.PackageName}}.{{.StructName}}CreateReq true "创建{{.Description}}"
 // @Success 200 {object} gincontext.DtoRender{data=dto{{.PackageName}}.{{.StructName}}CreateResp} "{"code": 0,"data": "ok","msg": "success"}"
-// @Router /{{.AppName}}/{{.StructNameLowerCamel}}/create [post]
+// @Router /{{.AppName}}/v1/{{.StructNameLowerCamel}}/create [post]
 func (ctr *{{.StructNameLowerCamel}}Ctr) Create(ctx *gin.Context) {
 	var req dto{{.PackageName}}.{{.StructName}}CreateReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -58,7 +58,7 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Create(ctx *gin.Context) {
 // @Produce application/json
 // @Param req body dto{{.PackageName}}.{{.StructName}}DeleteReq true "删除{{.Description}}"
 // @Success 200 {object} gincontext.DtoRender{data=string} "{"code": 0,"data": "ok","msg": "删除成功"}"
-// @Router /{{.AppName}}/{{.StructNameLowerCamel}}/delete [post]
+// @Router /{{.AppName}}/v1/{{.StructNameLowerCamel}}/delete [post]
 func (ctr *{{.StructNameLowerCamel}}Ctr) Delete(ctx *gin.Context) {
 	var req dto{{.PackageName}}.{{.StructName}}DeleteReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -81,7 +81,7 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Delete(ctx *gin.Context) {
 // @Produce application/json
 // @Param req body dto{{.PackageName}}.{{.StructName}}UpdateReq true "修改{{.Description}}"
 // @Success 200 {object} gincontext.DtoRender{data=string} "{"code": 0,"data": "ok","msg": "修改成功"}"
-// @Router /{{.AppName}}/{{.StructNameLowerCamel}}/update [post]
+// @Router /{{.AppName}}/v1/{{.StructNameLowerCamel}}/update [post]
 func (ctr *{{.StructNameLowerCamel}}Ctr) Update(ctx *gin.Context) {
 	var req dto{{.PackageName}}.{{.StructName}}UpdateReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -103,7 +103,7 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Update(ctx *gin.Context) {
 // @Produce application/json
 // @Param req query dto{{.PackageName}}.{{.StructName}}DetailReq true "{{.Description}}详情"
 // @Success 200 {object} gincontext.DtoRender{data=dto{{.PackageName}}.{{.StructName}}DetailResp} "{"code": 0,"data": "ok","msg": "success"}"
-// @Router /{{.AppName}}/{{.StructNameLowerCamel}}/detail [get]
+// @Router /{{.AppName}}/v1/{{.StructNameLowerCamel}}/detail [get]
 func (ctr *{{.StructNameLowerCamel}}Ctr) Detail(ctx *gin.Context) {
 	var req dto{{.PackageName}}.{{.StructName}}DetailReq
 	if err := ctx.ShouldBindQuery(&req); err != nil {
@@ -126,7 +126,7 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Detail(ctx *gin.Context) {
 // @Produce application/json
 // @Param req query dto{{.PackageName}}.{{.StructName}}PageListReq true "{{.Description}}列表"
 // @Success 200 {object} gincontext.DtoRender{data=dto{{.PackageName}}.{{.StructName}}PageListResp} "{"code": 0,"data": "ok","msg": "success"}"
-// @Router /{{.AppName}}/{{.StructNameLowerCamel}}/pageList [get]
+// @Router /{{.AppName}}/v1/{{.StructNameLowerCamel}}/pageList [get]
 func (ctr *{{.StructNameLowerCamel}}Ctr) PageList(ctx *gin.Context) {
 	var req dto{{.PackageName}}.{{.StructName}}PageListReq
 	if err := ctx.ShouldBindQuery(&req); err != nil {
