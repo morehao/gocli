@@ -5,13 +5,13 @@ import (
     {{- if isDefaultDaoLayer .DaoLayerName}}
     "{{.ModulePath}}/{{.AppPathInProject}}/dao/dao{{.PackageName}}"
     {{- else}}
-    "{{.ModulePath}}/{{.AppPathInProject}}/dao/{{.DaoLayerName}}/dao{{.PackageName}}"
+    "{{.ModulePath}}/{{.AppPathInProject}}/{{.DaoLayerName}}/dao{{.PackageName}}"
     {{- end}}
 	"{{.ModulePath}}/{{.AppPathInProject}}/internal/dto/dto{{.PackageName}}"
     {{- if isDefaultModelLayer .ModelLayerName}}
     "{{.ModulePath}}/{{.AppPathInProject}}/model"
     {{- else}}
-    "{{.ModulePath}}/{{.AppPathInProject}}/model/{{.ModelLayerName}}"
+    "{{.ModulePath}}/{{.AppPathInProject}}/{{.ModelLayerName}}"
     {{- end}}
 	"{{.ModulePath}}/{{.AppPathInProject}}/object/objcommon"
 	"{{.ModulePath}}/{{.AppPathInProject}}/object/obj{{.PackageName}}"

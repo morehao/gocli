@@ -49,6 +49,15 @@ func genModel() error {
 		return fmt.Errorf("analysis model tpl error: %v", analysisErr)
 	}
 
+	// 如果配置了表名前缀，则从结构体名中去除前缀
+	if modelGenCfg.TablePrefix != "" {
+		analysisRes.StructName = RemoveTablePrefixFromStructName(
+			analysisRes.StructName,
+			analysisRes.TableName,
+			modelGenCfg.TablePrefix,
+		)
+	}
+
 	var modelLayerName, daoLayerName codegen.LayerName
 	for _, v := range analysisRes.TplAnalysisList {
 		if v.OriginLayerName == codegen.LayerNameModel {
@@ -92,9 +101,19 @@ func genModel() error {
 			})
 		}
 
+		// 如果配置了表名前缀，则从文件名中去除前缀
+		targetFilename := v.TargetFilename
+		if modelGenCfg.TablePrefix != "" {
+			targetFilename = RemoveTablePrefixFromFilename(
+				v.TargetFilename,
+				analysisRes.TableName,
+				modelGenCfg.TablePrefix,
+			)
+		}
+
 		genParamsList = append(genParamsList, codegen.GenParamsItem{
 			TargetDir:      v.TargetDir,
-			TargetFileName: v.TargetFilename,
+			TargetFileName: targetFilename,
 			Template:       v.Template,
 			ExtraParams: ModelExtraParams{
 				AppInfo: AppInfo{

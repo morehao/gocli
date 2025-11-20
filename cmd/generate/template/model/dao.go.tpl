@@ -9,12 +9,12 @@ import (
     {{- if isDefaultDaoLayer .DaoLayerName}}
     "{{.ModulePath}}/{{.AppPathInProject}}/dao"
     {{- else}}
-    "{{.ModulePath}}/{{.AppPathInProject}}/dao/{{.DaoLayerName}}"
+    "{{.ModulePath}}/{{.AppPathInProject}}/{{.DaoLayerName}}"
     {{- end}}
     {{- if isDefaultModelLayer .ModelLayerName}}
     "{{.ModulePath}}/{{.AppPathInProject}}/model"
     {{- else}}
-    "{{.ModulePath}}/{{.AppPathInProject}}/model/{{.ModelLayerName}}"
+    "{{.ModulePath}}/{{.AppPathInProject}}/{{.ModelLayerName}}"
     {{- end}}
 
     "github.com/gin-gonic/gin"

@@ -45,6 +45,15 @@ func genModule() error {
 		return fmt.Errorf("analysis module tpl error: %v", analysisErr)
 	}
 
+	// 如果配置了表名前缀，则从结构体名中去除前缀
+	if moduleGenCfg.TablePrefix != "" {
+		analysisRes.StructName = RemoveTablePrefixFromStructName(
+			analysisRes.StructName,
+			analysisRes.TableName,
+			moduleGenCfg.TablePrefix,
+		)
+	}
+
 	var modelLayerName, daoLayerName codegen.LayerName
 	for _, v := range analysisRes.TplAnalysisList {
 		if v.OriginLayerName == codegen.LayerNameModel {
@@ -97,9 +106,19 @@ func genModule() error {
 			})
 		}
 
+		// 如果配置了表名前缀，则从文件名中去除前缀
+		targetFilename := v.TargetFilename
+		if moduleGenCfg.TablePrefix != "" {
+			targetFilename = RemoveTablePrefixFromFilename(
+				v.TargetFilename,
+				analysisRes.TableName,
+				moduleGenCfg.TablePrefix,
+			)
+		}
+
 		genParamsList = append(genParamsList, codegen.GenParamsItem{
 			TargetDir:      v.TargetDir,
-			TargetFileName: v.TargetFilename,
+			TargetFileName: targetFilename,
 			Template:       v.Template,
 			ExtraParams: ModuleExtraParams{
 				AppInfo: AppInfo{
