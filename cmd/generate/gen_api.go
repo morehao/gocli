@@ -115,15 +115,16 @@ func genApi() error {
 
 	// 	注册路由
 	if isNewRouter {
-		routerCallContent := fmt.Sprintf("%sRouter(routerGroup)", structNameLowerCamel)
+		routerCallContent := fmt.Sprintf("%sRouter(v1Auth)", structNameLowerCamel)
 		routerEnterFilepath := filepath.Join(workDir, "/router/enter.go")
 		if err := gast.AddContentToFunc(routerEnterFilepath, "RegisterRouter", routerCallContent); err != nil {
 			return fmt.Errorf("new router appendContentToFunc error: %v", err)
 		}
 	} else {
-		routerCallContent := fmt.Sprintf(`routerGroup.%s("/%s", %sCtr.%s) // %s`, apiGenCfg.HttpMethod, functionNameLowerCamel, structNameLowerCamel, functionName, apiGenCfg.Description)
+		routerCallContent := fmt.Sprintf(`routerGroup.%s("/%s/%s", %sCtr.%s) // %s`, apiGenCfg.HttpMethod, structNameLowerCamel, functionNameLowerCamel, structNameLowerCamel, functionName, apiGenCfg.Description)
 		routerEnterFilepath := filepath.Join(workDir, fmt.Sprintf("/router/%s.go", gutils.TrimFileExtension(apiGenCfg.PackageName)))
-		if err := gast.AddContentToFuncWithLineNumber(routerEnterFilepath, fmt.Sprintf("%sRouter", structNameLowerCamel), routerCallContent, -2); err != nil {
+		// 使用 AddContentToFunc 添加到函数末尾，避免注释丢失
+		if err := gast.AddContentToFuncWithLineNumber(routerEnterFilepath, fmt.Sprintf("%sRouter", structNameLowerCamel), routerCallContent, -1); err != nil {
 			return fmt.Errorf("appendContentToFunc error: %v", err)
 		}
 	}
