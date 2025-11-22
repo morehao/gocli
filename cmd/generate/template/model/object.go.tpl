@@ -6,9 +6,11 @@ type {{.StructName}}BaseInfo struct {
     {{- continue}}
 {{- end}}
 {{- if eq .FieldType "time.Time"}}
-    {{.FieldName}} int64 `json:"{{.FieldLowerCaseName}}" form:"{{.FieldLowerCaseName}}"` // {{.Comment}}
+    // {{.FieldName}} {{.Comment}}
+    {{.FieldName}} int64 `json:"{{.FieldLowerCaseName}}" form:"{{.FieldLowerCaseName}}"`
 {{- else}}
-    {{.FieldName}} {{.FieldType}} `json:"{{.FieldLowerCaseName}}" form:"{{.FieldLowerCaseName}}"` // {{.Comment}}
+    // {{.FieldName}} {{.Comment}}
+    {{.FieldName}} {{.FieldType}} `json:"{{.FieldLowerCaseName}}" form:"{{.FieldLowerCaseName}}"`
 {{- end}}
 {{- end}}
 }

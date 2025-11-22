@@ -10,6 +10,6 @@ import (
 func {{.StructNameLowerCamel}}Router(routerGroup *gin.RouterGroup) {
 	{{.StructNameLowerCamel}}Ctr := ctr{{.PackageName}}.New{{.StructName}}Ctr()
 
-	routerGroup.{{.HttpMethod}}("/{{.StructNameLowerCamel}}/{{.FunctionNameLowerCamel}}", {{.StructNameLowerCamel}}Ctr.{{.FunctionName}}) // {{.Description}}
+	routerGroup.{{.HttpMethod}}("/{{.StructNameLowerCamel}}/{{.FunctionNameLowerCamel}}", {{.StructNameLowerCamel}}Ctr.{{.FunctionName}})
 }
 {{end}}
