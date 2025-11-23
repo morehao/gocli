@@ -71,7 +71,7 @@ func (d *{{.StructName}}Dao) BatchInsert(ctx context.Context, entityList {{.Mode
 }
 
 func (d *{{.StructName}}Dao) UpdateByID(ctx context.Context, id uint, entity *{{.ModelLayerName}}.{{.StructName}}Entity) error {
-	db := d.DB(ctx).Table(d.TableName())
+	db := d.DB(ctx).Model(&{{.ModelLayerName}}.{{.StructName}}Entity{}).Table(d.TableName())
 	if err := db.Where("id = ?", id).Updates(entity).Error; err != nil {
 		return code.GetError(gerror.DBUpdateErr).Wrapf(err, "[{{.StructName}}Dao] UpdateByID fail, id:%d entity:%s", id, gutil.ToJsonString(entity))
 	}
@@ -79,7 +79,7 @@ func (d *{{.StructName}}Dao) UpdateByID(ctx context.Context, id uint, entity *{{
 }
 
 func (d *{{.StructName}}Dao) UpdateMap(ctx context.Context, id uint, updateMap map[string]interface{}) error {
-	db := d.DB(ctx).Table(d.TableName())
+	db := d.DB(ctx).Model(&{{.ModelLayerName}}.{{.StructName}}Entity{}).Table(d.TableName())
 	if err := db.Where("id = ?", id).Updates(updateMap).Error; err != nil {
 		return code.GetError(gerror.DBUpdateErr).Wrapf(err, "[{{.StructName}}Dao] UpdateMap fail, id:%d, updateMap:%s", id, gutil.ToJsonString(updateMap))
 	}
@@ -87,7 +87,7 @@ func (d *{{.StructName}}Dao) UpdateMap(ctx context.Context, id uint, updateMap m
 }
 
 func (d *{{.StructName}}Dao) Delete(ctx context.Context, id, deletedBy uint) error {
-	db := d.DB(ctx).Table(d.TableName())
+	db := d.DB(ctx).Model(&{{.ModelLayerName}}.{{.StructName}}Entity{}).Table(d.TableName())
 	updatedField := map[string]interface{}{
 		"deleted_time": time.Now(),
 		"deleted_by":   deletedBy,
@@ -132,7 +132,7 @@ func (d *{{.StructName}}Dao) GetListByCond(ctx context.Context, cond *{{.StructN
 }
 
 func (d *{{.StructName}}Dao) GetPageListByCond(ctx context.Context, cond *{{.StructName}}Cond) ({{.ModelLayerName}}.{{.StructName}}EntityList, int64, error) {
-	db := d.DB(ctx).Table(d.TableName())
+	db := d.DB(ctx).Model(&{{.ModelLayerName}}.{{.StructName}}Entity{}).Table(d.TableName())
 
 	d.BuildCondition(db, cond)
 
@@ -151,7 +151,7 @@ func (d *{{.StructName}}Dao) GetPageListByCond(ctx context.Context, cond *{{.Str
 }
 
 func (d *{{.StructName}}Dao) CountByCond(ctx context.Context, cond *{{.StructName}}Cond) (int64, error) {
-	db := d.DB(ctx).Table(d.TableName())
+	db := d.DB(ctx).Model(&{{.ModelLayerName}}.{{.StructName}}Entity{}).Table(d.TableName())
 
 	d.BuildCondition(db, cond)
 	var count int64

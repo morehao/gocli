@@ -91,6 +91,7 @@ func genModel() error {
 				IsPrimaryKey:       field.ColumnKey == codegen.ColumnKeyPRI,
 				FieldName:          gutil.ReplaceIdToID(field.FieldName),
 				FieldLowerCaseName: gutil.SnakeToLowerCamel(field.FieldName),
+				JsonTagName:        SnakeToLowerCamelWithID(field.ColumnName),
 				FieldType:          field.FieldType,
 				ColumnName:         field.ColumnName,
 				ColumnType:         field.ColumnType,
@@ -148,6 +149,7 @@ type ModelField struct {
 	IsPrimaryKey       bool   // 是否是主键
 	FieldName          string // 字段名称
 	FieldLowerCaseName string // 字段名称小驼峰
+	JsonTagName        string // JSON 标签名称，特殊处理 _id 后缀为 ID
 	FieldType          string // 字段数据类型，如int、string
 	ColumnName         string // 列名
 	ColumnType         string // 列数据类型，如varchar(255)

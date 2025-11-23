@@ -126,7 +126,7 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Detail(ctx *gin.Context) {
 // @Produce application/json
 // @Param req query dto{{.PackageName}}.{{.StructName}}PageListReq true "{{.Description}}列表"
 // @Success 200 {object} gincontext.DtoRender{data=dto{{.PackageName}}.{{.StructName}}PageListResp} "{"code": 0,"data": "ok","msg": "success"}"
-// @Router /{{.AppName}}/v1/{{.StructNameLowerCamel}}/pageList [get]
+// @Router /{{.AppName}}/v1/{{.StructNameLowerCamel}}/pageList [post]
 func (ctr *{{.StructNameLowerCamel}}Ctr) PageList(ctx *gin.Context) {
 	var req dto{{.PackageName}}.{{.StructName}}PageListReq
 	if err := ctx.ShouldBindQuery(&req); err != nil {
