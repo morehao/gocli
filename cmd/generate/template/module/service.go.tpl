@@ -13,11 +13,11 @@ import (
     {{- else}}
     "{{.ModulePath}}/{{.AppPathInProject}}/{{.ModelLayerName}}"
     {{- end}}
-	"{{.ModulePath}}/{{.AppPathInProject}}/object/objcommon"
 	"{{.ModulePath}}/{{.AppPathInProject}}/object/obj{{.PackageName}}"
 	"{{.ModulePath}}/pkg/code"
 	"github.com/morehao/golib/gcontext/gincontext"
 	"github.com/morehao/golib/glog"
+	"github.com/morehao/golib/gobject"
 	"github.com/morehao/golib/gutil"
 )
 
@@ -120,7 +120,7 @@ func (svc *{{.StructNameLowerCamel}}Svc) Detail(ctx *gin.Context, req *dto{{.Pac
 		{{- end}}
 	{{- end}}
 		},
-		OperatorBaseInfo: objcommon.OperatorBaseInfo{
+		OperatorBaseInfo: gobject.OperatorBaseInfo{
 			CreatedAt: detailEntity.CreatedAt.Unix(),
 			UpdatedAt: detailEntity.UpdatedAt.Unix(),
 		},
@@ -155,7 +155,7 @@ func (svc *{{.StructNameLowerCamel}}Svc) PageList(ctx *gin.Context, req *dto{{.P
 			{{- end}}
 		{{- end}}
 			},
-			OperatorBaseInfo: objcommon.OperatorBaseInfo{
+			OperatorBaseInfo: gobject.OperatorBaseInfo{
 				UpdatedAt: v.UpdatedAt.Unix(),
 			},
 		})

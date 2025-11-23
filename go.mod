@@ -3,7 +3,7 @@ module github.com/morehao/gocli
 go 1.23.3
 
 require (
-	github.com/morehao/golib v1.2.20
+	github.com/morehao/golib v1.2.21
 	github.com/spf13/cobra v1.9.1
 	golang.org/x/mod v0.25.0
 	gorm.io/driver/mysql v1.6.0

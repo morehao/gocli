@@ -1,8 +1,8 @@
 package dto{{.PackageName}}
 
 import (
-	"{{.ModulePath}}/{{.AppPathInProject}}/object/objcommon"
 	"{{.ModulePath}}/{{.AppPathInProject}}/object/obj{{.PackageName}}"
+	"github.com/morehao/golib/gobject"
 )
 
 type {{.StructName}}CreateReq struct {
@@ -21,7 +21,7 @@ type {{.StructName}}DetailReq struct {
 }
 
 type {{.StructName}}PageListReq struct {
-	objcommon.PageQuery
+	gobject.PageQuery
 }
 
 type {{.StructName}}DeleteReq struct {
