@@ -8,7 +8,7 @@ import (
 
 	"github.com/morehao/golib/codegen"
 	"github.com/morehao/golib/gast"
-	"github.com/morehao/golib/gutils"
+	"github.com/morehao/golib/gutil"
 )
 
 func genApi() error {
@@ -39,10 +39,10 @@ func genApi() error {
 		return fmt.Errorf("analysis api tpl error: %v", analysisErr)
 	}
 
-	structName := gutils.SnakeToPascal(gutils.TrimFileExtension(apiGenCfg.TargetFilename))
-	structNameLowerCamel := gutils.FirstLetterToLower(structName)
-	functionName := gutils.FirstLetterToUpper(apiGenCfg.FunctionName)
-	functionNameLowerCamel := gutils.FirstLetterToLower(apiGenCfg.FunctionName)
+	structName := gutil.SnakeToPascal(gutil.TrimFileExtension(apiGenCfg.TargetFilename))
+	structNameLowerCamel := gutil.FirstLetterToLower(structName)
+	functionName := gutil.FirstLetterToUpper(apiGenCfg.FunctionName)
+	functionNameLowerCamel := gutil.FirstLetterToLower(apiGenCfg.FunctionName)
 	var genParamsList []codegen.GenParamsItem
 	var isNewRouter, isNewController bool
 	var controllerFilepath, serviceFilepath string
@@ -122,7 +122,7 @@ func genApi() error {
 		}
 	} else {
 		routerCallContent := fmt.Sprintf(`routerGroup.%s("/%s/%s", %sCtr.%s) // %s`, apiGenCfg.HttpMethod, structNameLowerCamel, functionNameLowerCamel, structNameLowerCamel, functionName, apiGenCfg.Description)
-		routerEnterFilepath := filepath.Join(workDir, fmt.Sprintf("/router/%s.go", gutils.TrimFileExtension(apiGenCfg.PackageName)))
+		routerEnterFilepath := filepath.Join(workDir, fmt.Sprintf("/router/%s.go", gutil.TrimFileExtension(apiGenCfg.PackageName)))
 		// 使用 AddContentToFunc 添加到函数末尾，避免注释丢失
 		if err := gast.AddContentToFuncWithLineNumber(routerEnterFilepath, fmt.Sprintf("%sRouter", structNameLowerCamel), routerCallContent, -1); err != nil {
 			return fmt.Errorf("appendContentToFunc error: %v", err)

@@ -6,7 +6,7 @@ import (
 	"text/template"
 
 	"github.com/morehao/golib/codegen"
-	"github.com/morehao/golib/gutils"
+	"github.com/morehao/golib/gutil"
 )
 
 const (
@@ -89,8 +89,8 @@ func genModel() error {
 			comment := field.Comment
 			modelFields = append(modelFields, ModelField{
 				IsPrimaryKey:       field.ColumnKey == codegen.ColumnKeyPRI,
-				FieldName:          gutils.ReplaceIdToID(field.FieldName),
-				FieldLowerCaseName: gutils.SnakeToLowerCamel(field.FieldName),
+				FieldName:          gutil.ReplaceIdToID(field.FieldName),
+				FieldLowerCaseName: gutil.SnakeToLowerCamel(field.FieldName),
 				FieldType:          field.FieldType,
 				ColumnName:         field.ColumnName,
 				ColumnType:         field.ColumnType,

@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/morehao/golib/gutils"
+	"github.com/morehao/golib/gutil"
 )
 
 // 测试模板文件加载
@@ -41,7 +41,7 @@ func TestConfigLoading(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to execute command with config: %v", err)
 	}
-	t.Log(gutils.ToJsonString(cfg))
+	t.Log(gutil.ToJsonString(cfg))
 }
 
 // TestGenerateModelCode 测试生成 model 层代码
