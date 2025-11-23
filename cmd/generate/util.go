@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/morehao/golib/gutil"
 	"github.com/spf13/cobra"
 )
 
@@ -267,6 +268,35 @@ func getModulePath(projectRootPath string) (string, error) {
 	}
 
 	return "", fmt.Errorf("module declaration not found in go.mod")
+}
+
+// SnakeToLowerCamelWithID 蛇形转小驼峰，特殊处理 _id 后缀转换为 ID
+// 例如：tenant_id -> tenantID, user_name -> userName, id -> id
+func SnakeToLowerCamelWithID(s string) string {
+	if s == "" {
+		return ""
+	}
+	
+	// 如果整个字符串就是 "id"，直接返回
+	if s == "id" {
+		return "id"
+	}
+	
+	// 检查是否以 _id 结尾
+	if strings.HasSuffix(s, "_id") {
+		// 获取 _id 之前的部分
+		prefix := strings.TrimSuffix(s, "_id")
+		if prefix == "" {
+			// 如果只有 _id，返回 "id"
+			return "id"
+		}
+		// 将前缀部分转换为小驼峰，然后加上 ID
+		prefixCamel := gutil.SnakeToLowerCamel(prefix)
+		return prefixCamel + "ID"
+	}
+	
+	// 其他情况使用标准的小驼峰转换
+	return gutil.SnakeToLowerCamel(s)
 }
 
 // ExecuteCommand 执行命令并捕获输出

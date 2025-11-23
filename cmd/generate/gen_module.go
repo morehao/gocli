@@ -96,6 +96,7 @@ func genModule() error {
 				IsPrimaryKey:       field.ColumnKey == codegen.ColumnKeyPRI,
 				FieldName:          gutil.ReplaceIdToID(field.FieldName),
 				FieldLowerCaseName: gutil.SnakeToLowerCamel(field.FieldName),
+				JsonTagName:        SnakeToLowerCamelWithID(field.ColumnName),
 				FieldType:          field.FieldType,
 				ColumnName:         field.ColumnName,
 				ColumnType:         field.ColumnType,
@@ -149,7 +150,7 @@ func genModule() error {
 	}
 
 	// 注册路由
-	routerContent := fmt.Sprintf("%sRouter(v1Auth)", gutil.FirstLetterToLower(analysisRes.StructName))
+	routerContent := fmt.Sprintf("%sRouter(v1AuthGroup)", gutil.FirstLetterToLower(analysisRes.StructName))
 	routerEnterFilepath := filepath.Join(workDir, "/router/enter.go")
 	if err := gast.AddContentToFunc(routerEnterFilepath, "RegisterRouter", routerContent); err != nil {
 		return fmt.Errorf("router appendContentToFunc error: %v", err)
@@ -179,6 +180,7 @@ func genModule() error {
 				IsPrimaryKey:       field.ColumnKey == codegen.ColumnKeyPRI,
 				FieldName:          gutil.ReplaceIdToID(field.FieldName),
 				FieldLowerCaseName: gutil.SnakeToLowerCamel(field.FieldName),
+				JsonTagName:        SnakeToLowerCamelWithID(field.ColumnName),
 				FieldType:          field.FieldType,
 				ColumnName:         field.ColumnName,
 				ColumnType:         field.ColumnType,
