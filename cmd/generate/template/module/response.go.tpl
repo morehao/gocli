@@ -1,8 +1,8 @@
 package dto{{.PackageName}}
 
 import (
-	"{{.ModulePath}}/{{.AppPathInProject}}/object/objcommon"
 	"{{.ModulePath}}/{{.AppPathInProject}}/object/obj{{.PackageName}}"
+	"github.com/morehao/golib/gobject"
 )
 
 type {{.StructName}}CreateResp struct {
@@ -14,7 +14,7 @@ type {{.StructName}}DetailResp struct {
 	// ID 数据自增 ID
 	ID uint `json:"id" validate:"required"`
 	obj{{.PackageName}}.{{.StructName}}BaseInfo
-	objcommon.OperatorBaseInfo
+	gobject.OperatorBaseInfo
 
 }
 
@@ -22,7 +22,7 @@ type {{.StructName}}PageListItem struct {
 	// ID 数据自增 ID
 	ID        uint `json:"id" validate:"required"`
 	obj{{.PackageName}}.{{.StructName}}BaseInfo
-	objcommon.OperatorBaseInfo
+	gobject.OperatorBaseInfo
 }
 
 type {{.StructName}}PageListResp struct {
