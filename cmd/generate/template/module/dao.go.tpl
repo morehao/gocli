@@ -17,7 +17,7 @@ import (
     {{- end}}
 	"{{.ModulePath}}/pkg/code"
 	"github.com/morehao/golib/gerror"
-    "github.com/morehao/golib/gutils"
+    "github.com/morehao/golib/gutil"
     "gorm.io/gorm"
 )
 
@@ -53,7 +53,7 @@ func (d *{{.StructName}}Dao) WithTx(db *gorm.DB) *{{.StructName}}Dao {
 func (d *{{.StructName}}Dao) Insert(ctx context.Context, entity *{{.ModelLayerName}}.{{.StructName}}Entity) error {
 	db := d.DB(ctx).Table(d.TableName())
 	if err := db.Create(entity).Error; err != nil {
-		return code.GetError(gerror.DBInsertErr).Wrapf(err, "[{{.StructName}}Dao] Insert fail, entity:%s", gutils.ToJsonString(entity))
+		return code.GetError(gerror.DBInsertErr).Wrapf(err, "[{{.StructName}}Dao] Insert fail, entity:%s", gutil.ToJsonString(entity))
 	}
 	return nil
 }
@@ -65,7 +65,7 @@ func (d *{{.StructName}}Dao) BatchInsert(ctx context.Context, entityList {{.Mode
 
 	db := d.DB(ctx).Table(d.TableName())
 	if err := db.Create(entityList).Error; err != nil {
-		return code.GetError(gerror.DBInsertErr).Wrapf(err, "[{{.StructName}}Dao] BatchInsert fail, entityList:%s", gutils.ToJsonString(entityList))
+		return code.GetError(gerror.DBInsertErr).Wrapf(err, "[{{.StructName}}Dao] BatchInsert fail, entityList:%s", gutil.ToJsonString(entityList))
 	}
 	return nil
 }
@@ -73,7 +73,7 @@ func (d *{{.StructName}}Dao) BatchInsert(ctx context.Context, entityList {{.Mode
 func (d *{{.StructName}}Dao) UpdateByID(ctx context.Context, id uint, entity *{{.ModelLayerName}}.{{.StructName}}Entity) error {
 	db := d.DB(ctx).Table(d.TableName())
 	if err := db.Where("id = ?", id).Updates(entity).Error; err != nil {
-		return code.GetError(gerror.DBUpdateErr).Wrapf(err, "[{{.StructName}}Dao] UpdateByID fail, id:%d entity:%s", id, gutils.ToJsonString(entity))
+		return code.GetError(gerror.DBUpdateErr).Wrapf(err, "[{{.StructName}}Dao] UpdateByID fail, id:%d entity:%s", id, gutil.ToJsonString(entity))
 	}
 	return nil
 }
@@ -81,7 +81,7 @@ func (d *{{.StructName}}Dao) UpdateByID(ctx context.Context, id uint, entity *{{
 func (d *{{.StructName}}Dao) UpdateMap(ctx context.Context, id uint, updateMap map[string]interface{}) error {
 	db := d.DB(ctx).Table(d.TableName())
 	if err := db.Where("id = ?", id).Updates(updateMap).Error; err != nil {
-		return code.GetError(gerror.DBUpdateErr).Wrapf(err, "[{{.StructName}}Dao] UpdateMap fail, id:%d, updateMap:%s", id, gutils.ToJsonString(updateMap))
+		return code.GetError(gerror.DBUpdateErr).Wrapf(err, "[{{.StructName}}Dao] UpdateMap fail, id:%d, updateMap:%s", id, gutil.ToJsonString(updateMap))
 	}
 	return nil
 }
@@ -114,7 +114,7 @@ func (d *{{.StructName}}Dao) GetByCond(ctx context.Context, cond *{{.StructName}
 	d.BuildCondition(db, cond)
 
 	if err := db.Find(&entity).Error; err != nil {
-		return nil, code.GetError(gerror.DBFindErr).Wrapf(err, "[{{.StructName}}Dao] GetById fail, cond:%s", gutils.ToJsonString(cond))
+		return nil, code.GetError(gerror.DBFindErr).Wrapf(err, "[{{.StructName}}Dao] GetById fail, cond:%s", gutil.ToJsonString(cond))
 	}
 	return &entity, nil
 }
@@ -126,7 +126,7 @@ func (d *{{.StructName}}Dao) GetListByCond(ctx context.Context, cond *{{.StructN
 	d.BuildCondition(db, cond)
 
 	if err := db.Find(&entityList).Error; err != nil {
-		return nil, code.GetError(gerror.DBFindErr).Wrapf(err, "[{{.StructName}}Dao] GetListByCond fail, cond:%s", gutils.ToJsonString(cond))
+		return nil, code.GetError(gerror.DBFindErr).Wrapf(err, "[{{.StructName}}Dao] GetListByCond fail, cond:%s", gutil.ToJsonString(cond))
 	}
 	return entityList, nil
 }
@@ -138,14 +138,14 @@ func (d *{{.StructName}}Dao) GetPageListByCond(ctx context.Context, cond *{{.Str
 
 	var count int64
 	if err := db.Count(&count).Error; err != nil {
-		return nil, 0, code.GetError(gerror.DBFindErr).Wrapf(err, "[{{.StructName}}Dao] GetPageListByCond count fail, cond:%s", gutils.ToJsonString(cond))
+		return nil, 0, code.GetError(gerror.DBFindErr).Wrapf(err, "[{{.StructName}}Dao] GetPageListByCond count fail, cond:%s", gutil.ToJsonString(cond))
 	}
 	if cond.PageSize > 0 && cond.Page > 0 {
 		db.Offset((cond.Page - 1) * cond.PageSize).Limit(cond.PageSize)
 	}
 	var entityList {{.ModelLayerName}}.{{.StructName}}EntityList
 	if err := db.Find(&entityList).Error; err != nil {
-		return nil, 0, code.GetError(gerror.DBFindErr).Wrapf(err, "[{{.StructName}}Dao] GetPageListByCond find fail, cond:%s", gutils.ToJsonString(cond))
+		return nil, 0, code.GetError(gerror.DBFindErr).Wrapf(err, "[{{.StructName}}Dao] GetPageListByCond find fail, cond:%s", gutil.ToJsonString(cond))
 	}
 	return entityList, count, nil
 }
@@ -156,7 +156,7 @@ func (d *{{.StructName}}Dao) CountByCond(ctx context.Context, cond *{{.StructNam
 	d.BuildCondition(db, cond)
 	var count int64
 	if err := db.Count(&count).Error; err != nil {
-		return 0, code.GetError(gerror.DBFindErr).Wrapf(err, "[{{.StructName}}Dao] CountByCond fail, cond:%s", gutils.ToJsonString(cond))
+		return 0, code.GetError(gerror.DBFindErr).Wrapf(err, "[{{.StructName}}Dao] CountByCond fail, cond:%s", gutil.ToJsonString(cond))
 	}
 	return count, nil
 }

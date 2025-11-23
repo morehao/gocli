@@ -8,7 +8,7 @@ import (
 
 	"github.com/morehao/golib/codegen"
 	"github.com/morehao/golib/gast"
-	"github.com/morehao/golib/gutils"
+	"github.com/morehao/golib/gutil"
 )
 
 func genModule() error {
@@ -94,8 +94,8 @@ func genModule() error {
 			comment := field.Comment
 			modelFields = append(modelFields, ModelField{
 				IsPrimaryKey:       field.ColumnKey == codegen.ColumnKeyPRI,
-				FieldName:          gutils.ReplaceIdToID(field.FieldName),
-				FieldLowerCaseName: gutils.SnakeToLowerCamel(field.FieldName),
+				FieldName:          gutil.ReplaceIdToID(field.FieldName),
+				FieldLowerCaseName: gutil.SnakeToLowerCamel(field.FieldName),
 				FieldType:          field.FieldType,
 				ColumnName:         field.ColumnName,
 				ColumnType:         field.ColumnType,
@@ -134,7 +134,7 @@ func genModule() error {
 				DaoLayerName:         string(daoLayerName),
 				Description:          moduleGenCfg.Description,
 				StructName:           analysisRes.StructName,
-				StructNameLowerCamel: gutils.FirstLetterToLower(analysisRes.StructName),
+				StructNameLowerCamel: gutil.FirstLetterToLower(analysisRes.StructName),
 				Template:             v.Template,
 				ModelFields:          modelFields,
 			},
@@ -149,7 +149,7 @@ func genModule() error {
 	}
 
 	// 注册路由
-	routerContent := fmt.Sprintf("%sRouter(v1Auth)", gutils.FirstLetterToLower(analysisRes.StructName))
+	routerContent := fmt.Sprintf("%sRouter(v1Auth)", gutil.FirstLetterToLower(analysisRes.StructName))
 	routerEnterFilepath := filepath.Join(workDir, "/router/enter.go")
 	if err := gast.AddContentToFunc(routerEnterFilepath, "RegisterRouter", routerContent); err != nil {
 		return fmt.Errorf("router appendContentToFunc error: %v", err)
@@ -177,8 +177,8 @@ func genModule() error {
 			comment := field.Comment
 			modelFields = append(modelFields, ModelField{
 				IsPrimaryKey:       field.ColumnKey == codegen.ColumnKeyPRI,
-				FieldName:          gutils.ReplaceIdToID(field.FieldName),
-				FieldLowerCaseName: gutils.SnakeToLowerCamel(field.FieldName),
+				FieldName:          gutil.ReplaceIdToID(field.FieldName),
+				FieldLowerCaseName: gutil.SnakeToLowerCamel(field.FieldName),
 				FieldType:          field.FieldType,
 				ColumnName:         field.ColumnName,
 				ColumnType:         field.ColumnType,
@@ -203,7 +203,7 @@ func genModule() error {
 			DaoLayerName:         string(daoLayerName),
 			Description:          moduleGenCfg.Description,
 			StructName:           analysisRes.StructName,
-			StructNameLowerCamel: gutils.FirstLetterToLower(analysisRes.StructName),
+			StructNameLowerCamel: gutil.FirstLetterToLower(analysisRes.StructName),
 			Template:             codeLayerItem.Template,
 			ModelFields:          modelFields,
 		}
@@ -233,7 +233,7 @@ func genModule() error {
 		}
 
 		// 注册错误码到项目根目录的pkg/code/enter.go
-		codeContent := fmt.Sprintf("registerError(%sErrorMsgMap)", gutils.FirstLetterToLower(analysisRes.StructName))
+		codeContent := fmt.Sprintf("registerError(%sErrorMsgMap)", gutil.FirstLetterToLower(analysisRes.StructName))
 		codeEnterFilepath := filepath.Join(cfg.appInfo.ProjectRootPath, "pkg/code/enter.go")
 		if err := gast.AddContentToFunc(codeEnterFilepath, "init", codeContent); err != nil {
 			return fmt.Errorf("code appendContentToFunc error: %v", err)
