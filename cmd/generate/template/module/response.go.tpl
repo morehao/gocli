@@ -2,7 +2,7 @@ package dto{{.PackageName}}
 
 import (
 	"{{.ModulePath}}/{{.AppPathInProject}}/object/obj{{.PackageName}}"
-	"github.com/morehao/golib/gobject"
+	"github.com/morehao/golib/biz/gobject"
 )
 
 type {{.StructName}}CreateResp struct {

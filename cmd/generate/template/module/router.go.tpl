@@ -1,9 +1,8 @@
 package router
 
 import (
-	"{{.ModulePath}}/{{.AppPathInProject}}/internal/controller/ctr{{.PackageName}}"
-
 	"github.com/gin-gonic/gin"
+	"{{.ModulePath}}/{{.AppPathInProject}}/internal/controller/ctr{{.PackageName}}"
 )
 
 // {{.StructNameLowerCamel}}Router 初始化{{.Description}}路由信息

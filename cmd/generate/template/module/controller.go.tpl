@@ -4,7 +4,7 @@ import (
     "github.com/gin-gonic/gin"
     "{{.ModulePath}}/{{.AppPathInProject}}/internal/dto/dto{{.PackageName}}"
     "{{.ModulePath}}/{{.AppPathInProject}}/internal/service/svc{{.PackageName}}"
-    "github.com/morehao/golib/gcontext/gincontext"
+    "github.com/morehao/golib/biz/gcontext/gincontext"
 )
 
 type {{.StructName}}Ctr interface {
