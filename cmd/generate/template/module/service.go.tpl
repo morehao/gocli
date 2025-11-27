@@ -15,9 +15,9 @@ import (
     {{- end}}
 	"{{.ModulePath}}/{{.AppPathInProject}}/object/obj{{.PackageName}}"
 	"{{.ModulePath}}/pkg/code"
-	"github.com/morehao/golib/gcontext/gincontext"
+	"github.com/morehao/golib/biz/gcontext/gincontext"
+	"github.com/morehao/golib/biz/gobject"
 	"github.com/morehao/golib/glog"
-	"github.com/morehao/golib/gobject"
 	"github.com/morehao/golib/gutil"
 )
 
