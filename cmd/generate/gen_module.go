@@ -133,6 +133,8 @@ func genModule() error {
 				TableName:            analysisRes.TableName,
 				ModelLayerName:       string(modelLayerName),
 				DaoLayerName:         string(daoLayerName),
+				DaoPackageName:       fmt.Sprintf("%sdao", appInfo.AppName),
+				DBName:               fmt.Sprintf("%sDB", gutil.FirstLetterToUpper(appInfo.AppName)),
 				Description:          moduleGenCfg.Description,
 				StructName:           analysisRes.StructName,
 				StructNameLowerCamel: gutil.FirstLetterToLower(analysisRes.StructName),
@@ -203,6 +205,8 @@ func genModule() error {
 			TableName:            analysisRes.TableName,
 			ModelLayerName:       string(modelLayerName),
 			DaoLayerName:         string(daoLayerName),
+			DaoPackageName:       fmt.Sprintf("%sdao", appInfo.AppName),
+			DBName:               fmt.Sprintf("%sDB", gutil.FirstLetterToUpper(appInfo.AppName)),
 			Description:          moduleGenCfg.Description,
 			StructName:           analysisRes.StructName,
 			StructNameLowerCamel: gutil.FirstLetterToLower(analysisRes.StructName),
@@ -250,10 +254,12 @@ type ModuleExtraParams struct {
 	PackageName          string
 	ModelLayerName       string
 	DaoLayerName         string
+	DaoPackageName       string
+	DBName               string
 	TableName            string
 	Description          string
 	StructName           string
-	StructNameLowerCamel string // 结构体小写驼峰名
+	StructNameLowerCamel string
 	Template             *template.Template
 	ModelFields          []ModelField
 }

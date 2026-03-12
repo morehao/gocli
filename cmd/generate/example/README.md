@@ -113,7 +113,8 @@ gocli generate --mode api --app demoapp
 
 ## 生成的文件位置
 
-- **model/dao/object**: 在 `apps/demoapp/` 下生成（可通过 layer_parent_dir_map 配置）
+- **model/object**: 在 `apps/demoapp/` 下生成（可通过 layer_parent_dir_map 配置）
+- **dao**: 在 `apps/demoapp/{appName}dao/` 下生成（如 `demoappdao`），使用 `genericdao.GenericDao` 封装
 - **controller/service/dto**: 在 `apps/demoapp/internal/` 下生成（可通过 layer_parent_dir_map 配置）
 - **router**: 在 `apps/demoapp/router/` 下生成
 - **code**: 在项目根目录的 `pkg/code/` 下生成
@@ -132,11 +133,11 @@ layer_parent_dir_map:
 # 自定义层级名称（例如：model -> mysqlmodel）
 layer_name_map:
   model: mysqlmodel
-  dao: mysqldao
 
 # 自定义文件名前缀（例如：model 文件前缀为 mysql_）
 layer_prefix_map:
   model: mysql_
-  dao: mysql_
 ```
+
+**注意**：dao 层会自动生成到 `{appName}dao` 目录下（如 `demoappdao`），包名也为 `{appName}dao`，无需额外配置。
 

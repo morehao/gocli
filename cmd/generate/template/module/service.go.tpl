@@ -2,11 +2,7 @@ package svc{{.PackageName}}
 
 import (
 	"github.com/gin-gonic/gin"
-    {{- if isDefaultDaoLayer .DaoLayerName}}
-    "{{.ModulePath}}/{{.AppPathInProject}}/dao/dao{{.PackageName}}"
-    {{- else}}
-    "{{.ModulePath}}/{{.AppPathInProject}}/{{.DaoLayerName}}/dao{{.PackageName}}"
-    {{- end}}
+	"{{.ModulePath}}/{{.AppPathInProject}}/{{.DaoPackageName}}"
 	"{{.ModulePath}}/{{.AppPathInProject}}/internal/dto/dto{{.PackageName}}"
     {{- if isDefaultModelLayer .ModelLayerName}}
     "{{.ModulePath}}/{{.AppPathInProject}}/model"
@@ -53,8 +49,8 @@ func (svc *{{.StructNameLowerCamel}}Svc) Create(ctx *gin.Context, req *dto{{.Pac
 {{- end}}
 	}
 
-	if err := dao{{.PackageName}}.New{{.StructName}}Dao().Insert(ctx, insertEntity); err != nil {
-		glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}Create] dao{{.StructName}} Create fail, err:%v, req:%s", err, gutil.ToJsonString(req))
+	if err := {{.DaoPackageName}}.New{{.StructName}}Dao().Insert(ctx, insertEntity); err != nil {
+		glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}Create] {{.DaoPackageName}} Create fail, err:%v, req:%s", err, gutil.ToJsonString(req))
 		return nil, code.GetError(code.{{.StructName}}CreateError)
 	}
 	return &dto{{.PackageName}}.{{.StructName}}CreateResp{
@@ -66,8 +62,8 @@ func (svc *{{.StructNameLowerCamel}}Svc) Create(ctx *gin.Context, req *dto{{.Pac
 func (svc *{{.StructNameLowerCamel}}Svc) Delete(ctx *gin.Context, req *dto{{.PackageName}}.{{.StructName}}DeleteReq) error {
 	userID := gincontext.GetUserID(ctx)
 
-	if err := dao{{.PackageName}}.New{{.StructName}}Dao().Delete(ctx, req.ID, userID); err != nil {
-		glog.Errorf(ctx, "[svc{{.PackageName}}.Delete] dao{{.StructName}} Delete fail, err:%v, req:%s", err, gutil.ToJsonString(req))
+	if err := {{.DaoPackageName}}.New{{.StructName}}Dao().Delete(ctx, req.ID, userID); err != nil {
+		glog.Errorf(ctx, "[svc{{.PackageName}}.Delete] {{.DaoPackageName}} Delete fail, err:%v, req:%s", err, gutil.ToJsonString(req))
 		return code.GetError(code.{{.StructName}}DeleteError)
 	}
 	return nil
@@ -88,8 +84,8 @@ func (svc *{{.StructNameLowerCamel}}Svc) Update(ctx *gin.Context, req *dto{{.Pac
     {{- end}}
     {{- end}}
     }
-    if err := dao{{.PackageName}}.New{{.StructName}}Dao().UpdateByID(ctx, req.ID, updateEntity); err != nil {
-        glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}Update] dao{{.StructName}} UpdateByID fail, err:%v, req:%s", err, gutil.ToJsonString(req))
+    if err := {{.DaoPackageName}}.New{{.StructName}}Dao().UpdateByID(ctx, req.ID, updateEntity); err != nil {
+        glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}Update] {{.DaoPackageName}} UpdateByID fail, err:%v, req:%s", err, gutil.ToJsonString(req))
         return code.GetError(code.{{.StructName}}UpdateError)
     }
     return nil
@@ -97,9 +93,9 @@ func (svc *{{.StructNameLowerCamel}}Svc) Update(ctx *gin.Context, req *dto{{.Pac
 
 // Detail 根据id获取{{.Description}}
 func (svc *{{.StructNameLowerCamel}}Svc) Detail(ctx *gin.Context, req *dto{{.PackageName}}.{{.StructName}}DetailReq) (*dto{{.PackageName}}.{{.StructName}}DetailResp, error) {
-	detailEntity, err := dao{{.PackageName}}.New{{.StructName}}Dao().GetById(ctx, req.ID)
+	detailEntity, err := {{.DaoPackageName}}.New{{.StructName}}Dao().GetById(ctx, req.ID)
 	if err != nil {
-		glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}Detail] dao{{.StructName}} GetById fail, err:%v, req:%s", err, gutil.ToJsonString(req))
+		glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}Detail] {{.DaoPackageName}} GetById fail, err:%v, req:%s", err, gutil.ToJsonString(req))
 		return nil, code.GetError(code.{{.StructName}}GetDetailError)
 	}
     // 判断是否存在
@@ -130,13 +126,13 @@ func (svc *{{.StructNameLowerCamel}}Svc) Detail(ctx *gin.Context, req *dto{{.Pac
 
 // PageList 分页获取{{.Description}}列表
 func (svc *{{.StructNameLowerCamel}}Svc) PageList(ctx *gin.Context, req *dto{{.PackageName}}.{{.StructName}}PageListReq) (*dto{{.PackageName}}.{{.StructName}}PageListResp, error) {
-	cond := &dao{{.PackageName}}.{{.StructName}}Cond{
+	cond := &{{.DaoPackageName}}.{{.StructName}}Cond{
 		Page:     req.Page,
 		PageSize: req.PageSize,
 	}
-	dataList, total, err := dao{{.PackageName}}.New{{.StructName}}Dao().GetPageListByCond(ctx, cond)
+	dataList, total, err := {{.DaoPackageName}}.New{{.StructName}}Dao().GetPageListByCond(ctx, cond)
 	if err != nil {
-		glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}PageList] dao{{.StructName}} GetPageListByCond fail, err:%v, req:%s", err, gutil.ToJsonString(req))
+		glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}PageList] {{.DaoPackageName}} GetPageListByCond fail, err:%v, req:%s", err, gutil.ToJsonString(req))
 		return nil, code.GetError(code.{{.StructName}}GetPageListError)
 	}
 	list := make([]dto{{.PackageName}}.{{.StructName}}PageListItem, 0, len(dataList))

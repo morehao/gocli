@@ -128,6 +128,8 @@ func genModel() error {
 				TableName:      analysisRes.TableName,
 				ModelLayerName: string(modelLayerName),
 				DaoLayerName:   string(daoLayerName),
+				DaoPackageName: fmt.Sprintf("%sdao", cfg.appInfo.AppName),
+				DBName:         fmt.Sprintf("%sDB", gutil.FirstLetterToUpper(cfg.appInfo.AppName)),
 				Description:    modelGenCfg.Description,
 				StructName:     analysisRes.StructName,
 				Template:       v.Template,
@@ -164,6 +166,8 @@ type ModelExtraParams struct {
 	PackageName    string
 	ModelLayerName string
 	DaoLayerName   string
+	DaoPackageName string
+	DBName         string
 	TableName      string
 	Description    string
 	StructName     string
