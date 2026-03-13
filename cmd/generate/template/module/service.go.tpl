@@ -1,6 +1,9 @@
 package svc{{.PackageName}}
 
 import (
+	{{- if hasTimeField .ModelFields}}
+	"time"
+	{{- end}}
 	"github.com/gin-gonic/gin"
 	"{{.ModulePath}}/{{.AppPathInProject}}/{{.DaoPackageName}}"
 	"{{.ModulePath}}/{{.AppPathInProject}}/internal/dto/dto{{.PackageName}}"
@@ -12,6 +15,7 @@ import (
 	"{{.ModulePath}}/{{.AppPathInProject}}/object/obj{{.PackageName}}"
 	"{{.ModulePath}}/pkg/code"
 	"github.com/morehao/golib/biz/gcontext/gincontext"
+	"github.com/morehao/golib/biz/genericdao"
 	"github.com/morehao/golib/biz/gobject"
 	"github.com/morehao/golib/glog"
 	"github.com/morehao/golib/gutil"
@@ -126,9 +130,11 @@ func (svc *{{.StructNameLowerCamel}}Svc) Detail(ctx *gin.Context, req *dto{{.Pac
 
 // PageList 分页获取{{.Description}}列表
 func (svc *{{.StructNameLowerCamel}}Svc) PageList(ctx *gin.Context, req *dto{{.PackageName}}.{{.StructName}}PageListReq) (*dto{{.PackageName}}.{{.StructName}}PageListResp, error) {
-	cond := &{{.DaoPackageName}}.{{.StructName}}Cond{
-		Page:     req.Page,
-		PageSize: req.PageSize,
+	cond := &demodao.UserLoginLogCond{
+		BaseCond: &genericdao.BaseCond{
+			Page:     req.Page,
+			PageSize: req.PageSize,
+		},
 	}
 	dataList, total, err := {{.DaoPackageName}}.New{{.StructName}}Dao().GetPageListByCond(ctx, cond)
 	if err != nil {

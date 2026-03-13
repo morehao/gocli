@@ -1,6 +1,10 @@
 package {{.ModelLayerName}}
 
 import (
+	{{- if hasTimeField .ModelFields}}
+	"time"
+	{{- end}}
+	
 	"gorm.io/gorm"
 )
 

@@ -19,6 +19,7 @@ const (
 	TplFuncIsSysField          = "isSysField"
 	TplFuncIsDefaultModelLayer = "isDefaultModelLayer"
 	TplFuncIsDefaultDaoLayer   = "isDefaultDaoLayer"
+	TplFuncHasTimeField        = "hasTimeField"
 )
 
 func IsBuiltInField(name string) bool {
@@ -54,18 +55,28 @@ func IsDefaultDaoLayer(name string) bool {
 	return name == "dao"
 }
 
+func HasTimeField(fields []ModelField) bool {
+	for _, field := range fields {
+		if field.FieldType == "time.Time" {
+			return true
+		}
+	}
+	return false
+}
+
 // RemoveTablePrefixFromStructName 从结构体名中去除表名前缀
 // 例如：表名 iam_users，前缀 iam_，结构体名 IamUsers -> Users
 // 参数：
 //   - structName: 原始结构体名（如 IamUsers）
 //   - tableName: 原始表名（如 iam_users）
 //   - prefix: 要去除的前缀（如 iam_）
+//
 // 返回：去除前缀后的结构体名（如 Users）
 func RemoveTablePrefixFromStructName(structName, tableName, prefix string) string {
 	if prefix == "" {
 		return structName
 	}
-	
+
 	// 如果表名以指定前缀开头，则从结构体名中去除对应的前缀部分
 	if strings.HasPrefix(tableName, prefix) {
 		// 将前缀转换为对应的结构体名格式（去除下划线，每个单词首字母大写）
@@ -74,7 +85,7 @@ func RemoveTablePrefixFromStructName(structName, tableName, prefix string) strin
 		if prefixWithoutUnderscore == "" {
 			return structName
 		}
-		
+
 		// 将前缀转换为 PascalCase
 		prefixParts := strings.Split(prefixWithoutUnderscore, "_")
 		var prefixStructName string
@@ -86,7 +97,7 @@ func RemoveTablePrefixFromStructName(structName, tableName, prefix string) strin
 				}
 			}
 		}
-		
+
 		// 如果结构体名以此前缀开头，则去除
 		if strings.HasPrefix(structName, prefixStructName) {
 			remaining := strings.TrimPrefix(structName, prefixStructName)
@@ -98,7 +109,7 @@ func RemoveTablePrefixFromStructName(structName, tableName, prefix string) strin
 			return structName
 		}
 	}
-	
+
 	return structName
 }
 
@@ -108,27 +119,28 @@ func RemoveTablePrefixFromStructName(structName, tableName, prefix string) strin
 //   - filename: 原始文件名（如 iam_user.go）
 //   - tableName: 原始表名（如 iam_users）
 //   - prefix: 要去除的前缀（如 iam_）
+//
 // 返回：去除前缀后的文件名（如 user.go）
 func RemoveTablePrefixFromFilename(filename, tableName, prefix string) string {
 	if prefix == "" {
 		return filename
 	}
-	
+
 	// 如果表名以指定前缀开头，则从文件名中去除对应的前缀部分
 	if strings.HasPrefix(tableName, prefix) {
 		// 分离文件名和扩展名
 		ext := filepath.Ext(filename)
 		nameWithoutExt := strings.TrimSuffix(filename, ext)
-		
+
 		// 将前缀转换为文件名格式（去除下划线）
 		prefixWithoutUnderscore := strings.TrimSuffix(prefix, "_")
 		if prefixWithoutUnderscore == "" {
 			return filename
 		}
-		
+
 		// 构建前缀在文件名中的形式（snake_case）
 		prefixInFilename := prefixWithoutUnderscore + "_"
-		
+
 		// 如果文件名以此前缀开头，则去除
 		if strings.HasPrefix(nameWithoutExt, prefixInFilename) {
 			remaining := strings.TrimPrefix(nameWithoutExt, prefixInFilename)
@@ -137,7 +149,7 @@ func RemoveTablePrefixFromFilename(filename, tableName, prefix string) string {
 			}
 		}
 	}
-	
+
 	return filename
 }
 
@@ -245,7 +257,7 @@ func GetAppInfo(workDir string) (*AppInfo, error) {
 // getModulePath 从 go.mod 文件中读取模块路径
 func getModulePath(projectRootPath string) (string, error) {
 	goModPath := filepath.Join(projectRootPath, "go.mod")
-	
+
 	file, err := os.Open(goModPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to open go.mod: %v", err)
@@ -276,12 +288,12 @@ func SnakeToLowerCamelWithID(s string) string {
 	if s == "" {
 		return ""
 	}
-	
+
 	// 如果整个字符串就是 "id"，直接返回
 	if s == "id" {
 		return "id"
 	}
-	
+
 	// 检查是否以 _id 结尾
 	if strings.HasSuffix(s, "_id") {
 		// 获取 _id 之前的部分
@@ -294,7 +306,7 @@ func SnakeToLowerCamelWithID(s string) string {
 		prefixCamel := gutil.SnakeToLowerCamel(prefix)
 		return prefixCamel + "ID"
 	}
-	
+
 	// 其他情况使用标准的小驼峰转换
 	return gutil.SnakeToLowerCamel(s)
 }

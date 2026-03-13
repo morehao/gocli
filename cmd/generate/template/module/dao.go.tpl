@@ -1,6 +1,9 @@
 package {{.DaoPackageName}}
 
 import (
+	{{- if hasTimeField .ModelFields}}
+	"time"
+	{{- end}}
 	"{{.ModulePath}}/{{.AppPathInProject}}/{{.ModelLayerName}}"
 	"{{.ModulePath}}/pkg/dbclient"
 	"github.com/morehao/golib/biz/genericdao"
@@ -30,6 +33,10 @@ func (c *{{.StructName}}Cond) BuildCondition(db *gorm.DB, tableName string) {
 	if c.{{.FieldName}} != 0 {
 		db.Where("{{.ColumnName}} = ?", c.{{.FieldName}})
 	}
+{{- else if eq .FieldType "time.Time"}}
+	if !c.{{.FieldName}}.IsZero() {
+		db.Where("{{.ColumnName}} = ?", c.{{.FieldName}})
+	}
 {{- else}}
 	if c.{{.FieldName}} > 0 {
 		db.Where("{{.ColumnName}} = ?", c.{{.FieldName}})
@@ -47,7 +54,7 @@ func New{{.StructName}}Dao() *{{.StructName}}Dao {
 	return &{{.StructName}}Dao{
 		GenericDao: genericdao.NewGenericDao[{{.ModelLayerName}}.{{.StructName}}Entity, {{.ModelLayerName}}.{{.StructName}}EntityList](
 			{{.ModelLayerName}}.TableName{{.StructName}}, "{{.StructName}}Dao",
-			dbclient.{{.DBName}},
+			dbclient.DB{{.ServiceName}},
 		),
 	}
 }

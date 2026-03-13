@@ -22,19 +22,22 @@ func genModule() error {
 	// 清理临时目录
 	defer os.RemoveAll(tplDir)
 
+	layerNameMap := buildLayerNameMap(cfg.ServiceName)
+
 	analysisCfg := &codegen.ModuleCfg{
 		CommonConfig: codegen.CommonConfig{
 			PackageName:       moduleGenCfg.PackageName,
 			TplDir:            tplDir,
 			RootDir:           workDir,
-			LayerParentDirMap: cfg.LayerParentDirMap,
-			LayerNameMap:      cfg.LayerNameMap,
-			LayerPrefixMap:    cfg.LayerPrefixMap,
+			LayerParentDirMap: defaultLayerParentDirMap,
+			LayerNameMap:      layerNameMap,
+			LayerPrefixMap:    defaultLayerPrefixMap,
 			TplFuncMap: template.FuncMap{
 				TplFuncIsBuiltInField:      IsBuiltInField,
 				TplFuncIsSysField:          IsSysField,
 				TplFuncIsDefaultModelLayer: IsDefaultModelLayer,
 				TplFuncIsDefaultDaoLayer:   IsDefaultDaoLayer,
+				TplFuncHasTimeField:        HasTimeField,
 			},
 		},
 		TableName: moduleGenCfg.TableName,
@@ -117,8 +120,14 @@ func genModule() error {
 			)
 		}
 
+		targetDir := v.TargetDir
+		if v.OriginLayerName == codegen.LayerNameDao {
+			// 删除最后一级目录
+			targetDir = filepath.Dir(v.TargetDir)
+		}
+
 		genParamsList = append(genParamsList, codegen.GenParamsItem{
-			TargetDir:      v.TargetDir,
+			TargetDir:      targetDir,
 			TargetFileName: targetFilename,
 			Template:       v.Template,
 			ExtraParams: ModuleExtraParams{
