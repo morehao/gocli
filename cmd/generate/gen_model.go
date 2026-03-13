@@ -140,7 +140,7 @@ func genModel() error {
 				ModelLayerName: string(modelLayerName),
 				DaoLayerName:   string(daoLayerName),
 				DaoPackageName: fmt.Sprintf("%sdao", cfg.appInfo.AppName),
-				DBName:         fmt.Sprintf("%sDB", gutil.FirstLetterToUpper(cfg.appInfo.AppName)),
+				DBName:         fmt.Sprintf("%sDB", gutil.FirstLetterToUpper(cfg.ServiceName)),
 				Description:    modelGenCfg.Description,
 				StructName:     analysisRes.StructName,
 				Template:       v.Template,
@@ -171,8 +171,6 @@ type ModelField struct {
 	GormComment        string // gorm tag中的注释，格式为 "comment: xxx"，用于 model 层
 	Comment            string // 普通注释，用于 obj 层等其他地方
 }
-
-
 
 type ModelExtraParams struct {
 	AppInfo

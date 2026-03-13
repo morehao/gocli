@@ -55,7 +55,7 @@ func New{{.StructName}}Dao() *{{.StructName}}Dao {
 	return &{{.StructName}}Dao{
 		GenericDao: genericdao.NewGenericDao[{{.ModelLayerName}}.{{.StructName}}Entity, {{.ModelLayerName}}.{{.StructName}}EntityList](
 			{{.ModelLayerName}}.TableName{{.StructName}}, "{{.StructName}}Dao",
-			dbclient.DB{{.ServiceName}},
+			dbclient.{{.DBName}},
 		),
 	}
 }

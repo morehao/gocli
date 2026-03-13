@@ -57,7 +57,7 @@ func IsDefaultDaoLayer(name string) bool {
 
 func HasTimeField(fields []ModelField) bool {
 	for _, field := range fields {
-		if field.FieldType == "time.Time" {
+		if field.FieldType == "time.Time" && !IsBuiltInField(field.FieldName) {
 			return true
 		}
 	}

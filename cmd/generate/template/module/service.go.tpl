@@ -75,54 +75,41 @@ func (svc *{{.StructNameLowerCamel}}Svc) Delete(ctx *gin.Context, req *dto{{.Pac
 
 // Update 更新{{.Description}}
 func (svc *{{.StructNameLowerCamel}}Svc) Update(ctx *gin.Context, req *dto{{.PackageName}}.{{.StructName}}UpdateReq) error {
-
-	updateEntity := &{{.ModelLayerName}}.{{.StructName}}Entity{
-    {{- range .ModelFields}}
-    {{- if isSysField .FieldName}}
-        {{- continue}}
-    {{- end}}
-    {{- if eq .FieldType "time.Time"}}
-        {{.FieldName}}: time.Unix(req.{{.FieldName}}, 0),
-    {{- else}}
-        {{.FieldName}}: req.{{.FieldName}},
-    {{- end}}
-    {{- end}}
-    }
-    if err := {{.DaoPackageName}}.New{{.StructName}}Dao().UpdateByID(ctx, req.ID, updateEntity); err != nil {
-        glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}Update] {{.DaoPackageName}} UpdateByID fail, err:%v, req:%s", err, gutil.ToJsonString(req))
-        return code.GetError(code.{{.StructName}}UpdateError)
-    }
-    return nil
+	updateMap := map[string]any{}
+	if err := {{.DaoPackageName}}.New{{.StructName}}Dao().UpdateMap(ctx, req.ID, updateMap); err != nil {
+		glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}Update] {{.DaoPackageName}} UpdateMap fail, err:%v, req:%s", err, gutil.ToJsonString(req))
+		return code.GetError(code.{{.StructName}}UpdateError)
+	}
+	return nil
 }
 
 // Detail 根据id获取{{.Description}}
 func (svc *{{.StructNameLowerCamel}}Svc) Detail(ctx *gin.Context, req *dto{{.PackageName}}.{{.StructName}}DetailReq) (*dto{{.PackageName}}.{{.StructName}}DetailResp, error) {
-	detailEntity, err := {{.DaoPackageName}}.New{{.StructName}}Dao().GetById(ctx, req.ID)
+	{{.StructNameLowerCamel}}Entity, err := {{.DaoPackageName}}.New{{.StructName}}Dao().GetByID(ctx, req.ID)
 	if err != nil {
-		glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}Detail] {{.DaoPackageName}} GetById fail, err:%v, req:%s", err, gutil.ToJsonString(req))
+		glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}Detail] {{.DaoPackageName}} GetByID fail, err:%v, req:%s", err, gutil.ToJsonString(req))
 		return nil, code.GetError(code.{{.StructName}}GetDetailError)
 	}
-    // 判断是否存在
-    if detailEntity == nil || detailEntity.ID == 0 {
-        return nil, code.GetError(code.{{.StructName}}NotExistError)
-    }
+	if {{.StructNameLowerCamel}}Entity == nil || {{.StructNameLowerCamel}}Entity.ID == 0 {
+		return nil, code.GetError(code.{{.StructName}}NotExistError)
+	}
 	resp := &dto{{.PackageName}}.{{.StructName}}DetailResp{
-		ID:   detailEntity.ID,
+		ID:   {{.StructNameLowerCamel}}Entity.ID,
 		{{.StructName}}BaseInfo: obj{{.PackageName}}.{{.StructName}}BaseInfo{
 	{{- range .ModelFields}}
 		{{- if isSysField .FieldName}}
 			{{- continue}}
 		{{- end}}
 		{{- if eq .FieldType "time.Time"}}
-			{{.FieldName}}: detailEntity.{{.FieldName}}.Unix(),
+			{{.FieldName}}: {{.StructNameLowerCamel}}Entity.{{.FieldName}}.Unix(),
 		{{- else}}
-			{{.FieldName}}: detailEntity.{{.FieldName}},
+			{{.FieldName}}: {{.StructNameLowerCamel}}Entity.{{.FieldName}},
 		{{- end}}
 	{{- end}}
 		},
 		OperatorBaseInfo: gobject.OperatorBaseInfo{
-			CreatedAt: detailEntity.CreatedAt.Unix(),
-			UpdatedAt: detailEntity.UpdatedAt.Unix(),
+			CreatedAt: {{.StructNameLowerCamel}}Entity.CreatedAt.Unix(),
+			UpdatedAt: {{.StructNameLowerCamel}}Entity.UpdatedAt.Unix(),
 		},
 	}
 	return resp, nil
@@ -130,19 +117,19 @@ func (svc *{{.StructNameLowerCamel}}Svc) Detail(ctx *gin.Context, req *dto{{.Pac
 
 // PageList 分页获取{{.Description}}列表
 func (svc *{{.StructNameLowerCamel}}Svc) PageList(ctx *gin.Context, req *dto{{.PackageName}}.{{.StructName}}PageListReq) (*dto{{.PackageName}}.{{.StructName}}PageListResp, error) {
-	cond := &demodao.UserLoginLogCond{
+	cond := &{{.DaoPackageName}}.{{.StructName}}Cond{
 		BaseCond: &genericdao.BaseCond{
 			Page:     req.Page,
 			PageSize: req.PageSize,
 		},
 	}
-	dataList, total, err := {{.DaoPackageName}}.New{{.StructName}}Dao().GetPageListByCond(ctx, cond)
+	{{.StructNameLowerCamel}}EntityList, total, err := {{.DaoPackageName}}.New{{.StructName}}Dao().GetPageListByCond(ctx, cond)
 	if err != nil {
 		glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}PageList] {{.DaoPackageName}} GetPageListByCond fail, err:%v, req:%s", err, gutil.ToJsonString(req))
 		return nil, code.GetError(code.{{.StructName}}GetPageListError)
 	}
-	list := make([]dto{{.PackageName}}.{{.StructName}}PageListItem, 0, len(dataList))
-	for _, v := range dataList {
+	list := make([]dto{{.PackageName}}.{{.StructName}}PageListItem, 0, len({{.StructNameLowerCamel}}EntityList))
+	for _, v := range {{.StructNameLowerCamel}}EntityList {
 		list = append(list, dto{{.PackageName}}.{{.StructName}}PageListItem{
 			ID:   v.ID,
 			{{.StructName}}BaseInfo: obj{{.PackageName}}.{{.StructName}}BaseInfo{

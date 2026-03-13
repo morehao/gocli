@@ -143,7 +143,7 @@ func genModule() error {
 				ModelLayerName:       string(modelLayerName),
 				DaoLayerName:         string(daoLayerName),
 				DaoPackageName:       fmt.Sprintf("%sdao", appInfo.AppName),
-				DBName:               fmt.Sprintf("%sDB", gutil.FirstLetterToUpper(appInfo.AppName)),
+				DBName:               fmt.Sprintf("%sDB", gutil.FirstLetterToUpper(cfg.ServiceName)),
 				Description:          moduleGenCfg.Description,
 				StructName:           analysisRes.StructName,
 				StructNameLowerCamel: gutil.FirstLetterToLower(analysisRes.StructName),
