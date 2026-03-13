@@ -27,9 +27,9 @@ func genApi() error {
 			PackageName:       apiGenCfg.PackageName,
 			TplDir:            tplDir,
 			RootDir:           workDir,
-			LayerParentDirMap: cfg.LayerParentDirMap,
-			LayerNameMap:      cfg.LayerNameMap,
-			LayerPrefixMap:    cfg.LayerPrefixMap,
+			LayerParentDirMap: defaultLayerParentDirMap,
+			LayerNameMap:      defaultLayerNameMap,
+			LayerPrefixMap:    defaultLayerPrefixMap,
 		},
 		TargetFilename: apiGenCfg.TargetFilename,
 	}

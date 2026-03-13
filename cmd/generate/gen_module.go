@@ -22,19 +22,22 @@ func genModule() error {
 	// 清理临时目录
 	defer os.RemoveAll(tplDir)
 
+	layerNameMap := buildLayerNameMap(cfg.ServiceName)
+
 	analysisCfg := &codegen.ModuleCfg{
 		CommonConfig: codegen.CommonConfig{
 			PackageName:       moduleGenCfg.PackageName,
 			TplDir:            tplDir,
 			RootDir:           workDir,
-			LayerParentDirMap: cfg.LayerParentDirMap,
-			LayerNameMap:      cfg.LayerNameMap,
-			LayerPrefixMap:    cfg.LayerPrefixMap,
+			LayerParentDirMap: defaultLayerParentDirMap,
+			LayerNameMap:      layerNameMap,
+			LayerPrefixMap:    defaultLayerPrefixMap,
 			TplFuncMap: template.FuncMap{
 				TplFuncIsBuiltInField:      IsBuiltInField,
 				TplFuncIsSysField:          IsSysField,
 				TplFuncIsDefaultModelLayer: IsDefaultModelLayer,
 				TplFuncIsDefaultDaoLayer:   IsDefaultDaoLayer,
+				TplFuncHasTimeField:        HasTimeField,
 			},
 		},
 		TableName: moduleGenCfg.TableName,
@@ -117,8 +120,14 @@ func genModule() error {
 			)
 		}
 
+		targetDir := v.TargetDir
+		if v.OriginLayerName == codegen.LayerNameDao {
+			// 删除最后一级目录
+			targetDir = filepath.Dir(v.TargetDir)
+		}
+
 		genParamsList = append(genParamsList, codegen.GenParamsItem{
-			TargetDir:      v.TargetDir,
+			TargetDir:      targetDir,
 			TargetFileName: targetFilename,
 			Template:       v.Template,
 			ExtraParams: ModuleExtraParams{
@@ -133,6 +142,8 @@ func genModule() error {
 				TableName:            analysisRes.TableName,
 				ModelLayerName:       string(modelLayerName),
 				DaoLayerName:         string(daoLayerName),
+				DaoPackageName:       fmt.Sprintf("%sdao", appInfo.AppName),
+				DBName:               fmt.Sprintf("%sDB", gutil.FirstLetterToUpper(cfg.ServiceName)),
 				Description:          moduleGenCfg.Description,
 				StructName:           analysisRes.StructName,
 				StructNameLowerCamel: gutil.FirstLetterToLower(analysisRes.StructName),
@@ -203,6 +214,8 @@ func genModule() error {
 			TableName:            analysisRes.TableName,
 			ModelLayerName:       string(modelLayerName),
 			DaoLayerName:         string(daoLayerName),
+			DaoPackageName:       fmt.Sprintf("%sdao", appInfo.AppName),
+			DBName:               fmt.Sprintf("%sDB", gutil.FirstLetterToUpper(appInfo.AppName)),
 			Description:          moduleGenCfg.Description,
 			StructName:           analysisRes.StructName,
 			StructNameLowerCamel: gutil.FirstLetterToLower(analysisRes.StructName),
@@ -250,10 +263,12 @@ type ModuleExtraParams struct {
 	PackageName          string
 	ModelLayerName       string
 	DaoLayerName         string
+	DaoPackageName       string
+	DBName               string
 	TableName            string
 	Description          string
 	StructName           string
-	StructNameLowerCamel string // 结构体小写驼峰名
+	StructNameLowerCamel string
 	Template             *template.Template
 	ModelFields          []ModelField
 }

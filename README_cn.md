@@ -195,9 +195,8 @@ gocli generate -m api -a demoapp
 apps/demoapp/
 ├── model/              # 数据库模型
 │   └── user.go
-├── dao/                # 数据访问层
-│   └── daouser/
-│       └── user.go
+├── demoappdao/         # 数据访问层（命名为 {appName}dao）
+│   └── user.go
 ├── object/             # 业务对象
 │   └── objuser/
 │       └── user.go
@@ -218,6 +217,8 @@ apps/demoapp/
 pkg/code/               # 共享错误码
 └── user.go
 ```
+
+**注意**：dao 层以单层目录生成，命名为 `{appName}dao`（如 `demoappdao`），使用 `genericdao.GenericDao` 封装通用 CRUD 操作。
 
 ## cutter
 `cutter`是一个命令行工具，用于快速基于现有 Go 项目创建新的 Go 项目，或在同一项目内克隆应用。

@@ -3,6 +3,7 @@ package generate
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"text/template"
 
 	"github.com/morehao/golib/codegen"
@@ -26,23 +27,27 @@ func genModel() error {
 	// 清理临时目录
 	defer os.RemoveAll(tplDir)
 
+	layerNameMap := buildLayerNameMap(cfg.ServiceName)
+
 	analysisCfg := &codegen.ModuleCfg{
 		CommonConfig: codegen.CommonConfig{
 			PackageName:       modelGenCfg.PackageName,
 			TplDir:            tplDir,
 			RootDir:           workDir,
-			LayerParentDirMap: cfg.LayerParentDirMap,
-			LayerNameMap:      cfg.LayerNameMap,
-			LayerPrefixMap:    cfg.LayerPrefixMap,
+			LayerParentDirMap: defaultLayerParentDirMap,
+			LayerNameMap:      layerNameMap,
+			LayerPrefixMap:    defaultLayerPrefixMap,
 			TplFuncMap: template.FuncMap{
 				TplFuncIsBuiltInField:      IsBuiltInField,
 				TplFuncIsSysField:          IsSysField,
 				TplFuncIsDefaultModelLayer: IsDefaultModelLayer,
 				TplFuncIsDefaultDaoLayer:   IsDefaultDaoLayer,
+				TplFuncHasTimeField:        HasTimeField,
 			},
 		},
 		TableName: modelGenCfg.TableName,
 	}
+
 	gen := codegen.NewGenerator()
 	analysisRes, analysisErr := gen.AnalysisModuleTpl(MysqlClient, analysisCfg)
 	if analysisErr != nil {
@@ -112,8 +117,14 @@ func genModel() error {
 			)
 		}
 
+		targetDir := v.TargetDir
+		if v.OriginLayerName == codegen.LayerNameDao {
+			// 删除最后一级目录
+			targetDir = filepath.Dir(v.TargetDir)
+		}
+
 		genParamsList = append(genParamsList, codegen.GenParamsItem{
-			TargetDir:      v.TargetDir,
+			TargetDir:      targetDir,
 			TargetFileName: targetFilename,
 			Template:       v.Template,
 			ExtraParams: ModelExtraParams{
@@ -128,6 +139,8 @@ func genModel() error {
 				TableName:      analysisRes.TableName,
 				ModelLayerName: string(modelLayerName),
 				DaoLayerName:   string(daoLayerName),
+				DaoPackageName: fmt.Sprintf("%sdao", cfg.appInfo.AppName),
+				DBName:         fmt.Sprintf("%sDB", gutil.FirstLetterToUpper(cfg.ServiceName)),
 				Description:    modelGenCfg.Description,
 				StructName:     analysisRes.StructName,
 				Template:       v.Template,
@@ -164,6 +177,8 @@ type ModelExtraParams struct {
 	PackageName    string
 	ModelLayerName string
 	DaoLayerName   string
+	DaoPackageName string
+	DBName         string
 	TableName      string
 	Description    string
 	StructName     string

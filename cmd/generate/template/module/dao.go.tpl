@@ -1,188 +1,66 @@
-package dao{{.PackageName}}
+package {{.DaoPackageName}}
 
 import (
-	"context"
-	"fmt"
+	{{- if hasTimeField .ModelFields}}
 	"time"
-
-    {{- if isDefaultDaoLayer .DaoLayerName}}
-    "{{.ModulePath}}/{{.AppPathInProject}}/dao"
-    {{- else}}
-    "{{.ModulePath}}/{{.AppPathInProject}}/{{.DaoLayerName}}"
-    {{- end}}
-    {{- if isDefaultModelLayer .ModelLayerName}}
-    "{{.ModulePath}}/{{.AppPathInProject}}/model"
-    {{- else}}
-    "{{.ModulePath}}/{{.AppPathInProject}}/{{.ModelLayerName}}"
-    {{- end}}
-	"{{.ModulePath}}/pkg/code"
-	"github.com/morehao/golib/biz/gconstant"
-    "github.com/morehao/golib/gutil"
-    "gorm.io/gorm"
+	{{- end}}
+	"{{.ModulePath}}/{{.AppPathInProject}}/{{.ModelLayerName}}"
+	"{{.ModulePath}}/pkg/dbclient"
+	"github.com/morehao/golib/biz/genericdao"
+	"gorm.io/gorm"
 )
 
 type {{.StructName}}Cond struct {
-	ID             uint
-	IDs            []uint
-	IsDelete       bool
-	Page           int
-	PageSize       int
-	CreatedAtStart int64
-	CreatedAtEnd   int64
-	OrderField     string
+	*genericdao.BaseCond
+{{- range .ModelFields}}
+{{- if not (isBuiltInField .FieldName)}}
+	{{.FieldName}} {{.FieldType}}
+{{- end}}
+{{- end}}
+}
+
+func (c *{{.StructName}}Cond) BuildCondition(db *gorm.DB, tableName string) {
+	if c.BaseCond != nil {
+		c.BaseCond.BuildCondition(db, tableName)
+	}
+{{- range .ModelFields}}
+{{- if not (isBuiltInField .FieldName)}}
+{{- if eq .FieldType "string"}}
+	if c.{{.FieldName}} != "" {
+		db.Where("{{.ColumnName}} = ?", c.{{.FieldName}})
+	}
+{{- else if eq .FieldType "int"}}
+	if c.{{.FieldName}} != 0 {
+		db.Where("{{.ColumnName}} = ?", c.{{.FieldName}})
+	}
+{{- else if eq .FieldType "time.Time"}}
+	if !c.{{.FieldName}}.IsZero() {
+		db.Where("{{.ColumnName}} = ?", c.{{.FieldName}})
+	}
+{{- else}}
+	if c.{{.FieldName}} > 0 {
+		db.Where("{{.ColumnName}} = ?", c.{{.FieldName}})
+	}
+{{- end}}
+{{- end}}
+{{- end}}
 }
 
 type {{.StructName}}Dao struct {
-	{{.DaoLayerName}}.Base
+	*genericdao.GenericDao[{{.ModelLayerName}}.{{.StructName}}Entity, {{.ModelLayerName}}.{{.StructName}}EntityList]
 }
 
 func New{{.StructName}}Dao() *{{.StructName}}Dao {
-	return &{{.StructName}}Dao{}
-}
-
-func (d *{{.StructName}}Dao) TableName() string {
-	return {{.ModelLayerName}}.TableName{{.StructName}}
+	return &{{.StructName}}Dao{
+		GenericDao: genericdao.NewGenericDao[{{.ModelLayerName}}.{{.StructName}}Entity, {{.ModelLayerName}}.{{.StructName}}EntityList](
+			{{.ModelLayerName}}.TableName{{.StructName}}, "{{.StructName}}Dao",
+			dbclient.{{.DBName}},
+		),
+	}
 }
 
 func (d *{{.StructName}}Dao) WithTx(db *gorm.DB) *{{.StructName}}Dao {
 	return &{{.StructName}}Dao{
-		Base: {{.DaoLayerName}}.Base{Tx: db},
-	}
-}
-
-func (d *{{.StructName}}Dao) Insert(ctx context.Context, entity *{{.ModelLayerName}}.{{.StructName}}Entity) error {
-	db := d.DB(ctx).Table(d.TableName())
-	if err := db.Create(entity).Error; err != nil {
-		return code.GetError(gconstant.DBInsertErr).Wrapf(err, "[{{.StructName}}Dao] Insert fail, entity:%s", gutil.ToJsonString(entity))
-	}
-	return nil
-}
-
-func (d *{{.StructName}}Dao) BatchInsert(ctx context.Context, entityList {{.ModelLayerName}}.{{.StructName}}EntityList) error {
-	if len(entityList) == 0 {
-		return code.GetError(gconstant.DBInsertErr).Wrapf(nil, "[{{.StructName}}Dao] BatchInsert fail, entityList is empty")
-	}
-
-	db := d.DB(ctx).Table(d.TableName())
-	if err := db.Create(entityList).Error; err != nil {
-		return code.GetError(gconstant.DBInsertErr).Wrapf(err, "[{{.StructName}}Dao] BatchInsert fail, entityList:%s", gutil.ToJsonString(entityList))
-	}
-	return nil
-}
-
-func (d *{{.StructName}}Dao) UpdateByID(ctx context.Context, id uint, entity *{{.ModelLayerName}}.{{.StructName}}Entity) error {
-	db := d.DB(ctx).Model(&{{.ModelLayerName}}.{{.StructName}}Entity{}).Table(d.TableName())
-	if err := db.Where("id = ?", id).Updates(entity).Error; err != nil {
-		return code.GetError(gconstant.DBUpdateErr).Wrapf(err, "[{{.StructName}}Dao] UpdateByID fail, id:%d entity:%s", id, gutil.ToJsonString(entity))
-	}
-	return nil
-}
-
-func (d *{{.StructName}}Dao) UpdateMap(ctx context.Context, id uint, updateMap map[string]interface{}) error {
-	db := d.DB(ctx).Model(&{{.ModelLayerName}}.{{.StructName}}Entity{}).Table(d.TableName())
-	if err := db.Where("id = ?", id).Updates(updateMap).Error; err != nil {
-		return code.GetError(gconstant.DBUpdateErr).Wrapf(err, "[{{.StructName}}Dao] UpdateMap fail, id:%d, updateMap:%s", id, gutil.ToJsonString(updateMap))
-	}
-	return nil
-}
-
-func (d *{{.StructName}}Dao) Delete(ctx context.Context, id, deletedBy uint) error {
-	db := d.DB(ctx).Model(&{{.ModelLayerName}}.{{.StructName}}Entity{}).Table(d.TableName())
-	updatedField := map[string]interface{}{
-		"deleted_time": time.Now(),
-		"deleted_by":   deletedBy,
-	}
-	if err := db.Where("id = ?", id).Updates(updatedField).Error; err != nil {
-		return code.GetError(gconstant.DBDeleteErr).Wrapf(err, "[{{.StructName}}Dao] Delete fail, id:%d, deletedBy:%d", id, deletedBy)
-	}
-	return nil
-}
-
-func (d *{{.StructName}}Dao) GetById(ctx context.Context, id uint) (*{{.ModelLayerName}}.{{.StructName}}Entity, error) {
-	var entity {{.ModelLayerName}}.{{.StructName}}Entity
-	db := d.DB(ctx).Table(d.TableName())
-	if err := db.Where("id = ?", id).Find(&entity).Error; err != nil {
-		return nil, code.GetError(gconstant.DBFindErr).Wrapf(err, "[{{.StructName}}Dao] GetById fail, id:%d", id)
-	}
-	return &entity, nil
-}
-
-func (d *{{.StructName}}Dao) GetByCond(ctx context.Context, cond *{{.StructName}}Cond) (*{{.ModelLayerName}}.{{.StructName}}Entity, error) {
-	var entity {{.ModelLayerName}}.{{.StructName}}Entity
-	db := d.DB(ctx).Table(d.TableName())
-
-	d.BuildCondition(db, cond)
-
-	if err := db.Find(&entity).Error; err != nil {
-		return nil, code.GetError(gconstant.DBFindErr).Wrapf(err, "[{{.StructName}}Dao] GetById fail, cond:%s", gutil.ToJsonString(cond))
-	}
-	return &entity, nil
-}
-
-func (d *{{.StructName}}Dao) GetListByCond(ctx context.Context, cond *{{.StructName}}Cond) ({{.ModelLayerName}}.{{.StructName}}EntityList, error) {
-	var entityList {{.ModelLayerName}}.{{.StructName}}EntityList
-	db := d.DB(ctx).Table(d.TableName())
-
-	d.BuildCondition(db, cond)
-
-	if err := db.Find(&entityList).Error; err != nil {
-		return nil, code.GetError(gconstant.DBFindErr).Wrapf(err, "[{{.StructName}}Dao] GetListByCond fail, cond:%s", gutil.ToJsonString(cond))
-	}
-	return entityList, nil
-}
-
-func (d *{{.StructName}}Dao) GetPageListByCond(ctx context.Context, cond *{{.StructName}}Cond) ({{.ModelLayerName}}.{{.StructName}}EntityList, int64, error) {
-	db := d.DB(ctx).Model(&{{.ModelLayerName}}.{{.StructName}}Entity{}).Table(d.TableName())
-
-	d.BuildCondition(db, cond)
-
-	var count int64
-	if err := db.Count(&count).Error; err != nil {
-		return nil, 0, code.GetError(gconstant.DBFindErr).Wrapf(err, "[{{.StructName}}Dao] GetPageListByCond count fail, cond:%s", gutil.ToJsonString(cond))
-	}
-	if cond.PageSize > 0 && cond.Page > 0 {
-		db.Offset((cond.Page - 1) * cond.PageSize).Limit(cond.PageSize)
-	}
-	var entityList {{.ModelLayerName}}.{{.StructName}}EntityList
-	if err := db.Find(&entityList).Error; err != nil {
-		return nil, 0, code.GetError(gconstant.DBFindErr).Wrapf(err, "[{{.StructName}}Dao] GetPageListByCond find fail, cond:%s", gutil.ToJsonString(cond))
-	}
-	return entityList, count, nil
-}
-
-func (d *{{.StructName}}Dao) CountByCond(ctx context.Context, cond *{{.StructName}}Cond) (int64, error) {
-	db := d.DB(ctx).Model(&{{.ModelLayerName}}.{{.StructName}}Entity{}).Table(d.TableName())
-
-	d.BuildCondition(db, cond)
-	var count int64
-	if err := db.Count(&count).Error; err != nil {
-		return 0, code.GetError(gconstant.DBFindErr).Wrapf(err, "[{{.StructName}}Dao] CountByCond fail, cond:%s", gutil.ToJsonString(cond))
-	}
-	return count, nil
-}
-
-func (d *{{.StructName}}Dao) BuildCondition(db *gorm.DB, cond *{{.StructName}}Cond) {
-	if cond.ID > 0 {
-		query := fmt.Sprintf("%s.id = ?", d.TableName())
-		db.Where(query, cond.ID)
-	}
-	if len(cond.IDs) > 0 {
-		query := fmt.Sprintf("%s.id in (?)", d.TableName())
-		db.Where(query, cond.IDs)
-	}
-	if cond.CreatedAtStart > 0 {
-		query := fmt.Sprintf("%s.created_at >= ?", d.TableName())
-		db.Where(query, time.Unix(cond.CreatedAtStart, 0))
-	}
-	if cond.CreatedAtEnd > 0 {
-		query := fmt.Sprintf("%s.created_at <= ?", d.TableName())
-		db.Where(query, time.Unix(cond.CreatedAtEnd, 0))
-	}
-	if cond.IsDelete {
-		db.Unscoped()
-	}
-
-	if cond.OrderField != "" {
-		db.Order(cond.OrderField)
+		GenericDao: d.GenericDao.WithTx(db),
 	}
 } 

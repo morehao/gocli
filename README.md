@@ -197,9 +197,8 @@ When you run `gocli generate -m module -a demoapp`, the tool generates:
 apps/demoapp/
 ├── model/              # Database models
 │   └── user.go
-├── dao/                # Data access layer
-│   └── daouser/
-│       └── user.go
+├── demoappdao/         # Data access layer (named as {appName}dao)
+│   └── user.go
 ├── object/             # Business objects
 │   └── objuser/
 │       └── user.go
@@ -220,6 +219,8 @@ apps/demoapp/
 pkg/code/               # Shared error codes
 └── user.go
 ```
+
+**Note**: The dao layer is generated as a single-level directory named `{appName}dao` (e.g., `demoappdao`), using `genericdao.GenericDao` for common CRUD operations.
 
 ---
 

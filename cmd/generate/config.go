@@ -2,33 +2,40 @@ package generate
 
 import "github.com/morehao/golib/codegen"
 
+var (
+	defaultLayerParentDirMap = map[codegen.LayerName]string{
+		codegen.LayerNameController: "internal",
+		codegen.LayerNameService:    "internal",
+		codegen.LayerNameDto:        "internal",
+	}
+
+	defaultLayerNameMap = map[codegen.LayerName]codegen.LayerName{}
+
+	defaultLayerPrefixMap = map[codegen.LayerName]codegen.LayerPrefix{}
+)
+
+func buildLayerNameMap(serviceName string) map[codegen.LayerName]codegen.LayerName {
+	return map[codegen.LayerName]codegen.LayerName{
+		codegen.LayerNameModel: codegen.LayerName(serviceName + "model"),
+		codegen.LayerNameDao:   codegen.LayerName(serviceName + "dao"),
+	}
+}
+
 type Config struct {
-	MysqlDSN          string                                    `yaml:"mysql_dsn"`            // MySQL 连接字符串
-	LayerParentDirMap map[codegen.LayerName]string              `yaml:"layer_parent_dir_map"` // 模块父目录映射
-	LayerNameMap      map[codegen.LayerName]codegen.LayerName   `yaml:"layer_name_map"`       // 模块层名称映射
-	LayerPrefixMap    map[codegen.LayerName]codegen.LayerPrefix `yaml:"layer_prefix_map"`     // 模块层前缀映射
-	Module            ModuleConfig                              `yaml:"module"`               // 模块生成配置
-	Model             ModelConfig                               `yaml:"model"`                // 模型生成配置
-	Api               ApiConfig                                 `yaml:"api"`                  // 控制器生成配置
-	appInfo           AppInfo
-}
-
-// AppInfo 应用信息，示例路径：go-gin-web/internal/apps/demoapp
-type AppInfo struct {
-	AppPathInProject string // apps/demoapp
-	ProjectName      string // go-gin-web
-	AppName          string // demoapp
-	ProjectRootPath  string // /Users/morehao/xxx/go-gin-web (项目根目录绝对路径)
-	ModulePath       string // github.com/morehao/go-gin-web (从 go.mod 读取的完整模块路径)
-}
-
-type CodeGen struct {
+	MysqlDSN    string       `yaml:"mysql_dsn"`    // MySQL 连接字符串
 	ServiceName string       `yaml:"service_name"` // 服务名
-	AppName     string       `yaml:"app_name"`     // 应用名
-	Mode        string       `yaml:"mode"`         // 生成模式，支持：module、model、api
 	Module      ModuleConfig `yaml:"module"`       // 模块生成配置
 	Model       ModelConfig  `yaml:"model"`        // 模型生成配置
 	Api         ApiConfig    `yaml:"api"`          // 控制器生成配置
+	appInfo     AppInfo
+}
+
+type AppInfo struct {
+	AppPathInProject string
+	ProjectName      string
+	AppName          string
+	ProjectRootPath  string
+	ModulePath       string
 }
 
 type ModuleConfig struct {
