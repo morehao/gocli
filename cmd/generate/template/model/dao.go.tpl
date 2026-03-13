@@ -59,9 +59,3 @@ func New{{.StructName}}Dao() *{{.StructName}}Dao {
 		),
 	}
 }
-
-func (d *{{.StructName}}Dao) WithTx(db *gorm.DB) *{{.StructName}}Dao {
-	return &{{.StructName}}Dao{
-		GenericDao: d.GenericDao.WithTx(db),
-	}
-} 

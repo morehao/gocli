@@ -93,17 +93,18 @@ func genModel() error {
 			// Comment 用于 obj 层等其他地方的普通注释，直接使用原始注释
 			comment := field.Comment
 			modelFields = append(modelFields, ModelField{
-				IsPrimaryKey:       field.ColumnKey == codegen.ColumnKeyPRI,
-				FieldName:          gutil.ReplaceIdToID(field.FieldName),
-				FieldLowerCaseName: gutil.SnakeToLowerCamel(field.FieldName),
-				JsonTagName:        SnakeToLowerCamelWithID(field.ColumnName),
-				FieldType:          field.FieldType,
-				ColumnName:         field.ColumnName,
-				ColumnType:         field.ColumnType,
-				NullableDesc:       nullableDesc,
-				DefaultValue:       defaultValue,
-				GormComment:        gormComment,
-				Comment:            comment,
+				IsPrimaryKey:         field.ColumnKey == codegen.ColumnKeyPRI,
+				FieldName:            gutil.ReplaceIdToID(field.FieldName),
+				FieldLowerCaseName:   gutil.SnakeToLowerCamel(field.FieldName),
+				JsonTagName:          SnakeToLowerCamelWithID(field.ColumnName),
+				FieldType:            field.FieldType,
+				ColumnName:           field.ColumnName,
+				ColumnType:           field.ColumnType,
+				NullableDesc:         nullableDesc,
+				DefaultValue:         defaultValue,
+				GormComment:          gormComment,
+				Comment:              comment,
+				StructNameLowerCamel: gutil.FirstLetterToLower(analysisRes.StructName),
 			})
 		}
 
@@ -159,17 +160,18 @@ func genModel() error {
 }
 
 type ModelField struct {
-	IsPrimaryKey       bool   // 是否是主键
-	FieldName          string // 字段名称
-	FieldLowerCaseName string // 字段名称小驼峰
-	JsonTagName        string // JSON 标签名称，特殊处理 _id 后缀为 ID
-	FieldType          string // 字段数据类型，如int、string
-	ColumnName         string // 列名
-	ColumnType         string // 列数据类型，如varchar(255)
-	NullableDesc       string // 是否允许为空描述，如 NOT NULL
-	DefaultValue       string // 默认值,如 DEFAULT 0
-	GormComment        string // gorm tag中的注释，格式为 "comment: xxx"，用于 model 层
-	Comment            string // 普通注释，用于 obj 层等其他地方
+	IsPrimaryKey         bool   // 是否是主键
+	FieldName            string // 字段名称
+	FieldLowerCaseName   string // 字段名称小驼峰
+	JsonTagName          string // JSON 标签名称，特殊处理 _id 后缀为 ID
+	FieldType            string // 字段数据类型，如int、string
+	ColumnName           string // 列名
+	ColumnType           string // 列数据类型，如varchar(255)
+	NullableDesc         string // 是否允许为空描述，如 NOT NULL
+	DefaultValue         string // 默认值,如 DEFAULT 0
+	GormComment          string // gorm tag中的注释，格式为 "comment: xxx"，用于 model 层
+	Comment              string // 普通注释，用于 obj 层等其他地方
+	StructNameLowerCamel string // 结构体名称小驼峰，用于模板引用
 }
 
 type ModelExtraParams struct {

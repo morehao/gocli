@@ -96,17 +96,18 @@ func genModule() error {
 			// Comment 用于 obj 层等其他地方的普通注释，直接使用原始注释
 			comment := field.Comment
 			modelFields = append(modelFields, ModelField{
-				IsPrimaryKey:       field.ColumnKey == codegen.ColumnKeyPRI,
-				FieldName:          gutil.ReplaceIdToID(field.FieldName),
-				FieldLowerCaseName: gutil.SnakeToLowerCamel(field.FieldName),
-				JsonTagName:        SnakeToLowerCamelWithID(field.ColumnName),
-				FieldType:          field.FieldType,
-				ColumnName:         field.ColumnName,
-				ColumnType:         field.ColumnType,
-				NullableDesc:       nullableDesc,
-				DefaultValue:       defaultValue,
-				GormComment:        gormComment,
-				Comment:            comment,
+				IsPrimaryKey:         field.ColumnKey == codegen.ColumnKeyPRI,
+				FieldName:            gutil.ReplaceIdToID(field.FieldName),
+				FieldLowerCaseName:   gutil.SnakeToLowerCamel(field.FieldName),
+				JsonTagName:          SnakeToLowerCamelWithID(field.ColumnName),
+				FieldType:            field.FieldType,
+				ColumnName:           field.ColumnName,
+				ColumnType:           field.ColumnType,
+				NullableDesc:         nullableDesc,
+				DefaultValue:         defaultValue,
+				GormComment:          gormComment,
+				Comment:              comment,
+				StructNameLowerCamel: gutil.FirstLetterToLower(analysisRes.StructName),
 			})
 		}
 
@@ -188,17 +189,18 @@ func genModule() error {
 			// Comment 用于 obj 层等其他地方的普通注释，直接使用原始注释
 			comment := field.Comment
 			modelFields = append(modelFields, ModelField{
-				IsPrimaryKey:       field.ColumnKey == codegen.ColumnKeyPRI,
-				FieldName:          gutil.ReplaceIdToID(field.FieldName),
-				FieldLowerCaseName: gutil.SnakeToLowerCamel(field.FieldName),
-				JsonTagName:        SnakeToLowerCamelWithID(field.ColumnName),
-				FieldType:          field.FieldType,
-				ColumnName:         field.ColumnName,
-				ColumnType:         field.ColumnType,
-				NullableDesc:       nullableDesc,
-				DefaultValue:       defaultValue,
-				GormComment:        gormComment,
-				Comment:            comment,
+				IsPrimaryKey:         field.ColumnKey == codegen.ColumnKeyPRI,
+				FieldName:            gutil.ReplaceIdToID(field.FieldName),
+				FieldLowerCaseName:   gutil.SnakeToLowerCamel(field.FieldName),
+				JsonTagName:          SnakeToLowerCamelWithID(field.ColumnName),
+				FieldType:            field.FieldType,
+				ColumnName:           field.ColumnName,
+				ColumnType:           field.ColumnType,
+				NullableDesc:         nullableDesc,
+				DefaultValue:         defaultValue,
+				GormComment:          gormComment,
+				Comment:              comment,
+				StructNameLowerCamel: gutil.FirstLetterToLower(analysisRes.StructName),
 			})
 		}
 
