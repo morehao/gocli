@@ -20,7 +20,43 @@ const (
 	TplFuncIsDefaultModelLayer = "isDefaultModelLayer"
 	TplFuncIsDefaultDaoLayer   = "isDefaultDaoLayer"
 	TplFuncHasTimeField        = "hasTimeField"
+
+	DBTypeMySQL    = "mysql"
+	DBTypePostgres = "postgresql"
 )
+
+type DatabaseConfig struct {
+	Type    string
+	ConnStr string
+}
+
+func ParseDatabaseDSN(dsn string) (*DatabaseConfig, error) {
+	if dsn == "" {
+		return nil, fmt.Errorf("database dsn is empty")
+	}
+
+	parts := strings.SplitN(dsn, "://", 2)
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid database dsn format, expected: schema://connection_string, got: %s", dsn)
+	}
+
+	dbType := parts[0]
+
+	switch dbType {
+	case DBTypePostgres:
+		return &DatabaseConfig{
+			Type:    dbType,
+			ConnStr: dsn,
+		}, nil
+	case DBTypeMySQL:
+		return &DatabaseConfig{
+			Type:    dbType,
+			ConnStr: parts[1],
+		}, nil
+	default:
+		return nil, fmt.Errorf("unsupported database type: %s, supported types: mysql, postgres", dbType)
+	}
+}
 
 func IsBuiltInField(name string) bool {
 	buildInFieldMap := map[string]struct{}{

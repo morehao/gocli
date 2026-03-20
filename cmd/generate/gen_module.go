@@ -43,7 +43,7 @@ func genModule() error {
 		TableName: moduleGenCfg.TableName,
 	}
 	gen := codegen.NewGenerator()
-	analysisRes, analysisErr := gen.AnalysisModuleTpl(MysqlClient, analysisCfg)
+	analysisRes, analysisErr := gen.AnalysisModuleTpl(DBClient, analysisCfg)
 	if analysisErr != nil {
 		return fmt.Errorf("analysis module tpl error: %v", analysisErr)
 	}
