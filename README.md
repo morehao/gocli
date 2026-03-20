@@ -1,4 +1,4 @@
-[English](./README.md) | [简体中文](./README_cn.md)
+[简体中文](./README_CN.md) | [English](./README.md)
 
 # gocli Introduction
 
@@ -14,7 +14,7 @@ go install github.com/morehao/gocli@latest
 
 ## generate
 
-`generate` is a powerful code generation tool based on template files and database schema. The project structure and style are modeled after [go-gin-web](https://github.com/morehao/go-gin-web).
+`generate` is a powerful code generation tool based on template files and database schema. The project structure and style are modeled after [goark](https://github.com/morehao/goark).
 
 ### Features
 
@@ -82,22 +82,17 @@ Example configuration file:
 
 ```yaml
 mysql_dsn: root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local
-#layer_parent_dir_map:
-#  model: model
-#  dao: dao
-#layer_name_map:
-#  model: mysqlmodel
-#  dao: mysqldao
-#layer_prefix_map:
-#  service: srv
+service_name: mysql
 module:
   package_name: user
   description: User login records
   table_name: user_login_log
+  table_prefix: ""   # Optional: Table name prefix, will be removed when generating struct name (e.g., "iam_")
 model:
   package_name: user
   description: User
   table_name: user
+  table_prefix: ""   # Optional: Table name prefix
 api:
   package_name: user
   target_filename: user_login_log.go
@@ -114,36 +109,16 @@ api:
 | Field | Description | Example | Required |
 | ----- | ----------- | ------- | -------- |
 | `mysql_dsn` | MySQL database connection string | `root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local` | ✅ Yes |
-| `layer_parent_dir_map` | Parent directory mapping for each layer | `model: model`<br>`controller: internal` | ❌ Optional |
-| `layer_name_map` | Custom layer directory names | `model: mysqlmodel`<br>`dao: mysqldao` | ❌ Optional |
-| `layer_prefix_map` | File name prefix for each layer | `service: svc`<br>`controller: ctr` | ❌ Optional |
+| `service_name` | Layer name prefix for model/dao directories and DB connection name | `mysql` | ✅ Yes |
 
-**Example custom configuration:**
-```yaml
-# Customize layer parent directories
-layer_parent_dir_map:
-  controller: internal
-  service: internal
-  dto: internal
 
-# Customize layer names
-layer_name_map:
-  model: mysqlmodel
-  dao: mysqldao
-
-# Customize file name prefixes
-layer_prefix_map:
-  service: svc
-  controller: ctr
-```
-
-#### Module Configuration (for `module` mode)
 
 | Field | Description | Example | Required |
 | ----- | ----------- | ------- | -------- |
 | `package_name` | Package name for the module | `user` | ✅ Yes |
 | `description` | Module description (for comments) | `User login records` | ✅ Yes |
 | `table_name` | MySQL table name | `user_login_log` | ✅ Yes |
+| `table_prefix` | Table name prefix, removed when generating struct name | `iam_` | ❌ Optional |
 
 #### Model Configuration (for `model` mode)
 
@@ -152,6 +127,7 @@ layer_prefix_map:
 | `package_name` | Package name for the model | `user` | ✅ Yes |
 | `description` | Model description | `User` | ✅ Yes |
 | `table_name` | MySQL table name | `user` | ✅ Yes |
+| `table_prefix` | Table name prefix, removed when generating struct name | `iam_` | ❌ Optional |
 
 #### API Configuration (for `api` mode)
 
@@ -187,7 +163,7 @@ gocli generate -m api -a demoapp
 - 💡 Use `module` mode when starting a new feature from scratch
 - 💡 Use `model` mode when you only need database models
 - 💡 Use `api` mode to add new endpoints to existing modules
-- 💡 Check the [go-gin-web](https://github.com/morehao/go-gin-web) `Makefile` for practical examples
+- 💡 Check the [goark](https://github.com/morehao/goark) `Makefile` for practical examples
 
 ### Generated File Structure
 

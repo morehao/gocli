@@ -1,4 +1,4 @@
-[English](./README.md) | [简体中文](./README_cn.md)
+[简体中文](./README_CN.md) | [English](./README.md)
 
 
 # gocli 介绍
@@ -14,7 +14,7 @@ go install github.com/morehao/gocli@latest
 
 ## generate
 
-`generate`是一个强大的代码生成工具，基于模板文件和数据库结构快速生成代码。项目结构和风格参照[go-gin-web](https://github.com/morehao/go-gin-web)。
+`generate`是一个强大的代码生成工具，基于模板文件和数据库结构快速生成代码。项目结构和风格参照[goark](https://github.com/morehao/goark)。
 
 ### 功能特性
 
@@ -81,22 +81,17 @@ gocli generate -m api -a demoapp
 示例配置文件：
 ```yaml
 mysql_dsn: root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local
-#layer_parent_dir_map:
-#  model: model
-#  dao: dao
-#layer_name_map:
-#  model: mysqlmodel
-#  dao: mysqldao
-#layer_prefix_map:
-#  service: srv
+service_name: mysql
 module:
   package_name: user
   description: 用户登录记录
   table_name: user_login_log
+  table_prefix: ""   # 可选：表名前缀，生成结构体名时会去除此前缀（如 "iam_"）
 model:
   package_name: user
   description: 用户
   table_name: user
+  table_prefix: ""   # 可选：表名前缀
 api:
   package_name: user
   target_filename: user_login_log.go
@@ -112,36 +107,16 @@ api:
 | 配置项 | 说明 | 示例值 | 是否必填 |
 | ----- | ---- | ------ | ------- |
 | `mysql_dsn` | MySQL 数据库连接字符串 | `root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local` | ✅ 必填 |
-| `layer_parent_dir_map` | 各层代码的父目录映射 | `model: model`<br>`controller: internal` | ❌ 可选 |
-| `layer_name_map` | 自定义层级目录名称 | `model: mysqlmodel`<br>`dao: mysqldao` | ❌ 可选 |
-| `layer_prefix_map` | 各层文件名前缀 | `service: svc`<br>`controller: ctr` | ❌ 可选 |
+| `service_name` | model/dao 层目录名称前缀及数据库连接名 | `mysql` | ✅ 必填 |
 
-**自定义配置示例：**
-```yaml
-# 自定义层级父目录
-layer_parent_dir_map:
-  controller: internal
-  service: internal
-  dto: internal
 
-# 自定义层级名称
-layer_name_map:
-  model: mysqlmodel
-  dao: mysqldao
-
-# 自定义文件名前缀
-layer_prefix_map:
-  service: svc
-  controller: ctr
-```
-
-#### 模块配置（用于 `module` 模式）
 
 | 配置项 | 说明 | 示例值 | 是否必填 |
 | ----- | ---- | ------ | ------- |
 | `package_name` | 模块包名 | `user` | ✅ 必填 |
 | `description` | 模块描述（用于注释） | `用户登录记录` | ✅ 必填 |
 | `table_name` | MySQL 表名 | `user_login_log` | ✅ 必填 |
+| `table_prefix` | 表名前缀，生成结构体名时会去除此前缀 | `iam_` | ❌ 可选 |
 
 #### 模型配置（用于 `model` 模式）
 
@@ -150,6 +125,7 @@ layer_prefix_map:
 | `package_name` | 模型包名 | `user` | ✅ 必填 |
 | `description` | 模型描述 | `用户` | ✅ 必填 |
 | `table_name` | MySQL 表名 | `user` | ✅ 必填 |
+| `table_prefix` | 表名前缀，生成结构体名时会去除此前缀 | `iam_` | ❌ 可选 |
 
 #### API 配置（用于 `api` 模式）
 
@@ -185,7 +161,7 @@ gocli generate -m api -a demoapp
 - 💡 从零开始新功能时使用 `module` 模式
 - 💡 只需数据库模型时使用 `model` 模式
 - 💡 为现有模块添加新接口时使用 `api` 模式
-- 💡 查看 [go-gin-web](https://github.com/morehao/go-gin-web) 项目的 `Makefile` 了解实际使用示例
+- 💡 查看 [goark](https://github.com/morehao/goark) 项目的 `Makefile` 了解实际使用示例
 
 ### 生成的文件结构
 
