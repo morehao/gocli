@@ -38,6 +38,8 @@ func genModule() error {
 				TplFuncIsDefaultModelLayer: IsDefaultModelLayer,
 				TplFuncIsDefaultDaoLayer:   IsDefaultDaoLayer,
 				TplFuncHasTimeField:        HasTimeField,
+				TplFuncGetFieldImports:     GetFieldImports,
+				TplFuncIsBasicType:         IsBasicType,
 			},
 		},
 		TableName: moduleGenCfg.TableName,
@@ -150,6 +152,7 @@ func genModule() error {
 				StructNameLowerCamel: gutil.FirstLetterToLower(analysisRes.StructName),
 				Template:             v.Template,
 				ModelFields:          modelFields,
+				FieldImports:         calcFieldImports(modelFields),
 			},
 		})
 
@@ -223,6 +226,7 @@ func genModule() error {
 			StructNameLowerCamel: gutil.FirstLetterToLower(analysisRes.StructName),
 			Template:             codeLayerItem.Template,
 			ModelFields:          modelFields,
+			FieldImports:         calcFieldImports(modelFields),
 		}
 
 		// 生成错误码文件到项目根目录的pkg/code目录
@@ -273,4 +277,5 @@ type ModuleExtraParams struct {
 	StructNameLowerCamel string
 	Template             *template.Template
 	ModelFields          []ModelField
+	FieldImports         []string
 }

@@ -20,6 +20,8 @@ const (
 	TplFuncIsDefaultModelLayer = "isDefaultModelLayer"
 	TplFuncIsDefaultDaoLayer   = "isDefaultDaoLayer"
 	TplFuncHasTimeField        = "hasTimeField"
+	TplFuncGetFieldImports     = "getFieldImports"
+	TplFuncIsBasicType         = "isBasicType"
 
 	DBTypeMySQL    = "mysql"
 	DBTypePostgres = "postgresql"
@@ -98,6 +100,46 @@ func HasTimeField(fields []ModelField) bool {
 		}
 	}
 	return false
+}
+
+type FieldTypeImport struct {
+	ImportPath string
+	ImportName string
+}
+
+var fieldTypeImportMap = map[string]FieldTypeImport{
+	"json.RawMessage": {ImportPath: "encoding/json", ImportName: "json"},
+}
+
+func GetFieldImports(fields []ModelField) map[string]struct{} {
+	imports := make(map[string]struct{})
+	for _, field := range fields {
+		if importInfo, ok := fieldTypeImportMap[field.FieldType]; ok {
+			imports[importInfo.ImportPath] = struct{}{}
+		}
+	}
+	return imports
+}
+
+func IsBasicType(fieldType string) bool {
+	basicTypes := map[string]struct{}{
+		"string":    {},
+		"int":       {},
+		"int8":      {},
+		"int16":     {},
+		"int32":     {},
+		"int64":     {},
+		"uint":      {},
+		"uint8":     {},
+		"uint16":    {},
+		"uint32":    {},
+		"uint64":    {},
+		"float32":   {},
+		"float64":   {},
+		"time.Time": {},
+	}
+	_, ok := basicTypes[fieldType]
+	return ok
 }
 
 // RemoveTablePrefixFromStructName 从结构体名中去除表名前缀
