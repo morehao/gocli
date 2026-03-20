@@ -4,7 +4,9 @@ import (
 	{{- if hasTimeField .ModelFields}}
 	"time"
 	{{- end}}
-	
+	{{- range .FieldImports}}
+	"{{.}}"
+	{{- end}}
 	"gorm.io/gorm"
 )
 

@@ -18,12 +18,12 @@ go install github.com/morehao/gocli@latest
 
 ### Features
 
-* 🚀 **Fast Development**: Quickly generate a complete CRUD module based on MySQL table structure
+* 🚀 **Fast Development**: Quickly generate a complete CRUD module based on MySQL/PostgreSQL table structure
 * 📦 **Multi-Layer Generation**: Supports model, dao, service, controller, dto, router, and more
 * 🎯 **Three Generation Modes**: module (full module), model (data layer only), api (single API endpoint)
 * 🔧 **Highly Customizable**: Configure layer names, parent directories, and file name prefixes
 * ✨ **Auto Formatting**: Automatically formats generated code using `gofmt`
-* 📖 **Database-Driven**: Reads MySQL table structure to generate accurate model definitions
+* 📖 **Database-Driven**: Reads MySQL/PostgreSQL table structure to generate accurate model definitions
 
 ### Generation Modes
 
@@ -81,7 +81,7 @@ gocli generate -m api -a demoapp
 Example configuration file:
 
 ```yaml
-mysql_dsn: root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local
+database_dsn: mysql://root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local
 service_name: mysql
 module:
   package_name: user
@@ -102,13 +102,29 @@ api:
   api_doc_tag: User login records
 ```
 
+**Database Connection Format:**
+
+| Database Type | DSN Format |
+|---------------|------------|
+| MySQL | `mysql://user:password@tcp(host:port)/dbname?params` |
+| PostgreSQL | `postgresql://user:password@host:port/dbname?params` |
+
+**Examples:**
+```yaml
+# MySQL
+database_dsn: mysql://root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local
+
+# PostgreSQL
+database_dsn: postgresql://postgres:password@localhost:5432/demo?sslmode=disable
+```
+
 ### Configuration Reference
 
 #### Global Configuration
 
 | Field | Description | Example | Required |
 | ----- | ----------- | ------- | -------- |
-| `mysql_dsn` | MySQL database connection string | `root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local` | ✅ Yes |
+| `database_dsn` | Database connection string, format: schema://dsn | `mysql://root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local` | ✅ Yes |
 | `service_name` | Layer name prefix for model/dao directories and DB connection name | `mysql` | ✅ Yes |
 
 
@@ -117,7 +133,7 @@ api:
 | ----- | ----------- | ------- | -------- |
 | `package_name` | Package name for the module | `user` | ✅ Yes |
 | `description` | Module description (for comments) | `User login records` | ✅ Yes |
-| `table_name` | MySQL table name | `user_login_log` | ✅ Yes |
+| `table_name` | Database table name | `user_login_log` | ✅ Yes |
 | `table_prefix` | Table name prefix, removed when generating struct name | `iam_` | ❌ Optional |
 
 #### Model Configuration (for `model` mode)
@@ -126,7 +142,7 @@ api:
 | ----- | ----------- | ------- | -------- |
 | `package_name` | Package name for the model | `user` | ✅ Yes |
 | `description` | Model description | `User` | ✅ Yes |
-| `table_name` | MySQL table name | `user` | ✅ Yes |
+| `table_name` | Database table name | `user` | ✅ Yes |
 | `table_prefix` | Table name prefix, removed when generating struct name | `iam_` | ❌ Optional |
 
 #### API Configuration (for `api` mode)

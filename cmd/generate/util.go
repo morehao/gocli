@@ -20,7 +20,45 @@ const (
 	TplFuncIsDefaultModelLayer = "isDefaultModelLayer"
 	TplFuncIsDefaultDaoLayer   = "isDefaultDaoLayer"
 	TplFuncHasTimeField        = "hasTimeField"
+	TplFuncGetFieldImports     = "getFieldImports"
+	TplFuncIsBasicType         = "isBasicType"
+
+	DBTypeMySQL    = "mysql"
+	DBTypePostgres = "postgresql"
 )
+
+type DatabaseConfig struct {
+	Type    string
+	ConnStr string
+}
+
+func ParseDatabaseDSN(dsn string) (*DatabaseConfig, error) {
+	if dsn == "" {
+		return nil, fmt.Errorf("database dsn is empty")
+	}
+
+	parts := strings.SplitN(dsn, "://", 2)
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid database dsn format, expected: schema://connection_string, got: %s", dsn)
+	}
+
+	dbType := parts[0]
+
+	switch dbType {
+	case DBTypePostgres:
+		return &DatabaseConfig{
+			Type:    dbType,
+			ConnStr: dsn,
+		}, nil
+	case DBTypeMySQL:
+		return &DatabaseConfig{
+			Type:    dbType,
+			ConnStr: parts[1],
+		}, nil
+	default:
+		return nil, fmt.Errorf("unsupported database type: %s, supported types: mysql, postgres", dbType)
+	}
+}
 
 func IsBuiltInField(name string) bool {
 	buildInFieldMap := map[string]struct{}{
@@ -62,6 +100,46 @@ func HasTimeField(fields []ModelField) bool {
 		}
 	}
 	return false
+}
+
+type FieldTypeImport struct {
+	ImportPath string
+	ImportName string
+}
+
+var fieldTypeImportMap = map[string]FieldTypeImport{
+	"json.RawMessage": {ImportPath: "encoding/json", ImportName: "json"},
+}
+
+func GetFieldImports(fields []ModelField) map[string]struct{} {
+	imports := make(map[string]struct{})
+	for _, field := range fields {
+		if importInfo, ok := fieldTypeImportMap[field.FieldType]; ok {
+			imports[importInfo.ImportPath] = struct{}{}
+		}
+	}
+	return imports
+}
+
+func IsBasicType(fieldType string) bool {
+	basicTypes := map[string]struct{}{
+		"string":    {},
+		"int":       {},
+		"int8":      {},
+		"int16":     {},
+		"int32":     {},
+		"int64":     {},
+		"uint":      {},
+		"uint8":     {},
+		"uint16":    {},
+		"uint32":    {},
+		"uint64":    {},
+		"float32":   {},
+		"float64":   {},
+		"time.Time": {},
+	}
+	_, ok := basicTypes[fieldType]
+	return ok
 }
 
 // RemoveTablePrefixFromStructName 从结构体名中去除表名前缀

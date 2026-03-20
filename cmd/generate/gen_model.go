@@ -43,13 +43,15 @@ func genModel() error {
 				TplFuncIsDefaultModelLayer: IsDefaultModelLayer,
 				TplFuncIsDefaultDaoLayer:   IsDefaultDaoLayer,
 				TplFuncHasTimeField:        HasTimeField,
+				TplFuncGetFieldImports:     GetFieldImports,
+				TplFuncIsBasicType:         IsBasicType,
 			},
 		},
 		TableName: modelGenCfg.TableName,
 	}
 
 	gen := codegen.NewGenerator()
-	analysisRes, analysisErr := gen.AnalysisModuleTpl(MysqlClient, analysisCfg)
+	analysisRes, analysisErr := gen.AnalysisModuleTpl(DBClient, analysisCfg)
 	if analysisErr != nil {
 		return fmt.Errorf("analysis model tpl error: %v", analysisErr)
 	}
@@ -146,6 +148,7 @@ func genModel() error {
 				StructName:     analysisRes.StructName,
 				Template:       v.Template,
 				ModelFields:    modelFields,
+				FieldImports:   calcFieldImports(modelFields),
 			},
 		})
 
@@ -186,4 +189,19 @@ type ModelExtraParams struct {
 	StructName     string
 	Template       *template.Template
 	ModelFields    []ModelField
+	FieldImports   []string
+}
+
+func calcFieldImports(fields []ModelField) []string {
+	importMap := make(map[string]struct{})
+	for _, field := range fields {
+		if importInfo, ok := fieldTypeImportMap[field.FieldType]; ok {
+			importMap[importInfo.ImportPath] = struct{}{}
+		}
+	}
+	imports := make([]string, 0, len(importMap))
+	for path := range importMap {
+		imports = append(imports, path)
+	}
+	return imports
 }

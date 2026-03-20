@@ -18,12 +18,12 @@ go install github.com/morehao/gocli@latest
 
 ### 功能特性
 
-* 🚀 **快速开发**：基于 MySQL 表结构快速生成完整的 CRUD 模块
+* 🚀 **快速开发**：基于 MySQL/PostgreSQL 表结构快速生成完整的 CRUD 模块
 * 📦 **多层代码生成**：支持 model、dao、service、controller、dto、router 等多层代码
 * 🎯 **三种生成模式**：module（完整模块）、model（仅数据层）、api（单个接口）
 * 🔧 **高度可定制**：可配置层级名称、父级目录、文件名前缀
 * ✨ **自动格式化**：生成的代码自动使用 `gofmt` 格式化
-* 📖 **数据库驱动**：读取 MySQL 表结构生成准确的模型定义
+* 📖 **数据库驱动**：读取 MySQL/PostgreSQL 表结构生成准确的模型定义
 
 ### 生成模式
 
@@ -80,7 +80,7 @@ gocli generate -m api -a demoapp
 
 示例配置文件：
 ```yaml
-mysql_dsn: root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local
+database_dsn: mysql://root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local
 service_name: mysql
 module:
   package_name: user
@@ -100,13 +100,29 @@ api:
   description: 删除登录记录
   api_doc_tag: 用户登录记录
 ```
+
+**数据库连接格式说明：**
+
+| 数据库类型 | DSN 格式 |
+|-----------|---------|
+| MySQL | `mysql://user:password@tcp(host:port)/dbname?params` |
+| PostgreSQL | `postgres1l://user:password@host:port/dbname?params` |
+
+**示例：**
+```yaml
+# MySQL
+database_dsn: mysql://root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local
+
+# PostgreSQL
+database_dsn: postgresql://postgres:password@localhost:5432/demo?sslmode=disable
+```
 ### 配置说明
 
 #### 全局配置
 
 | 配置项 | 说明 | 示例值 | 是否必填 |
 | ----- | ---- | ------ | ------- |
-| `mysql_dsn` | MySQL 数据库连接字符串 | `root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local` | ✅ 必填 |
+| `database_dsn` | 数据库连接字符串，格式：schema://dsn | `mysql://root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local` | ✅ 必填 |
 | `service_name` | model/dao 层目录名称前缀及数据库连接名 | `mysql` | ✅ 必填 |
 
 
@@ -115,7 +131,7 @@ api:
 | ----- | ---- | ------ | ------- |
 | `package_name` | 模块包名 | `user` | ✅ 必填 |
 | `description` | 模块描述（用于注释） | `用户登录记录` | ✅ 必填 |
-| `table_name` | MySQL 表名 | `user_login_log` | ✅ 必填 |
+| `table_name` | 数据库表名 | `user_login_log` | ✅ 必填 |
 | `table_prefix` | 表名前缀，生成结构体名时会去除此前缀 | `iam_` | ❌ 可选 |
 
 #### 模型配置（用于 `model` 模式）
@@ -124,7 +140,7 @@ api:
 | ----- | ---- | ------ | ------- |
 | `package_name` | 模型包名 | `user` | ✅ 必填 |
 | `description` | 模型描述 | `用户` | ✅ 必填 |
-| `table_name` | MySQL 表名 | `user` | ✅ 必填 |
+| `table_name` | 数据库表名 | `user` | ✅ 必填 |
 | `table_prefix` | 表名前缀，生成结构体名时会去除此前缀 | `iam_` | ❌ 可选 |
 
 #### API 配置（用于 `api` 模式）

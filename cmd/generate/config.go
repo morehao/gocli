@@ -22,7 +22,7 @@ func buildLayerNameMap(serviceName string) map[codegen.LayerName]codegen.LayerNa
 }
 
 type Config struct {
-	MysqlDSN    string       `yaml:"mysql_dsn"`    // MySQL 连接字符串
+	DatabaseDSN string       `yaml:"database_dsn"` // 数据库连接字符串，格式：schema://dsn
 	ServiceName string       `yaml:"service_name"` // 服务名
 	Module      ModuleConfig `yaml:"module"`       // 模块生成配置
 	Model       ModelConfig  `yaml:"model"`        // 模型生成配置
