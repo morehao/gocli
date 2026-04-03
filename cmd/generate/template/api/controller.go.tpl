@@ -31,7 +31,7 @@ func New{{.StructName}}Ctr() {{.StructName}}Ctr {
 // @Produce application/json
 // @Param req body dto{{.PackageName}}.{{.StructName}}{{.FunctionName}}Req true "{{.Description}}"
 // @Success 200 {object} gincontext.DtoRender{data=dto{{.PackageName}}.{{.StructName}}{{.FunctionName}}Resp} "{"code": 0,"data": "ok","msg": "success"}"
-// @Router /{{.AppName}}/v1/{{.StructNameLowerCamel}}/{{.FunctionNameLowerCamel}} [post]
+// @Router /v1/{{.AppName}}/{{.StructNameLowerCamel}}/{{.FunctionNameLowerCamel}} [post]
 func (ctr *{{.StructNameLowerCamel}}Ctr) {{.FunctionName}}(ctx *gin.Context) {
 	var req dto{{.PackageName}}.{{.StructName}}{{.FunctionName}}Req
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -54,7 +54,7 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) {{.FunctionName}}(ctx *gin.Context) {
 // @Produce application/json
 // @Param req query dto{{.PackageName}}.{{.StructName}}{{.FunctionName}}Req true "{{.Description}}"
 // @Success 200 {object} gincontext.DtoRender{data=dto{{.PackageName}}.{{.StructName}}{{.FunctionName}}Resp} "{"code": 0,"data": "ok","msg": "success"}"
-// @Router /{{.AppName}}/v1/{{.StructNameLowerCamel}}/{{.FunctionNameLowerCamel}} [get]
+// @Router /v1/{{.AppName}}/{{.StructNameLowerCamel}}/{{.FunctionNameLowerCamel}} [get]
 func (ctr *{{.StructNameLowerCamel}}Ctr){{.FunctionName}}(ctx *gin.Context) {
 	var req dto{{.PackageName}}.{{.StructName}}{{.FunctionName}}Req
 	if err := ctx.ShouldBindQuery(&req); err != nil {

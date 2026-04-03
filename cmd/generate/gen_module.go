@@ -165,8 +165,8 @@ func genModule() error {
 	}
 
 	// 注册路由
-	routerContent := fmt.Sprintf("%sRouter(groups.AuthGroup)", gutil.FirstLetterToLower(analysisRes.StructName))
-	routerEnterFilepath := filepath.Join(workDir, "/router/enter.go")
+	routerContent := fmt.Sprintf("%sRouter(%sGroup)", gutil.FirstLetterToLower(analysisRes.StructName), appInfo.AppName)
+	routerEnterFilepath := filepath.Join(workDir, "/router/router.go")
 	if err := gast.AddContentToFunc(routerEnterFilepath, "RegisterRouter", routerContent); err != nil {
 		return fmt.Errorf("router appendContentToFunc error: %v", err)
 	}
@@ -253,9 +253,9 @@ func genModule() error {
 			return fmt.Errorf("failed to generate code file: %v", err)
 		}
 
-		// 注册错误码到项目根目录的pkg/code/enter.go
+		// 注册错误码到项目根目录的pkg/code/code.go
 		codeContent := fmt.Sprintf("registerError(%sErrorMsgMap)", gutil.FirstLetterToLower(analysisRes.StructName))
-		codeEnterFilepath := filepath.Join(cfg.appInfo.ProjectRootPath, "pkg/code/enter.go")
+		codeEnterFilepath := filepath.Join(cfg.appInfo.ProjectRootPath, "pkg/code/code.go")
 		if err := gast.AddContentToFunc(codeEnterFilepath, "init", codeContent); err != nil {
 			return fmt.Errorf("code appendContentToFunc error: %v", err)
 		}

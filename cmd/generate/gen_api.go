@@ -115,8 +115,8 @@ func genApi() error {
 
 	// 	注册路由
 	if isNewRouter {
-		routerCallContent := fmt.Sprintf("%sRouter(v1AuthGroup)", structNameLowerCamel)
-		routerEnterFilepath := filepath.Join(workDir, "/router/enter.go")
+		routerCallContent := fmt.Sprintf("%sRouter(%sGroup)", structNameLowerCamel, cfg.appInfo.AppName)
+		routerEnterFilepath := filepath.Join(workDir, "/router/router.go")
 		if err := gast.AddContentToFunc(routerEnterFilepath, "RegisterRouter", routerCallContent); err != nil {
 			return fmt.Errorf("new router appendContentToFunc error: %v", err)
 		}

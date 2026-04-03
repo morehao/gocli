@@ -64,6 +64,16 @@ func (svc *{{.StructNameLowerCamel}}Svc) Create(ctx *gin.Context, req *dto{{.Pac
 
 // Delete 删除{{.Description}}
 func (svc *{{.StructNameLowerCamel}}Svc) Delete(ctx *gin.Context, req *dto{{.PackageName}}.{{.StructName}}DeleteReq) error {
+	{{.StructNameLowerCamel}}Entity, err := {{.DaoPackageName}}.New{{.StructName}}Dao().GetByID(ctx, req.ID)
+	if err != nil {
+		glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}Delete] {{.DaoPackageName}} GetByID fail, err:%v, req:%s", err, gutil.ToJsonString(req))
+		return code.GetError(code.{{.StructName}}DeleteError)
+	}
+	if {{.StructNameLowerCamel}}Entity == nil || {{.StructNameLowerCamel}}Entity.ID == 0 {
+		return code.GetError(code.{{.StructName}}NotExistError)
+	}
+
+
 	userID := gincontext.GetUserID(ctx)
 
 	if err := {{.DaoPackageName}}.New{{.StructName}}Dao().Delete(ctx, req.ID, userID); err != nil {
@@ -75,6 +85,15 @@ func (svc *{{.StructNameLowerCamel}}Svc) Delete(ctx *gin.Context, req *dto{{.Pac
 
 // Update 更新{{.Description}}
 func (svc *{{.StructNameLowerCamel}}Svc) Update(ctx *gin.Context, req *dto{{.PackageName}}.{{.StructName}}UpdateReq) error {
+	{{.StructNameLowerCamel}}Entity, err := {{.DaoPackageName}}.New{{.StructName}}Dao().GetByID(ctx, req.ID)
+	if err != nil {
+		glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}Update] {{.DaoPackageName}} GetByID fail, err:%v, req:%s", err, gutil.ToJsonString(req))
+		return code.GetError(code.{{.StructName}}UpdateError)
+	}
+	if {{.StructNameLowerCamel}}Entity == nil || {{.StructNameLowerCamel}}Entity.ID == 0 {
+		return code.GetError(code.{{.StructName}}NotExistError)
+	}
+
 	updateMap := map[string]any{}
 	if err := {{.DaoPackageName}}.New{{.StructName}}Dao().UpdateMap(ctx, req.ID, updateMap); err != nil {
 		glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}Update] {{.DaoPackageName}} UpdateMap fail, err:%v, req:%s", err, gutil.ToJsonString(req))
