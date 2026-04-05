@@ -201,12 +201,13 @@ apps/demoapp/
 │   ├── service/        # Business logic
 │   │   └── svcuser/
 │   │       └── user.go
-│   └── dto/            # Request/Response DTOs
-│       └── dtouser/
-│           ├── request.go
-│           └── response.go
-└── router/             # Route registration
-    └── user.go
+│   ├── dto/            # Request/Response DTOs
+│   │   └── dtouser/
+│   │       ├── request.go
+│   │       └── response.go
+│   └── router/         # Route registration
+│       ├── router.go
+│       └── user.go
 
 pkg/code/               # Shared error codes
 └── user.go
@@ -283,4 +284,3 @@ This command will:
 2. Replace all import paths: `module/apps/demoapp/...` → `module/apps/newapp/...`
 3. Replace app names in configuration files
 4. Maintain proper Go code formatting
-

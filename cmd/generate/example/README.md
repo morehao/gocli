@@ -12,8 +12,9 @@ _example/
 │   └── demoapp/                   # 示例应用
 │       ├── config/                # 配置目录
 │       │   └── code_gen.yaml     # 代码生成配置文件
-│       └── router/                # 路由目录
-│           └── enter.go          # 路由注册入口文件
+│       └── internal/              # 内部实现目录
+│           └── router/            # 路由目录
+│               └── router.go      # 路由注册入口文件
 └── pkg/                           # 公共包目录
     └── code/                      # 错误码目录
         └── enter.go              # 错误码注册入口文件
@@ -116,7 +117,7 @@ gocli generate --mode api --app demoapp
 - **model/object**: 在 `apps/demoapp/` 下生成（可通过 layer_parent_dir_map 配置）
 - **dao**: 在 `apps/demoapp/{appName}dao/` 下生成（如 `demoappdao`），使用 `genericdao.GenericDao` 封装
 - **controller/service/dto**: 在 `apps/demoapp/internal/` 下生成（可通过 layer_parent_dir_map 配置）
-- **router**: 在 `apps/demoapp/router/` 下生成
+- **router**: 在 `apps/demoapp/internal/router/` 下生成
 - **code**: 在项目根目录的 `pkg/code/` 下生成
 
 ## 自定义配置
@@ -140,4 +141,3 @@ layer_prefix_map:
 ```
 
 **注意**：dao 层会自动生成到 `{appName}dao` 目录下（如 `demoappdao`），包名也为 `{appName}dao`，无需额外配置。
-

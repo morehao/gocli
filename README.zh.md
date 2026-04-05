@@ -199,12 +199,13 @@ apps/demoapp/
 │   ├── service/        # 业务逻辑层
 │   │   └── svcuser/
 │   │       └── user.go
-│   └── dto/            # 请求/响应 DTO
-│       └── dtouser/
-│           ├── request.go
-│           └── response.go
-└── router/             # 路由注册
-    └── user.go
+│   ├── dto/            # 请求/响应 DTO
+│   │   └── dtouser/
+│   │       ├── request.go
+│   │       └── response.go
+│   └── router/         # 路由注册
+│       ├── router.go
+│       └── user.go
 
 pkg/code/               # 共享错误码
 └── user.go
@@ -278,5 +279,4 @@ gocli cutter app -s demoapp -n adminapp
 2. 替换所有 import 路径：`module/apps/demoapp/...` → `module/apps/newapp/...`
 3. 替换配置文件中的应用名称
 4. 保持 Go 代码的正确格式
-
 
