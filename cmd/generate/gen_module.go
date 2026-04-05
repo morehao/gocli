@@ -165,8 +165,8 @@ func genModule() error {
 	}
 
 	// 注册路由
-	routerContent := fmt.Sprintf("%sRouter(%sGroup)", gutil.FirstLetterToLower(analysisRes.StructName), appInfo.AppName)
-	routerEnterFilepath := filepath.Join(workDir, "/router/router.go")
+	routerContent := fmt.Sprintf("%sRouter(groups)", gutil.FirstLetterToLower(analysisRes.StructName))
+	routerEnterFilepath := filepath.Join(workDir, "/internal/router/router.go")
 	if err := gast.AddContentToFunc(routerEnterFilepath, "RegisterRouter", routerContent); err != nil {
 		return fmt.Errorf("router appendContentToFunc error: %v", err)
 	}

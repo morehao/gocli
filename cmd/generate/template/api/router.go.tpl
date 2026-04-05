@@ -1,14 +1,14 @@
 package router
 
 import (
-	"github.com/gin-gonic/gin"
+	"github.com/morehao/golib/biz/grouter/ginrouter"
     "{{.ModulePath}}/{{.AppPathInProject}}/internal/controller/ctr{{.PackageName}}"
 )
 {{if .IsNewRouter}}
 // {{.StructNameLowerCamel}}Router 初始化{{.Description}}路由信息
-func {{.StructNameLowerCamel}}Router(routerGroup *gin.RouterGroup) {
+func {{.StructNameLowerCamel}}Router(groups *ginrouter.RouterGroups) {
 	{{.StructNameLowerCamel}}Ctr := ctr{{.PackageName}}.New{{.StructName}}Ctr()
 
-	routerGroup.{{.HttpMethod}}("/{{.StructNameLowerCamel}}/{{.FunctionNameLowerCamel}}", {{.StructNameLowerCamel}}Ctr.{{.FunctionName}})
+	groups.V1.{{.HttpMethod}}("/{{.StructNameLowerCamel}}/{{.FunctionNameLowerCamel}}", {{.StructNameLowerCamel}}Ctr.{{.FunctionName}})
 }
 {{end}}

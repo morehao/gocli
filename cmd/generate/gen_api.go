@@ -115,14 +115,14 @@ func genApi() error {
 
 	// 	注册路由
 	if isNewRouter {
-		routerCallContent := fmt.Sprintf("%sRouter(%sGroup)", structNameLowerCamel, cfg.appInfo.AppName)
-		routerEnterFilepath := filepath.Join(workDir, "/router/router.go")
+		routerCallContent := fmt.Sprintf("%sRouter(%s)", structNameLowerCamel, "groups")
+		routerEnterFilepath := filepath.Join(workDir, "/internal/router/router.go")
 		if err := gast.AddContentToFunc(routerEnterFilepath, "RegisterRouter", routerCallContent); err != nil {
 			return fmt.Errorf("new router appendContentToFunc error: %v", err)
 		}
 	} else {
-		routerCallContent := fmt.Sprintf(`routerGroup.%s("/%s/%s", %sCtr.%s) // %s`, apiGenCfg.HttpMethod, structNameLowerCamel, functionNameLowerCamel, structNameLowerCamel, functionName, apiGenCfg.Description)
-		routerEnterFilepath := filepath.Join(workDir, fmt.Sprintf("/router/%s.go", gutil.TrimFileExtension(apiGenCfg.PackageName)))
+		routerCallContent := fmt.Sprintf(`groups.V1.%s("/%s/%s", %sCtr.%s) // %s`, apiGenCfg.HttpMethod, structNameLowerCamel, functionNameLowerCamel, structNameLowerCamel, functionName, apiGenCfg.Description)
+		routerEnterFilepath := filepath.Join(workDir, fmt.Sprintf("/internal/router/%s.go", gutil.TrimFileExtension(apiGenCfg.PackageName)))
 		// 使用 AddContentToFunc 添加到函数末尾，避免注释丢失
 		if err := gast.AddContentToFuncWithLineNumber(routerEnterFilepath, fmt.Sprintf("%sRouter", structNameLowerCamel), routerCallContent, -1); err != nil {
 			return fmt.Errorf("appendContentToFunc error: %v", err)

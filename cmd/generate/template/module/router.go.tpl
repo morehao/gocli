@@ -1,17 +1,17 @@
 package router
 
 import (
-	"github.com/gin-gonic/gin"
+	"github.com/morehao/golib/biz/grouter/ginrouter"
 	"{{.ModulePath}}/{{.AppPathInProject}}/internal/controller/ctr{{.PackageName}}"
 )
 
 // {{.StructNameLowerCamel}}Router 初始化{{.Description}}路由信息
-func {{.StructNameLowerCamel}}Router(routerGroup *gin.RouterGroup) {
+func {{.StructNameLowerCamel}}Router(groups *ginrouter.RouterGroups) {
 	{{.StructNameLowerCamel}}Ctr := ctr{{.PackageName}}.New{{.StructName}}Ctr()
 
-	routerGroup.POST("/{{.StructNameLowerCamel}}/create", {{.StructNameLowerCamel}}Ctr.Create)    
-	routerGroup.POST("/{{.StructNameLowerCamel}}/delete", {{.StructNameLowerCamel}}Ctr.Delete)    
-	routerGroup.POST("/{{.StructNameLowerCamel}}/update", {{.StructNameLowerCamel}}Ctr.Update)    
-	routerGroup.GET("/{{.StructNameLowerCamel}}/detail", {{.StructNameLowerCamel}}Ctr.Detail)     
-	routerGroup.POST("/{{.StructNameLowerCamel}}/pageList", {{.StructNameLowerCamel}}Ctr.PageList) 
+	groups.V1.POST("/{{.StructNameLowerCamel}}/create", {{.StructNameLowerCamel}}Ctr.Create)
+	groups.V1.POST("/{{.StructNameLowerCamel}}/delete", {{.StructNameLowerCamel}}Ctr.Delete)
+	groups.V1.POST("/{{.StructNameLowerCamel}}/update", {{.StructNameLowerCamel}}Ctr.Update)
+	groups.V1.GET("/{{.StructNameLowerCamel}}/detail", {{.StructNameLowerCamel}}Ctr.Detail)
+	groups.V1.POST("/{{.StructNameLowerCamel}}/pageList", {{.StructNameLowerCamel}}Ctr.PageList)
 }

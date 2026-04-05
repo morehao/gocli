@@ -4,6 +4,7 @@ import "github.com/morehao/golib/codegen"
 
 var (
 	defaultLayerParentDirMap = map[codegen.LayerName]string{
+		codegen.LayerNameRouter:     "internal",
 		codegen.LayerNameController: "internal",
 		codegen.LayerNameService:    "internal",
 		codegen.LayerNameDto:        "internal",
