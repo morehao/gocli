@@ -1,17 +1,20 @@
 package router
 
 import (
-	"github.com/morehao/golib/biz/grouter/ginrouter"
 	"{{.ModulePath}}/{{.AppPathInProject}}/internal/controller/ctr{{.PackageName}}"
+	"github.com/morehao/golib/biz/gconstant"
+	"github.com/morehao/golib/biz/gserver/ginserver"
 )
 
 // {{.StructNameLowerCamel}}Router 初始化{{.Description}}路由信息
-func {{.StructNameLowerCamel}}Router(groups *ginrouter.RouterGroups) {
+func {{.StructNameLowerCamel}}Router(groups *ginserver.RouterGroups) {
 	{{.StructNameLowerCamel}}Ctr := ctr{{.PackageName}}.New{{.StructName}}Ctr()
 
-	groups.V1.POST("/{{.StructNameLowerCamel}}/create", {{.StructNameLowerCamel}}Ctr.Create)
-	groups.V1.POST("/{{.StructNameLowerCamel}}/delete", {{.StructNameLowerCamel}}Ctr.Delete)
-	groups.V1.POST("/{{.StructNameLowerCamel}}/update", {{.StructNameLowerCamel}}Ctr.Update)
-	groups.V1.GET("/{{.StructNameLowerCamel}}/detail", {{.StructNameLowerCamel}}Ctr.Detail)
-	groups.V1.POST("/{{.StructNameLowerCamel}}/pageList", {{.StructNameLowerCamel}}Ctr.PageList)
+	v1RouterGroup := groups.MustGetGroup(gconstant.ApiVersionV1)
+
+	v1RouterGroup.POST("/{{.StructNameLowerCamel}}/create", {{.StructNameLowerCamel}}Ctr.Create)
+	v1RouterGroup.POST("/{{.StructNameLowerCamel}}/delete", {{.StructNameLowerCamel}}Ctr.Delete)
+	v1RouterGroup.POST("/{{.StructNameLowerCamel}}/update", {{.StructNameLowerCamel}}Ctr.Update)
+	v1RouterGroup.GET("/{{.StructNameLowerCamel}}/detail", {{.StructNameLowerCamel}}Ctr.Detail)
+	v1RouterGroup.POST("/{{.StructNameLowerCamel}}/pageList", {{.StructNameLowerCamel}}Ctr.PageList)
 }

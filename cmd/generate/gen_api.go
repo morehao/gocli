@@ -121,7 +121,7 @@ func genApi() error {
 			return fmt.Errorf("new router appendContentToFunc error: %v", err)
 		}
 	} else {
-		routerCallContent := fmt.Sprintf(`groups.V1.%s("/%s/%s", %sCtr.%s) // %s`, apiGenCfg.HttpMethod, structNameLowerCamel, functionNameLowerCamel, structNameLowerCamel, functionName, apiGenCfg.Description)
+		routerCallContent := fmt.Sprintf(`v1RouterGroup.%s("/%s/%s", %sCtr.%s)`, apiGenCfg.HttpMethod, structNameLowerCamel, functionNameLowerCamel, structNameLowerCamel, functionName)
 		routerEnterFilepath := filepath.Join(workDir, fmt.Sprintf("/internal/router/%s.go", gutil.TrimFileExtension(apiGenCfg.PackageName)))
 		// 使用 AddContentToFunc 添加到函数末尾，避免注释丢失
 		if err := gast.AddContentToFuncWithLineNumber(routerEnterFilepath, fmt.Sprintf("%sRouter", structNameLowerCamel), routerCallContent, -1); err != nil {
