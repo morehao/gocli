@@ -13,11 +13,9 @@ type {{.StructName}}BaseInfo struct {
 {{- end}}
 
 {{- if eq .FieldType "time.Time"}}
-    // {{.FieldName}} {{.Comment}}
-    {{.FieldName}} int64 `json:"{{.JsonTagName}}" form:"{{.JsonTagName}}"`
+    {{.FieldName}} int64 `json:"{{.JsonTagName}}" form:"{{.JsonTagName}}"` // {{.Comment}}
 {{- else}}
-    // {{.FieldName}} {{.Comment}}
-    {{.FieldName}} {{.FieldType}} `json:"{{.JsonTagName}}" form:"{{.JsonTagName}}"`
+    {{.FieldName}} {{.FieldType}} `json:"{{.JsonTagName}}" form:"{{.JsonTagName}}"` // {{.Comment}}
 {{- end}}
 {{- end}}
 }

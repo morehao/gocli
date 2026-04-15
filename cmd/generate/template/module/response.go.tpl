@@ -6,28 +6,23 @@ import (
 )
 
 type {{.StructName}}CreateResp struct {
-	// ID 数据自增 ID
-	ID uint `json:"id"`
+	ID uint `json:"id"` // 数据自增 ID
 }
 
 type {{.StructName}}DetailResp struct {
-	// ID 数据自增 ID
-	ID uint `json:"id" validate:"required"`
+	ID uint `json:"id" validate:"required"` // 数据自增 ID
 	obj{{.PackageName}}.{{.StructName}}BaseInfo
 	gobject.OperatorBaseInfo
 
 }
 
 type {{.StructName}}PageListItem struct {
-	// ID 数据自增 ID
-	ID        uint `json:"id" validate:"required"`
+	ID        uint `json:"id" validate:"required"` // 数据自增 ID
 	obj{{.PackageName}}.{{.StructName}}BaseInfo
 	gobject.OperatorBaseInfo
 }
 
 type {{.StructName}}PageListResp struct {
-	// List 数据列表
-	List []{{.StructName}}PageListItem `json:"list"`
-	// Total 数据总条数
-	Total int64          `json:"total"`
+	List []{{.StructName}}PageListItem `json:"list"` // 数据列表
+	Total int64          `json:"total"` // 数据总条数
 }
