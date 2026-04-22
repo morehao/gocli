@@ -6,18 +6,18 @@ import (
 )
 
 type {{.StructName}}CreateResp struct {
-	ID uint `json:"id"` // 数据自增 ID
+	{{.StructName}}ID uint `json:"{{.StructNameLowerCamel}}ID"` // {{.StructName}}ID 自增 ID
 }
 
 type {{.StructName}}DetailResp struct {
-	ID uint `json:"id" validate:"required"` // 数据自增 ID
+	{{.StructName}}ID uint `json:"{{.StructNameLowerCamel}}ID" validate:"required"` // {{.StructName}}ID 自增 ID
 	obj{{.PackageName}}.{{.StructName}}BaseInfo
 	gobject.OperatorBaseInfo
 
 }
 
 type {{.StructName}}PageListItem struct {
-	ID        uint `json:"id" validate:"required"` // 数据自增 ID
+	{{.StructName}}ID uint `json:"{{.StructNameLowerCamel}}ID" validate:"required"` // {{.StructName}}ID 自增 ID
 	obj{{.PackageName}}.{{.StructName}}BaseInfo
 	gobject.OperatorBaseInfo
 }

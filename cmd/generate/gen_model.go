@@ -200,6 +200,9 @@ type ModelExtraParams struct {
 func calcFieldImports(fields []ModelField, excludeImports ...string) []string {
 	importMap := make(map[string]struct{})
 	for _, field := range fields {
+		if IsBuiltInField(field.FieldName) {
+			continue
+		}
 		if importInfo, ok := fieldTypeImportMap[field.FieldType]; ok {
 			importMap[importInfo.ImportPath] = struct{}{}
 		}

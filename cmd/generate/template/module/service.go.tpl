@@ -59,13 +59,13 @@ func (svc *{{.StructNameLowerCamel}}Svc) Create(ctx *gin.Context, req *dto{{.Pac
 		return nil, code.GetError(code.{{.StructName}}CreateError)
 	}
 	return &dto{{.PackageName}}.{{.StructName}}CreateResp{
-		ID: insertEntity.ID,
+		{{.StructName}}ID: insertEntity.ID,
 	}, nil
 }
 
 // Delete 删除{{.Description}}
 func (svc *{{.StructNameLowerCamel}}Svc) Delete(ctx *gin.Context, req *dto{{.PackageName}}.{{.StructName}}DeleteReq) error {
-	{{.StructNameLowerCamel}}Entity, err := {{.DaoPackageName}}.New{{.StructName}}Dao().GetByID(ctx, req.ID)
+	{{.StructNameLowerCamel}}Entity, err := {{.DaoPackageName}}.New{{.StructName}}Dao().GetByID(ctx, req.{{.StructName}}ID)
 	if err != nil {
 		glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}Delete] {{.DaoPackageName}} GetByID fail, err:%v, req:%s", err, gutil.ToJsonString(req))
 		return code.GetError(code.{{.StructName}}DeleteError)
@@ -77,7 +77,7 @@ func (svc *{{.StructNameLowerCamel}}Svc) Delete(ctx *gin.Context, req *dto{{.Pac
 
 	userID := gincontext.GetUserID(ctx)
 
-	if err := {{.DaoPackageName}}.New{{.StructName}}Dao().Delete(ctx, req.ID, userID); err != nil {
+	if err := {{.DaoPackageName}}.New{{.StructName}}Dao().Delete(ctx, req.{{.StructName}}ID, userID); err != nil {
 		glog.Errorf(ctx, "[svc{{.PackageName}}.Delete] {{.DaoPackageName}} Delete fail, err:%v, req:%s", err, gutil.ToJsonString(req))
 		return code.GetError(code.{{.StructName}}DeleteError)
 	}
@@ -86,7 +86,7 @@ func (svc *{{.StructNameLowerCamel}}Svc) Delete(ctx *gin.Context, req *dto{{.Pac
 
 // Update 更新{{.Description}}
 func (svc *{{.StructNameLowerCamel}}Svc) Update(ctx *gin.Context, req *dto{{.PackageName}}.{{.StructName}}UpdateReq) error {
-	{{.StructNameLowerCamel}}Entity, err := {{.DaoPackageName}}.New{{.StructName}}Dao().GetByID(ctx, req.ID)
+	{{.StructNameLowerCamel}}Entity, err := {{.DaoPackageName}}.New{{.StructName}}Dao().GetByID(ctx, req.{{.StructName}}ID)
 	if err != nil {
 		glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}Update] {{.DaoPackageName}} GetByID fail, err:%v, req:%s", err, gutil.ToJsonString(req))
 		return code.GetError(code.{{.StructName}}UpdateError)
@@ -96,7 +96,7 @@ func (svc *{{.StructNameLowerCamel}}Svc) Update(ctx *gin.Context, req *dto{{.Pac
 	}
 
 	updateMap := map[string]any{}
-	if err := {{.DaoPackageName}}.New{{.StructName}}Dao().UpdateMap(ctx, req.ID, updateMap); err != nil {
+	if err := {{.DaoPackageName}}.New{{.StructName}}Dao().UpdateMap(ctx, req.{{.StructName}}ID, updateMap); err != nil {
 		glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}Update] {{.DaoPackageName}} UpdateMap fail, err:%v, req:%s", err, gutil.ToJsonString(req))
 		return code.GetError(code.{{.StructName}}UpdateError)
 	}
@@ -105,7 +105,7 @@ func (svc *{{.StructNameLowerCamel}}Svc) Update(ctx *gin.Context, req *dto{{.Pac
 
 // Detail 根据id获取{{.Description}}
 func (svc *{{.StructNameLowerCamel}}Svc) Detail(ctx *gin.Context, req *dto{{.PackageName}}.{{.StructName}}DetailReq) (*dto{{.PackageName}}.{{.StructName}}DetailResp, error) {
-	{{.StructNameLowerCamel}}Entity, err := {{.DaoPackageName}}.New{{.StructName}}Dao().GetByID(ctx, req.ID)
+	{{.StructNameLowerCamel}}Entity, err := {{.DaoPackageName}}.New{{.StructName}}Dao().GetByID(ctx, req.{{.StructName}}ID)
 	if err != nil {
 		glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}Detail] {{.DaoPackageName}} GetByID fail, err:%v, req:%s", err, gutil.ToJsonString(req))
 		return nil, code.GetError(code.{{.StructName}}GetDetailError)
@@ -114,7 +114,7 @@ func (svc *{{.StructNameLowerCamel}}Svc) Detail(ctx *gin.Context, req *dto{{.Pac
 		return nil, code.GetError(code.{{.StructName}}NotExistError)
 	}
 	resp := &dto{{.PackageName}}.{{.StructName}}DetailResp{
-		ID:   {{.StructNameLowerCamel}}Entity.ID,
+		{{.StructName}}ID:   {{.StructNameLowerCamel}}Entity.ID,
 		{{.StructName}}BaseInfo: obj{{.PackageName}}.{{.StructName}}BaseInfo{
 	{{- range .ModelFields}}
 		{{- if isSysField .FieldName}}
@@ -151,7 +151,7 @@ func (svc *{{.StructNameLowerCamel}}Svc) PageList(ctx *gin.Context, req *dto{{.P
 	list := make([]dto{{.PackageName}}.{{.StructName}}PageListItem, 0, len({{.StructNameLowerCamel}}EntityList))
 	for _, v := range {{.StructNameLowerCamel}}EntityList {
 		list = append(list, dto{{.PackageName}}.{{.StructName}}PageListItem{
-			ID:   v.ID,
+			{{.StructName}}ID:   v.ID,
 			{{.StructName}}BaseInfo: obj{{.PackageName}}.{{.StructName}}BaseInfo{
 		{{- range .ModelFields}}
 			{{- if isSysField .FieldName}}

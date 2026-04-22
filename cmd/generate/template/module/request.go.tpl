@@ -10,12 +10,12 @@ type {{.StructName}}CreateReq struct {
 }
 
 type {{.StructName}}UpdateReq struct {
-	ID uint `json:"id" validate:"required" label:"数据自增id"` // 数据自增 ID
+	{{.StructName}}ID uint `json:"{{.StructNameLowerCamel}}ID" validate:"required" label:"{{.StructName}}自增id"` // {{.StructName}}ID 自增 ID
 	obj{{.PackageName}}.{{.StructName}}BaseInfo
 }
 
 type {{.StructName}}DetailReq struct {
-	ID uint `json:"id" form:"id" validate:"required" label:"数据自增id"` // 数据自增 ID
+	{{.StructName}}ID uint `json:"{{.StructNameLowerCamel}}ID" form:"{{.StructNameLowerCamel}}ID" validate:"required" label:"{{.StructName}}自增id"` // {{.StructName}}ID 自增 ID
 }
 
 type {{.StructName}}PageListReq struct {
@@ -23,5 +23,5 @@ type {{.StructName}}PageListReq struct {
 }
 
 type {{.StructName}}DeleteReq struct {
-	ID uint `json:"id" form:"id" validate:"required" label:"数据自增id"` // 数据自增 ID
+	{{.StructName}}ID uint `json:"{{.StructNameLowerCamel}}ID" form:"{{.StructNameLowerCamel}}ID" validate:"required" label:"{{.StructName}}自增id"` // {{.StructName}}ID 自增 ID
 }

@@ -29,15 +29,15 @@ func (c *{{.StructName}}Cond) BuildCondition(db *gorm.DB, tableName string) {
 {{- if isBasicType .FieldType}}
 	{{- if eq .FieldType "string"}}
 	if c.{{.FieldName}} != "" {
-		db.Where("{{.ColumnName}} = ?", c.{{.FieldName}})
+		db.Where(tableName+".{{.ColumnName}} = ?", c.{{.FieldName}})
 	}
 	{{- else if eq .FieldType "time.Time"}}
 	if !c.{{.FieldName}}.IsZero() {
-		db.Where("{{.ColumnName}} = ?", c.{{.FieldName}})
+		db.Where(tableName+".{{.ColumnName}} = ?", c.{{.FieldName}})
 	}
 	{{- else}}
 	if c.{{.FieldName}} != 0 {
-		db.Where("{{.ColumnName}} = ?", c.{{.FieldName}})
+		db.Where(tableName+".{{.ColumnName}} = ?", c.{{.FieldName}})
 	}
 	{{- end}}
 {{- else}}
