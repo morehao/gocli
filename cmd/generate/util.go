@@ -275,13 +275,11 @@ func CopyEmbeddedTemplatesToTempDir(embeddedFS embed.FS, root string) (string, e
 }
 
 // GetAppInfo 应用模块路径信息
-// 输入示例：/Users/morehao/xxx/go-gin-web/apps/demoapp
-// 或者：/Users/morehao/xxx/gocli/cmd/generate/_example/apps/demoapp
+// 输入示例：/Users/morehao/xxx/goark/apps/demo
 func GetAppInfo(workDir string) (*AppInfo, error) {
 	cleanPath := filepath.Clean(workDir)
 	segments := strings.Split(cleanPath, string(filepath.Separator))
 
-	// 查找 "apps/{appName}" 结构
 	var appsIndex = -1
 	for i := 0; i < len(segments)-1; i++ {
 		if segments[i] == "apps" {
@@ -292,25 +290,14 @@ func GetAppInfo(workDir string) (*AppInfo, error) {
 	if appsIndex == -1 {
 		return nil, fmt.Errorf("invalid structure: path does not contain /apps/{appName}")
 	}
-
-	// apps 目录前面至少需要有一个父级目录（projectName）
 	if appsIndex < 1 {
 		return nil, fmt.Errorf("invalid structure: apps directory must have at least one parent directory")
 	}
 
-	// 解析 app 名称
 	appName := segments[appsIndex+1]
-
-	// 解析项目名和相对路径
-	// 项目名是 apps 的直接父目录
 	projectName := segments[appsIndex-1]
-
-	// 构建从项目根到app的相对路径
-	// 如果 apps 直接在项目根下：apps/demoapp
 	appPathInProject := filepath.Join("apps", appName)
 
-	// 获取项目根目录的绝对路径
-	// 项目根目录是 apps 的父目录
 	projectRootPath := filepath.Join(segments[:appsIndex]...)
 	if len(projectRootPath) == 0 {
 		projectRootPath = string(filepath.Separator)
@@ -318,8 +305,8 @@ func GetAppInfo(workDir string) (*AppInfo, error) {
 		projectRootPath = string(filepath.Separator) + projectRootPath
 	}
 
-	// 读取 go.mod 文件获取模块路径
-	modulePath, err := getModulePath(projectRootPath)
+	// 传入 appPathInProject 用于裁剪模块路径
+	modulePath, err := getModulePath(filepath.Join(projectRootPath, appPathInProject), appPathInProject)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get module path: %v", err)
 	}
@@ -333,9 +320,10 @@ func GetAppInfo(workDir string) (*AppInfo, error) {
 	}, nil
 }
 
-// getModulePath 从 go.mod 文件中读取模块路径
-func getModulePath(projectRootPath string) (string, error) {
-	goModPath := filepath.Join(projectRootPath, "go.mod")
+// getModulePath 从 app 的 go.mod 中读取模块路径，并裁剪掉 appPathInProject 后缀
+// 例如：module=github.com/morehao/goark/apps/demo，suffix=apps/demo → github.com/morehao/goark
+func getModulePath(appRootPath string, appPathInProject string) (string, error) {
+	goModPath := filepath.Join(appRootPath, "go.mod")
 
 	file, err := os.Open(goModPath)
 	if err != nil {
@@ -347,17 +335,22 @@ func getModulePath(projectRootPath string) (string, error) {
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if strings.HasPrefix(line, "module ") {
-			// 提取模块路径，格式：module github.com/morehao/go-gin-web
-			modulePath := strings.TrimPrefix(line, "module ")
-			modulePath = strings.TrimSpace(modulePath)
-			return modulePath, nil
+			modulePath := strings.TrimSpace(strings.TrimPrefix(line, "module "))
+
+			// 将路径分隔符统一为 "/"（模块路径始终用 /）
+			suffix := filepath.ToSlash(appPathInProject) // "apps/demo"
+			trimmed := strings.TrimSuffix(modulePath, "/"+suffix)
+			if trimmed == modulePath {
+				// 未能裁剪，说明模块路径与目录结构不符，直接返回原值或报错
+				return "", fmt.Errorf("module path %q does not end with %q", modulePath, "/"+suffix)
+			}
+			return trimmed, nil
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
 		return "", fmt.Errorf("error reading go.mod: %v", err)
 	}
-
 	return "", fmt.Errorf("module declaration not found in go.mod")
 }
 
