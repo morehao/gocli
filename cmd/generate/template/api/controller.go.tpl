@@ -30,7 +30,7 @@ func New{{.StructName}}Ctr() {{.StructName}}Ctr {
 // @accept application/json
 // @Produce application/json
 // @Param req body dto{{.PackageName}}.{{.StructName}}{{.FunctionName}}Req true "{{.Description}}"
-// @Success 200 {object} gincontext.DtoRender{data=dto{{.PackageName}}.{{.StructName}}{{.FunctionName}}Resp} "{"code": 0,"data": "ok","msg": "success"}"
+// @Success 200 {object} gincontext.DtoRender{data=dto{{.PackageName}}.{{.StructName}}{{.FunctionName}}Resp} "{"code": 0, "requestID": "xxx", "data": "ok", "msg": "success"}"
 // @Router /v1/{{.AppName}}/{{.StructNameLowerCamel}}/{{.FunctionNameLowerCamel}} [post]
 func (ctr *{{.StructNameLowerCamel}}Ctr) {{.FunctionName}}(ctx *gin.Context) {
 	var req dto{{.PackageName}}.{{.StructName}}{{.FunctionName}}Req
@@ -53,7 +53,7 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) {{.FunctionName}}(ctx *gin.Context) {
 // @accept application/json
 // @Produce application/json
 // @Param req query dto{{.PackageName}}.{{.StructName}}{{.FunctionName}}Req true "{{.Description}}"
-// @Success 200 {object} gincontext.DtoRender{data=dto{{.PackageName}}.{{.StructName}}{{.FunctionName}}Resp} "{"code": 0,"data": "ok","msg": "success"}"
+// @Success 200 {object} gincontext.DtoRender{data=dto{{.PackageName}}.{{.StructName}}{{.FunctionName}}Resp} "{"code": 0, "requestID": "xxx", "data": "ok", "msg": "success"}"
 // @Router /v1/{{.AppName}}/{{.StructNameLowerCamel}}/{{.FunctionNameLowerCamel}} [get]
 func (ctr *{{.StructNameLowerCamel}}Ctr){{.FunctionName}}(ctx *gin.Context) {
 	var req dto{{.PackageName}}.{{.StructName}}{{.FunctionName}}Req

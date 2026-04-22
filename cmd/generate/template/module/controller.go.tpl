@@ -34,7 +34,7 @@ func New{{.StructName}}Ctr() {{.StructName}}Ctr {
 // @accept application/json
 // @Produce application/json
 // @Param req body dto{{.PackageName}}.{{.StructName}}CreateReq true "创建{{.Description}}"
-// @Success 200 {object} gincontext.DtoRender{data=dto{{.PackageName}}.{{.StructName}}CreateResp} "{"code": 0,"data": "ok","msg": "success"}"
+// @Success 200 {object} gincontext.DtoRender{data=dto{{.PackageName}}.{{.StructName}}CreateResp} "{"code": 0, "requestID": "xxx", "data": "ok", "msg": "success"}"
 // @Router /v1/{{.AppName}}/{{.StructNameLowerCamel}}/create [post]
 func (ctr *{{.StructNameLowerCamel}}Ctr) Create(ctx *gin.Context) {
 	var req dto{{.PackageName}}.{{.StructName}}CreateReq
@@ -57,7 +57,7 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Create(ctx *gin.Context) {
 // @accept application/json
 // @Produce application/json
 // @Param req body dto{{.PackageName}}.{{.StructName}}DeleteReq true "删除{{.Description}}"
-// @Success 200 {object} gincontext.DtoRender{data=string} "{"code": 0,"data": "ok","msg": "删除成功"}"
+// @Success 200 {object} gincontext.DtoRender{data=string} "{"code": 0, "requestID": "xxx", "data": "ok", "msg": "success"}"
 // @Router /v1/{{.AppName}}/{{.StructNameLowerCamel}}/delete [post]
 func (ctr *{{.StructNameLowerCamel}}Ctr) Delete(ctx *gin.Context) {
 	var req dto{{.PackageName}}.{{.StructName}}DeleteReq
@@ -80,7 +80,7 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Delete(ctx *gin.Context) {
 // @accept application/json
 // @Produce application/json
 // @Param req body dto{{.PackageName}}.{{.StructName}}UpdateReq true "修改{{.Description}}"
-// @Success 200 {object} gincontext.DtoRender{data=string} "{"code": 0,"data": "ok","msg": "修改成功"}"
+// @Success 200 {object} gincontext.DtoRender{data=string} "{"code": 0, "requestID": "xxx", "data": "ok", "msg": "修改成功"}"
 // @Router /v1/{{.AppName}}/{{.StructNameLowerCamel}}/update [post]
 func (ctr *{{.StructNameLowerCamel}}Ctr) Update(ctx *gin.Context) {
 	var req dto{{.PackageName}}.{{.StructName}}UpdateReq
@@ -102,7 +102,7 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Update(ctx *gin.Context) {
 // @accept application/json
 // @Produce application/json
 // @Param req query dto{{.PackageName}}.{{.StructName}}DetailReq true "{{.Description}}详情"
-// @Success 200 {object} gincontext.DtoRender{data=dto{{.PackageName}}.{{.StructName}}DetailResp} "{"code": 0,"data": "ok","msg": "success"}"
+// @Success 200 {object} gincontext.DtoRender{data=dto{{.PackageName}}.{{.StructName}}DetailResp} "{"code": 0, "requestID": "xxx", "data": "ok", "msg": "success"}"
 // @Router /v1/{{.AppName}}/{{.StructNameLowerCamel}}/detail [get]
 func (ctr *{{.StructNameLowerCamel}}Ctr) Detail(ctx *gin.Context) {
 	var req dto{{.PackageName}}.{{.StructName}}DetailReq
@@ -125,7 +125,7 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Detail(ctx *gin.Context) {
 // @accept application/json
 // @Produce application/json
 // @Param req query dto{{.PackageName}}.{{.StructName}}PageListReq true "{{.Description}}列表"
-// @Success 200 {object} gincontext.DtoRender{data=dto{{.PackageName}}.{{.StructName}}PageListResp} "{"code": 0,"data": "ok","msg": "success"}"
+// @Success 200 {object} gincontext.DtoRender{data=dto{{.PackageName}}.{{.StructName}}PageListResp} "{"code": 0, "requestID": "xxx", "data": "ok", "msg": "success"}"
 // @Router /v1/{{.AppName}}/{{.StructNameLowerCamel}}/pageList [post]
 func (ctr *{{.StructNameLowerCamel}}Ctr) PageList(ctx *gin.Context) {
 	var req dto{{.PackageName}}.{{.StructName}}PageListReq
