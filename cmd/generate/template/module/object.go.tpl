@@ -1,10 +1,12 @@
 package obj{{.PackageName}}
 
+{{- if .FieldImports}}
 import (
 	{{- range .FieldImports}}
 	"{{.}}"
 	{{- end}}
 )
+{{- end}}
 
 type {{.StructName}}BaseInfo struct {
 {{- range .ModelFields}}

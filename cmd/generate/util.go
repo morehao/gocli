@@ -109,6 +109,7 @@ type FieldTypeImport struct {
 
 var fieldTypeImportMap = map[string]FieldTypeImport{
 	"json.RawMessage": {ImportPath: "encoding/json", ImportName: "json"},
+	"time.Time":       {ImportPath: "time", ImportName: "time"},
 }
 
 func GetFieldImports(fields []ModelField) map[string]struct{} {

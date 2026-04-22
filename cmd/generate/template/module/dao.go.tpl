@@ -1,16 +1,14 @@
 package {{.DaoPackageName}}
 
 import (
-	{{- if hasTimeField .ModelFields}}
-	"time"
-	{{- end}}
 	{{- range .FieldImports}}
 	"{{.}}"
 	{{- end}}
-	"{{.ModulePath}}/{{.AppPathInProject}}/{{.ModelLayerName}}"
-	"{{.ModulePath}}/pkg/dbclient"
+
 	"github.com/morehao/golib/biz/genericdao"
 	"gorm.io/gorm"
+	"{{.ModulePath}}/{{.AppPathInProject}}/{{.ModelLayerName}}"
+	"{{.ModulePath}}/pkg/dbclient"
 )
 
 type {{.StructName}}Cond struct {

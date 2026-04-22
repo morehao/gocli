@@ -1,10 +1,16 @@
 package svc{{.PackageName}}
 
 import (
-	{{- if hasTimeField .ModelFields}}
-	"time"
+	{{- range .FieldImports}}
+	"{{.}}"
 	{{- end}}
+
 	"github.com/gin-gonic/gin"
+	"github.com/morehao/golib/biz/gcontext/gincontext"
+	"github.com/morehao/golib/biz/genericdao"
+	"github.com/morehao/golib/biz/gobject"
+	"github.com/morehao/golib/glog"
+	"github.com/morehao/golib/gutil"
 	"{{.ModulePath}}/{{.AppPathInProject}}/{{.DaoPackageName}}"
 	"{{.ModulePath}}/{{.AppPathInProject}}/internal/dto/dto{{.PackageName}}"
     {{- if isDefaultModelLayer .ModelLayerName}}
@@ -14,11 +20,6 @@ import (
     {{- end}}
 	"{{.ModulePath}}/{{.AppPathInProject}}/object/obj{{.PackageName}}"
 	"{{.ModulePath}}/pkg/code"
-	"github.com/morehao/golib/biz/gcontext/gincontext"
-	"github.com/morehao/golib/biz/genericdao"
-	"github.com/morehao/golib/biz/gobject"
-	"github.com/morehao/golib/glog"
-	"github.com/morehao/golib/gutil"
 )
 
 type {{.StructName}}Svc interface {

@@ -129,32 +129,36 @@ func genModule() error {
 			targetDir = filepath.Dir(v.TargetDir)
 		}
 
-		genParamsList = append(genParamsList, codegen.GenParamsItem{
-			TargetDir:      targetDir,
-			TargetFileName: targetFilename,
-			Template:       v.Template,
-			ExtraParams: ModuleExtraParams{
-				AppInfo: AppInfo{
-					ProjectName:      appInfo.ProjectName,
-					AppPathInProject: appInfo.AppPathInProject,
-					AppName:          appInfo.AppName,
-					ProjectRootPath:  appInfo.ProjectRootPath,
-					ModulePath:       appInfo.ModulePath,
+		fieldImports := calcFieldImports(modelFields)
+			if v.OriginLayerName == codegen.LayerNameObject {
+				fieldImports = calcFieldImports(modelFields, "time")
+			}
+			genParamsList = append(genParamsList, codegen.GenParamsItem{
+				TargetDir:      targetDir,
+				TargetFileName: targetFilename,
+				Template:       v.Template,
+				ExtraParams: ModuleExtraParams{
+					AppInfo: AppInfo{
+						ProjectName:      appInfo.ProjectName,
+						AppPathInProject: appInfo.AppPathInProject,
+						AppName:          appInfo.AppName,
+						ProjectRootPath:  appInfo.ProjectRootPath,
+						ModulePath:       appInfo.ModulePath,
+					},
+					PackageName:          analysisRes.PackageName,
+					TableName:            analysisRes.TableName,
+					ModelLayerName:       string(modelLayerName),
+					DaoLayerName:         string(daoLayerName),
+					DaoPackageName:       string(daoLayerName),
+					DBName:               fmt.Sprintf("%sDB", gutil.FirstLetterToUpper(cfg.ServiceName)),
+					Description:          moduleGenCfg.Description,
+					StructName:           analysisRes.StructName,
+					StructNameLowerCamel: gutil.FirstLetterToLower(analysisRes.StructName),
+					Template:             v.Template,
+					ModelFields:          modelFields,
+					FieldImports:         fieldImports,
 				},
-				PackageName:          analysisRes.PackageName,
-				TableName:            analysisRes.TableName,
-				ModelLayerName:       string(modelLayerName),
-				DaoLayerName:         string(daoLayerName),
-				DaoPackageName:       fmt.Sprintf("%sdao", appInfo.AppName),
-				DBName:               fmt.Sprintf("%sDB", gutil.FirstLetterToUpper(cfg.ServiceName)),
-				Description:          moduleGenCfg.Description,
-				StructName:           analysisRes.StructName,
-				StructNameLowerCamel: gutil.FirstLetterToLower(analysisRes.StructName),
-				Template:             v.Template,
-				ModelFields:          modelFields,
-				FieldImports:         calcFieldImports(modelFields),
-			},
-		})
+			})
 
 	}
 	genParams := &codegen.GenParams{
@@ -219,7 +223,7 @@ func genModule() error {
 			TableName:            analysisRes.TableName,
 			ModelLayerName:       string(modelLayerName),
 			DaoLayerName:         string(daoLayerName),
-			DaoPackageName:       fmt.Sprintf("%sdao", appInfo.AppName),
+			DaoPackageName:       string(daoLayerName),
 			DBName:               fmt.Sprintf("%sDB", gutil.FirstLetterToUpper(appInfo.AppName)),
 			Description:          moduleGenCfg.Description,
 			StructName:           analysisRes.StructName,

@@ -17,8 +17,8 @@ var (
 
 func buildLayerNameMap(serviceName string) map[codegen.LayerName]codegen.LayerName {
 	return map[codegen.LayerName]codegen.LayerName{
-		codegen.LayerNameModel: codegen.LayerName(serviceName + "model"),
-		codegen.LayerNameDao:   codegen.LayerName(serviceName + "dao"),
+		// codegen.LayerNameModel: codegen.LayerName(serviceName + "model"),
+		// codegen.LayerNameDao:   codegen.LayerName(serviceName + "dao"),
 	}
 }
 

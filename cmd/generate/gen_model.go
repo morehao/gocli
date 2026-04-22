@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"text/template"
 
 	"github.com/morehao/golib/codegen"
@@ -126,6 +127,10 @@ func genModel() error {
 			targetDir = filepath.Dir(v.TargetDir)
 		}
 
+		fieldImports := calcFieldImports(modelFields)
+		if v.OriginLayerName == codegen.LayerNameObject {
+			fieldImports = calcFieldImports(modelFields, "time")
+		}
 		genParamsList = append(genParamsList, codegen.GenParamsItem{
 			TargetDir:      targetDir,
 			TargetFileName: targetFilename,
@@ -142,13 +147,13 @@ func genModel() error {
 				TableName:      analysisRes.TableName,
 				ModelLayerName: string(modelLayerName),
 				DaoLayerName:   string(daoLayerName),
-				DaoPackageName: fmt.Sprintf("%sdao", cfg.appInfo.AppName),
+				DaoPackageName: string(daoLayerName),
 				DBName:         fmt.Sprintf("%sDB", gutil.FirstLetterToUpper(cfg.ServiceName)),
 				Description:    modelGenCfg.Description,
 				StructName:     analysisRes.StructName,
 				Template:       v.Template,
 				ModelFields:    modelFields,
-				FieldImports:   calcFieldImports(modelFields),
+				FieldImports:   fieldImports,
 			},
 		})
 
@@ -192,16 +197,20 @@ type ModelExtraParams struct {
 	FieldImports   []string
 }
 
-func calcFieldImports(fields []ModelField) []string {
+func calcFieldImports(fields []ModelField, excludeImports ...string) []string {
 	importMap := make(map[string]struct{})
 	for _, field := range fields {
 		if importInfo, ok := fieldTypeImportMap[field.FieldType]; ok {
 			importMap[importInfo.ImportPath] = struct{}{}
 		}
 	}
+	for _, exclude := range excludeImports {
+		delete(importMap, exclude)
+	}
 	imports := make([]string, 0, len(importMap))
 	for path := range importMap {
 		imports = append(imports, path)
 	}
+	sort.Strings(imports)
 	return imports
 }
