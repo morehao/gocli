@@ -2,6 +2,7 @@ package generate
 
 import (
 	"fmt"
+	"go/token"
 	"os"
 	"path/filepath"
 	"text/template"
@@ -72,11 +73,17 @@ func genModule() error {
 
 	var genParamsList []codegen.GenParamsItem
 	var codeLayerItem *codegen.ModuleTplAnalysisItem
+	var tableLayerItem *codegen.ModuleTplAnalysisItem
+	var modelTargetDir string
 	for _, v := range analysisRes.TplAnalysisList {
-		// 如果是code层，单独处理，不加入通用生成列表
 		if v.OriginLayerName == codegen.LayerNameCode {
 			tmpV := v
 			codeLayerItem = &tmpV
+			continue
+		}
+		if v.OriginLayerName == codegen.LayerName("table") {
+			tmpV := v
+			tableLayerItem = &tmpV
 			continue
 		}
 
@@ -125,8 +132,10 @@ func genModule() error {
 
 		targetDir := v.TargetDir
 		if v.OriginLayerName == codegen.LayerNameDao {
-			// 删除最后一级目录
 			targetDir = filepath.Dir(v.TargetDir)
+		}
+		if v.OriginLayerName == codegen.LayerNameModel {
+			modelTargetDir = targetDir
 		}
 
 		fieldImports := calcFieldImports(modelFields)
@@ -166,6 +175,43 @@ func genModule() error {
 	}
 	if err := gen.Gen(genParams); err != nil {
 		return err
+	}
+
+	if tableLayerItem != nil {
+		constName := fmt.Sprintf("TableName%s", analysisRes.StructName)
+		tableFilepath := filepath.Join(modelTargetDir, "table.go")
+		if gutil.FileExists(tableFilepath) {
+			if err := gast.AddConstToFile(tableFilepath, constName, analysisRes.TableName, token.STRING); err != nil {
+				return fmt.Errorf("failed to append table const: %v", err)
+			}
+		} else {
+			tableExtraParams := ModuleExtraParams{
+				AppInfo: AppInfo{
+					ProjectName:      appInfo.ProjectName,
+					AppPathInProject: appInfo.AppPathInProject,
+					AppName:          appInfo.AppName,
+					ProjectRootPath:  appInfo.ProjectRootPath,
+					ModulePath:       appInfo.ModulePath,
+				},
+				PackageName:    analysisRes.PackageName,
+				TableName:      analysisRes.TableName,
+				ModelLayerName: string(modelLayerName),
+				StructName:     analysisRes.StructName,
+			}
+			tableGenParams := &codegen.GenParams{
+				ParamsList: []codegen.GenParamsItem{
+					{
+						TargetDir:      modelTargetDir,
+						TargetFileName: "table.go",
+						Template:       tableLayerItem.Template,
+						ExtraParams:    tableExtraParams,
+					},
+				},
+			}
+			if err := gen.Gen(tableGenParams); err != nil {
+				return fmt.Errorf("failed to generate table.go: %v", err)
+			}
+		}
 	}
 
 	// 注册路由

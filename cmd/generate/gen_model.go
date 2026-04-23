@@ -2,12 +2,14 @@ package generate
 
 import (
 	"fmt"
+	"go/token"
 	"os"
 	"path/filepath"
 	"sort"
 	"text/template"
 
 	"github.com/morehao/golib/codegen"
+	"github.com/morehao/golib/gast"
 	"github.com/morehao/golib/gutil"
 )
 
@@ -77,7 +79,15 @@ func genModel() error {
 	}
 
 	var genParamsList []codegen.GenParamsItem
+	var tableLayerItem *codegen.ModuleTplAnalysisItem
+	var modelTargetDir string
 	for _, v := range analysisRes.TplAnalysisList {
+		if v.OriginLayerName == codegen.LayerName("table") {
+			tmpV := v
+			tableLayerItem = &tmpV
+			continue
+		}
+
 		var modelFields []ModelField
 		for _, field := range v.ModelFields {
 			nullableDesc := nullableDefaultDesc
@@ -123,8 +133,10 @@ func genModel() error {
 
 		targetDir := v.TargetDir
 		if v.OriginLayerName == codegen.LayerNameDao {
-			// 删除最后一级目录
 			targetDir = filepath.Dir(v.TargetDir)
+		}
+		if v.OriginLayerName == codegen.LayerNameModel {
+			modelTargetDir = targetDir
 		}
 
 		fieldImports := calcFieldImports(modelFields)
@@ -164,6 +176,44 @@ func genModel() error {
 	if err := gen.Gen(genParams); err != nil {
 		return err
 	}
+
+	if tableLayerItem != nil {
+		constName := fmt.Sprintf("TableName%s", analysisRes.StructName)
+		tableFilepath := filepath.Join(modelTargetDir, "table.go")
+		if gutil.FileExists(tableFilepath) {
+			if err := gast.AddConstToFile(tableFilepath, constName, analysisRes.TableName, token.STRING); err != nil {
+				return fmt.Errorf("failed to append table const: %v", err)
+			}
+		} else {
+			tableExtraParams := ModelExtraParams{
+				AppInfo: AppInfo{
+					ProjectName:      cfg.appInfo.ProjectName,
+					AppPathInProject: cfg.appInfo.AppPathInProject,
+					AppName:          cfg.appInfo.AppName,
+					ProjectRootPath:  cfg.appInfo.ProjectRootPath,
+					ModulePath:       cfg.appInfo.ModulePath,
+				},
+				PackageName:    analysisRes.PackageName,
+				TableName:      analysisRes.TableName,
+				ModelLayerName: string(modelLayerName),
+				StructName:     analysisRes.StructName,
+			}
+			tableGenParams := &codegen.GenParams{
+				ParamsList: []codegen.GenParamsItem{
+					{
+						TargetDir:      modelTargetDir,
+						TargetFileName: "table.go",
+						Template:       tableLayerItem.Template,
+						ExtraParams:    tableExtraParams,
+					},
+				},
+			}
+			if err := gen.Gen(tableGenParams); err != nil {
+				return fmt.Errorf("failed to generate table.go: %v", err)
+			}
+		}
+	}
+
 	return nil
 }
 
