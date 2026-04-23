@@ -1,28 +1,37 @@
 package code
 
-import "fmt"
+import (
+	"fmt"
 
-const (
-	UserLoginLogCreateError = 10001 + iota
-	UserLoginLogDeleteError
-	UserLoginLogUpdateError
-	UserLoginLogGetDetailError
-	UserLoginLogGetPageListError
-	UserLoginLogNotExistError
+	"github.com/morehao/golib/biz/gconstant"
+	"github.com/morehao/golib/biz/genericdao"
+	"github.com/morehao/golib/gerror"
 )
 
-var userLoginLogErrorMsgMap = map[int]string{
-	UserLoginLogCreateError:      "创建失败",
-	UserLoginLogDeleteError:      "删除失败",
-	UserLoginLogUpdateError:      "更新失败",
-	UserLoginLogGetDetailError:   "查询详情失败",
-	UserLoginLogGetPageListError: "查询列表失败",
-	UserLoginLogNotExistError:    "数据不存在",
+var errorMap = gerror.ErrorMap{}
+
+func registerError(codeMsgMap gerror.CodeMsgMap) {
+	for code, msg := range codeMsgMap {
+
+		if _, ok := errorMap[code]; ok {
+			panic(fmt.Sprintf("error code %d already exists", code))
+		}
+		errorMap[code] = gerror.Error{
+			Code: code,
+			Msg:  msg,
+		}
+	}
 }
 
-func GetError(code int) error {
-	if msg, ok := userLoginLogErrorMsgMap[code]; ok {
-		return fmt.Errorf("code=%d,msg=%s", code, msg)
-	}
-	return fmt.Errorf("code=%d", code)
+func GetError(code int) *gerror.Error {
+	err := errorMap[code]
+	return &err
+}
+
+func init() {
+	// 业务错误码规范: 从 1002XX 开始
+	// 模块划分: 1002XX(租户) 1003XX(公司) 1004XX(部门) 1005XX(用户) 1006XX(菜单) 1007XX(角色)
+	registerError(genericdao.DBErrorMsgMap)
+	registerError(gconstant.SystemErrorMsgMap)
+	registerError(gconstant.AuthErrorMsgMap)
 }
