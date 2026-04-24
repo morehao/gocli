@@ -43,6 +43,9 @@ func genApi() error {
 	structNameLowerCamel := gutil.FirstLetterToLower(structName)
 	functionName := gutil.FirstLetterToUpper(apiGenCfg.FunctionName)
 	functionNameLowerCamel := gutil.FirstLetterToLower(apiGenCfg.FunctionName)
+
+	fmt.Printf("[API] Generating API - Method: %s, Path: /%s/%s, Description: %s\n",
+		apiGenCfg.HttpMethod, structNameLowerCamel, functionNameLowerCamel, apiGenCfg.Description)
 	var genParamsList []codegen.GenParamsItem
 	var isNewRouter, isNewController bool
 	var controllerFilepath, serviceFilepath string
@@ -120,6 +123,7 @@ func genApi() error {
 		if err := gast.AddContentToFunc(routerEnterFilepath, "RegisterRouter", routerCallContent); err != nil {
 			return fmt.Errorf("new router appendContentToFunc error: %v", err)
 		}
+		fmt.Printf("[API] Registered new router: %sRouter\n", structNameLowerCamel)
 	} else {
 		routerCallContent := fmt.Sprintf(`v1RouterGroup.%s("/%s/%s", %sCtr.%s)`, apiGenCfg.HttpMethod, structNameLowerCamel, functionNameLowerCamel, structNameLowerCamel, functionName)
 		routerEnterFilepath := filepath.Join(workDir, fmt.Sprintf("/internal/router/%s.go", gutil.TrimFileExtension(apiGenCfg.PackageName)))
@@ -127,6 +131,7 @@ func genApi() error {
 		if err := gast.AddContentToFuncWithLineNumber(routerEnterFilepath, fmt.Sprintf("%sRouter", structNameLowerCamel), routerCallContent, -1); err != nil {
 			return fmt.Errorf("appendContentToFunc error: %v", err)
 		}
+		fmt.Printf("[API] Added route to existing router: %s %s\n", apiGenCfg.HttpMethod, fmt.Sprintf("/%s/%s", structNameLowerCamel, functionNameLowerCamel))
 	}
 	return nil
 }

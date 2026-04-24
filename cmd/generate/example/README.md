@@ -89,7 +89,7 @@ gocli generate --mode model --app demoapp
 
 ```bash
 # 在项目根目录运行
-gocli generate --mode module --app demoapp
+gocli generate module -a demoapp
 ```
 
 #### api 模式
@@ -101,7 +101,7 @@ gocli generate --mode module --app demoapp
 
 ```bash
 # 在项目根目录运行
-gocli generate --mode api --app demoapp
+gocli generate api -a demoapp
 ```
 
 ## 注意事项

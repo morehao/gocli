@@ -42,7 +42,7 @@ go install github.com/morehao/gocli@latest
 **使用场景**：从零开始创建新功能模块
 
 ```bash
-gocli generate -m module -a demoapp
+gocli generate module -a demoapp
 ```
 
 #### 2. **model** - 数据层生成
@@ -55,7 +55,7 @@ gocli generate -m module -a demoapp
 **使用场景**：只需添加数据库表，无需完整 CRUD 操作
 
 ```bash
-gocli generate -m model -a demoapp
+gocli generate model -a demoapp
 ```
 
 #### 3. **api** - 单个接口生成
@@ -69,7 +69,7 @@ gocli generate -m model -a demoapp
 **使用场景**：为已有功能添加新的接口
 
 ```bash
-gocli generate -m api -a demoapp
+gocli generate api -a demoapp
 ```
 
 ### 命令执行前提
@@ -160,28 +160,27 @@ database_dsn: postgresql://postgres:password@localhost:5432/demo?sslmode=disable
 # 在项目根目录（如 go-gin-web）下执行以下命令
 
 # 生成完整模块（model + dao + service + controller + dto + router + code）
-gocli generate -m module -a demoapp
+gocli generate module -a demoapp
 
 # 仅生成数据层（model + dao + object）
-gocli generate -m model -a demoapp
+gocli generate model -a demoapp
 
 # 生成单个 API 接口（controller + service + dto + router）
-gocli generate -m api -a demoapp
+gocli generate api -a demoapp
 ```
 
 **参数说明：**
-- `-m, --mode`：生成模式 - `module`、`model` 或 `api`（必填）
 - `-a, --app`：应用名称，例如：`demoapp`（必填）
 
 **使用技巧：**
-- 💡 从零开始新功能时使用 `module` 模式
-- 💡 只需数据库模型时使用 `model` 模式
-- 💡 为现有模块添加新接口时使用 `api` 模式
+- 💡 从零开始新功能时使用 `module`
+- 💡 只需数据库模型时使用 `model`
+- 💡 为现有模块添加新接口时使用 `api`
 - 💡 查看 [goark](https://github.com/morehao/goark) 项目的 `Makefile` 了解实际使用示例
 
 ### 生成的文件结构
 
-当你执行 `gocli generate -m module -a demoapp` 时，工具会生成：
+当你执行 `gocli generate module -a demoapp` 时，工具会生成：
 
 ```
 apps/demoapp/

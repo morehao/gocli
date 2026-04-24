@@ -22,6 +22,8 @@ const (
 func genModel() error {
 	modelGenCfg := cfg.Model
 
+	fmt.Printf("[Model] Generating model based on table: %s\n", modelGenCfg.TableName)
+
 	// 使用工具函数复制嵌入的模板文件到临时目录
 	tplDir, getTplErr := CopyEmbeddedTemplatesToTempDir(TemplatesFS, "template/model")
 	if getTplErr != nil {
@@ -214,6 +216,7 @@ func genModel() error {
 		}
 	}
 
+	fmt.Printf("[Model] Generated layers: model(%s), dao(%s)\n", modelLayerName, daoLayerName)
 	return nil
 }
 

@@ -42,7 +42,7 @@ Generates a complete CRUD module including all layers:
 **Use Case**: Creating a new feature module from scratch
 
 ```bash
-gocli generate -m module -a demoapp
+gocli generate module -a demoapp
 ```
 
 #### 2. **model** - Data Layer Generation
@@ -55,7 +55,7 @@ Generates only the data layer code:
 **Use Case**: Adding a new database table without full CRUD operations
 
 ```bash
-gocli generate -m model -a demoapp
+gocli generate model -a demoapp
 ```
 
 #### 3. **api** - Single API Endpoint
@@ -69,7 +69,7 @@ Adds a new API endpoint to an existing module:
 **Use Case**: Adding a new endpoint to an existing feature
 
 ```bash
-gocli generate -m api -a demoapp
+gocli generate api -a demoapp
 ```
 
 ### Prerequisites
@@ -162,28 +162,27 @@ database_dsn: postgresql://postgres:password@localhost:5432/demo?sslmode=disable
 # Run commands in the project root directory (e.g., go-gin-web)
 
 # Generate a complete module (model + dao + service + controller + dto + router + code)
-gocli generate -m module -a demoapp
+gocli generate module -a demoapp
 
 # Generate only data layer (model + dao + object)
-gocli generate -m model -a demoapp
+gocli generate model -a demoapp
 
 # Generate a single API endpoint (controller + service + dto + router)
-gocli generate -m api -a demoapp
+gocli generate api -a demoapp
 ```
 
 **Parameters:**
-- `-m, --mode`: Generation mode - `module`, `model`, or `api` (required)
 - `-a, --app`: Application name, e.g., `demoapp` (required)
 
 **Quick Tips:**
-- 💡 Use `module` mode when starting a new feature from scratch
-- 💡 Use `model` mode when you only need database models
-- 💡 Use `api` mode to add new endpoints to existing modules
+- 💡 Use `module` when starting a new feature from scratch
+- 💡 Use `model` when you only need database models
+- 💡 Use `api` to add new endpoints to existing modules
 - 💡 Check the [goark](https://github.com/morehao/goark) `Makefile` for practical examples
 
 ### Generated File Structure
 
-When you run `gocli generate -m module -a demoapp`, the tool generates:
+When you run `gocli generate module -a demoapp`, the tool generates:
 
 ```
 apps/demoapp/
