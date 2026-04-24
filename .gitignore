@@ -31,12 +31,19 @@ g
 .opencode
 
 # 忽略 demoapp 下生成的代码
-cmd/generate/example/apps/demoapp/*
+cmd/generate/example/apps/demoapp/**
 
 # 但保留配置和路由入口（代码生成会追加内容）
+!cmd/generate/example/apps/demoapp/go.mod
+!cmd/generate/example/apps/demoapp/go.sum
 !cmd/generate/example/apps/demoapp/config/
 !cmd/generate/example/apps/demoapp/config/code_gen.yaml
 !cmd/generate/example/apps/demoapp/internal/
 !cmd/generate/example/apps/demoapp/internal/router/
 !cmd/generate/example/apps/demoapp/internal/router/router.go
-!cmd/generate/example/pkg/code/enter.go
+
+# 忽略 pkg 所有的文件，但保留一部分指定的文件
+cmd/generate/example/pkg/**
+!cmd/generate/example/pkg/dbclient/
+!cmd/generate/example/pkg/dbclient/gorm.go
+!cmd/generate/example/pkg/code/code.go
