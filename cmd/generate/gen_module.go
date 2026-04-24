@@ -15,6 +15,8 @@ import (
 func genModule() error {
 	moduleGenCfg := cfg.Module
 
+	fmt.Printf("[Module] Generating module based on table: %s\n", moduleGenCfg.TableName)
+
 	// 使用工具函数复制嵌入的模板文件到临时目录
 	tplDir, getTplErr := CopyEmbeddedTemplatesToTempDir(TemplatesFS, "template/module")
 	if getTplErr != nil {
@@ -220,6 +222,7 @@ func genModule() error {
 	if err := gast.AddContentToFunc(routerEnterFilepath, "RegisterRouter", routerContent); err != nil {
 		return fmt.Errorf("router appendContentToFunc error: %v", err)
 	}
+	fmt.Printf("[Module] Registered router: %sRouter\n", gutil.FirstLetterToLower(analysisRes.StructName))
 
 	// 处理code层：生成错误码文件到项目根目录的pkg/code目录
 	if codeLayerItem != nil {
@@ -309,8 +312,10 @@ func genModule() error {
 		if err := gast.AddContentToFunc(codeEnterFilepath, "init", codeContent); err != nil {
 			return fmt.Errorf("code appendContentToFunc error: %v", err)
 		}
+		fmt.Printf("[Module] Registered error code: %sErrorMsgMap\n", gutil.FirstLetterToLower(analysisRes.StructName))
 	}
 
+	fmt.Printf("[Module] Generated layers: model(%s), dao(%s)\n", modelLayerName, daoLayerName)
 	return nil
 }
 

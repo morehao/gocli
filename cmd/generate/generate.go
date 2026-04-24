@@ -33,7 +33,32 @@ var Cmd = &cobra.Command{
 	Use:   "generate",
 	Short: "Generate code based on templates",
 	Long:  `Generate code for different layers like module, model, and API based on predefined templates.`,
-	Run: func(cmd *cobra.Command, args []string) {
+}
+
+var moduleCmd = &cobra.Command{
+	Use:   "module",
+	Short: "Generate module code",
+	Run:   runGenerate(genModule),
+}
+
+var modelCmd = &cobra.Command{
+	Use:   "model",
+	Short: "Generate model code",
+	Run:   runGenerate(genModel),
+}
+
+var apiCmd = &cobra.Command{
+	Use:   "api",
+	Short: "Generate api code",
+	Run:   runGenerate(genApi),
+}
+
+func init() {
+	Cmd.AddCommand(moduleCmd, modelCmd, apiCmd)
+}
+
+func runGenerate(genFn func() error) func(cmd *cobra.Command, args []string) {
+	return func(cmd *cobra.Command, args []string) {
 		projectRootDir, _ := os.Getwd()
 
 		appName, _ := cmd.Flags().GetString("app")
@@ -90,35 +115,16 @@ var Cmd = &cobra.Command{
 			DBClient = dbClient
 		}
 
-		mode, _ := cmd.Flags().GetString("mode")
-
-		switch mode {
-		case "module":
-			if err := genModule(); err != nil {
-				fmt.Printf("Error generating module: %v\n", err)
-				return
-			}
-			fmt.Println("Module generated successfully")
-		case "model":
-			if err := genModel(); err != nil {
-				fmt.Printf("Error generating model: %v\n", err)
-				return
-			}
-			fmt.Println("Model generated successfully")
-		case "api":
-			if err := genApi(); err != nil {
-				fmt.Printf("Error generating api: %v\n", err)
-				return
-			}
-			fmt.Println("API generated successfully")
-
-		default:
-			fmt.Println("Invalid mode. Available modes are: module, model, api")
+		if err := genFn(); err != nil {
+			fmt.Printf("Error generating: %v\n", err)
+			return
 		}
-	},
+		fmt.Println("Generated successfully")
+	}
 }
 
 func init() {
-	Cmd.Flags().StringP("mode", "m", "", "Mode of code generation (module, model, api)")
-	Cmd.Flags().StringP("app", "a", "", "App name to generate code for (e.g., demoapp)")
+	for _, subCmd := range []*cobra.Command{moduleCmd, modelCmd, apiCmd} {
+		subCmd.Flags().StringP("app", "a", "", "App name to generate code for (e.g., demoapp)")
+	}
 }
