@@ -14,7 +14,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/morehao/golib/conf"
+	"github.com/morehao/golib/gutil"
 	"github.com/spf13/cobra"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
@@ -56,7 +56,7 @@ var Cmd = &cobra.Command{
 				return
 			}
 
-			conf.LoadConfig(configFilepath, &cfg)
+			gutil.LoadYamlConfig(configFilepath, &cfg)
 			appInfo, getAppInfoErr := GetAppInfo(workDir)
 			if getAppInfoErr != nil {
 				fmt.Printf("Get app info error: %v\n", getAppInfoErr)

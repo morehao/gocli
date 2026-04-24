@@ -3,11 +3,11 @@ service_name: mysql
 module:
   package_name: user
   description: 用户登录记录
-  table_name: user_login_log
+  table_name: user
 model:
   package_name: user
-  description: 用户
-  table_name: user
+  description: 用户登录记录
+  table_name: user_login_log
 api:
   package_name: user
   target_filename: user_login_log.go

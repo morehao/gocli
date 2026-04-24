@@ -22,8 +22,6 @@ type {{.StructName}}Entity struct {
 
 type {{.StructName}}EntityList []{{.StructName}}Entity
 
-const TableName{{.StructName}} = "{{.TableName}}"
-
 func ({{.StructName}}Entity ) TableName() string {
   return TableName{{.StructName}}
 }
