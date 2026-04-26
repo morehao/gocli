@@ -119,6 +119,8 @@ func genModule() error {
 				GormComment:          gormComment,
 				Comment:              comment,
 				StructNameLowerCamel: gutil.FirstLetterToLower(analysisRes.StructName),
+				IndexName:            field.IndexName,
+				IsUniqueIndex:        field.IsUniqueIndex,
 			})
 		}
 
@@ -257,6 +259,8 @@ func genModule() error {
 				GormComment:          gormComment,
 				Comment:              comment,
 				StructNameLowerCamel: gutil.FirstLetterToLower(analysisRes.StructName),
+				IndexName:            field.IndexName,
+				IsUniqueIndex:        field.IsUniqueIndex,
 			})
 		}
 
