@@ -120,6 +120,8 @@ func genModel() error {
 				GormComment:          gormComment,
 				Comment:              comment,
 				StructNameLowerCamel: gutil.FirstLetterToLower(analysisRes.StructName),
+				IndexName:            field.IndexName,
+				IsUniqueIndex:        field.IsUniqueIndex,
 			})
 		}
 
@@ -233,6 +235,8 @@ type ModelField struct {
 	GormComment          string // gorm tag中的注释，格式为 "comment: xxx"，用于 model 层
 	Comment              string // 普通注释，用于 obj 层等其他地方
 	StructNameLowerCamel string // 结构体名称小驼峰，用于模板引用
+	IndexName            string // 索引名称
+	IsUniqueIndex        bool   // 是否唯一索引
 }
 
 type ModelExtraParams struct {
