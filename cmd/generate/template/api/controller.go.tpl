@@ -42,9 +42,8 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) {{.FunctionName}}(ctx *gin.Context) {
 	if err != nil {
 		gincontext.Fail(ctx, err)
 		return
-	} else {
-		gincontext.Success(ctx, res)
 	}
+	gincontext.Success(ctx, res)
 }
 {{else if eq .HttpMethod "GET"}}
 // {{.FunctionName}} {{.Description}}
@@ -65,8 +64,7 @@ func (ctr *{{.StructNameLowerCamel}}Ctr){{.FunctionName}}(ctx *gin.Context) {
 	if err != nil {
 		gincontext.Fail(ctx, err)
 		return
-	} else {
-		gincontext.Success(ctx, res)
 	}
+	gincontext.Success(ctx, res)
 }
 {{end}}

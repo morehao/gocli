@@ -46,9 +46,8 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Create(ctx *gin.Context) {
 	if err != nil {
 		gincontext.Fail(ctx, err)
 		return
-	} else {
-		gincontext.Success(ctx, res)
 	}
+	gincontext.Success(ctx, res)
 }
 
 // Delete 删除{{.Description}}
@@ -69,9 +68,8 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Delete(ctx *gin.Context) {
 	if err := ctr.{{.StructNameLowerCamel}}Svc.Delete(ctx, &req); err != nil {
 		gincontext.Fail(ctx, err)
 		return
-	} else {
-		gincontext.Success(ctx, "删除成功")
 	}
+	gincontext.Success(ctx, "删除成功")
 }
 
 // Update 修改{{.Description}}
@@ -91,9 +89,8 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Update(ctx *gin.Context) {
 	if err := ctr.{{.StructNameLowerCamel}}Svc.Update(ctx, &req); err != nil {
 		gincontext.Fail(ctx, err)
 		return
-	} else {
-		gincontext.Success(ctx, "修改成功")
 	}
+	gincontext.Success(ctx, "修改成功")
 }
 
 // Detail {{.Description}}详情
@@ -114,9 +111,8 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Detail(ctx *gin.Context) {
 	if err != nil {
 		gincontext.Fail(ctx, err)
 		return
-	} else {
-		gincontext.Success(ctx, res)
 	}
+	gincontext.Success(ctx, res)
 }
 
 // PageList {{.Description}}列表
@@ -137,7 +133,6 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) PageList(ctx *gin.Context) {
 	if err != nil {
 		gincontext.Fail(ctx, err)
 		return
-	} else {
-		gincontext.Success(ctx, res)
 	}
+	gincontext.Success(ctx, res)
 }
