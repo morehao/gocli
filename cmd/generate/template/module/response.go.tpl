@@ -10,14 +10,14 @@ type {{.StructName}}CreateResp struct {
 }
 
 type {{.StructName}}DetailResp struct {
-	{{.StructName}}ID uint `json:"{{.StructNameLowerCamel}}ID" validate:"required"` // 自增 ID
+	{{.StructName}}ID uint `json:"{{.StructNameLowerCamel}}ID" binding:"required"` // 自增 ID
 	obj{{.PackageName}}.{{.StructName}}BaseInfo
 	gobject.OperatorBaseInfo
 
 }
 
 type {{.StructName}}PageListItem struct {
-	{{.StructName}}ID uint `json:"{{.StructNameLowerCamel}}ID" validate:"required"` // 自增 ID
+	{{.StructName}}ID uint `json:"{{.StructNameLowerCamel}}ID" binding:"required"` // 自增 ID
 	obj{{.PackageName}}.{{.StructName}}BaseInfo
 	gobject.OperatorBaseInfo
 }
