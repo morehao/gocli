@@ -15,7 +15,7 @@ type {{.StructName}}UpdateReq struct {
 }
 
 type {{.StructName}}DetailReq struct {
-	{{.StructName}}ID uint `json:"{{.StructNameLowerCamel}}ID" form:"{{.StructNameLowerCamel}}ID" validate:"required" label:"{{.StructName}}自增id"` // 自增 ID
+	{{.StructName}}ID uint `json:"{{.StructNameLowerCamel}}ID" validate:"required" label:"{{.StructName}}自增id"` // 自增 ID
 }
 
 type {{.StructName}}PageListReq struct {
@@ -23,5 +23,5 @@ type {{.StructName}}PageListReq struct {
 }
 
 type {{.StructName}}DeleteReq struct {
-	{{.StructName}}ID uint `json:"{{.StructNameLowerCamel}}ID" form:"{{.StructNameLowerCamel}}ID" validate:"required" label:"{{.StructName}}自增id"` // 自增 ID
+	{{.StructName}}ID uint `json:"{{.StructNameLowerCamel}}ID" validate:"required" label:"{{.StructName}}自增id"` // 自增 ID
 }

@@ -124,12 +124,12 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Detail(ctx *gin.Context) {
 // @Summary {{.Description}}列表分页
 // @accept application/json
 // @Produce application/json
-// @Param req query dto{{.PackageName}}.{{.StructName}}PageListReq true "{{.Description}}列表"
+// @Param req body dto{{.PackageName}}.{{.StructName}}PageListReq true "{{.Description}}列表"
 // @Success 200 {object} gincontext.DtoRender{data=dto{{.PackageName}}.{{.StructName}}PageListResp} "{"code": 0, "requestID": "xxx", "data": "ok", "msg": "success"}"
 // @Router /v1/{{.AppName}}/{{.StructNameLowerCamel}}/pageList [post]
 func (ctr *{{.StructNameLowerCamel}}Ctr) PageList(ctx *gin.Context) {
 	var req dto{{.PackageName}}.{{.StructName}}PageListReq
-	if err := ctx.ShouldBindQuery(&req); err != nil {
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		gincontext.Fail(ctx, err)
 		return
 	}
