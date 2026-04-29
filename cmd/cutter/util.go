@@ -28,10 +28,15 @@ var defaultIgnoreFiles = []string{
 	"*.tmp",
 }
 
-// isGoProject 检查指定路径是否为Go项目（是否包含go.mod文件）
+// isGoProject 检查指定路径是否为Go项目
 func isGoProject(path string) bool {
-	_, err := os.Stat(filepath.Join(path, "go.mod"))
-	return !os.IsNotExist(err)
+	if _, err := os.Stat(filepath.Join(path, "go.mod")); !os.IsNotExist(err) {
+		return true
+	}
+	if _, err := os.Stat(filepath.Join(path, "go.work")); !os.IsNotExist(err) {
+		return true
+	}
+	return false
 }
 
 func shouldIgnore(relativePath string) bool {

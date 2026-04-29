@@ -91,10 +91,12 @@ func copyAndReplaceProject(srcDir, dstDir, oldName, newName string) error {
 	if err != nil {
 		return err
 	}
-	if err := modifyGoMod(dstDir, newName); err != nil {
-		return err
+	if _, err := os.Stat(filepath.Join(dstDir, "go.mod")); !os.IsNotExist(err) {
+		if err := modifyGoMod(dstDir, newName); err != nil {
+			return err
+		}
 	}
-	return err
+	return nil
 }
 
 // copyAndReplaceGoFile 复制并替换 Go 文件中的 import 路径
