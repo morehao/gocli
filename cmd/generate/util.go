@@ -274,6 +274,22 @@ func CopyEmbeddedTemplatesToTempDir(embeddedFS embed.FS, root string) (string, e
 	return tempDir, nil
 }
 
+func findGitRoot(workDir string) (string, error) {
+	current := workDir
+	for {
+		gitPath := filepath.Join(current, ".git")
+		if _, err := os.Stat(gitPath); err == nil {
+			return current, nil
+		}
+		parent := filepath.Dir(current)
+		if parent == current {
+			break
+		}
+		current = parent
+	}
+	return "", fmt.Errorf(".git directory not found")
+}
+
 // GetAppInfo 应用模块路径信息
 // 输入示例：/Users/morehao/xxx/goark/apps/demo
 func GetAppInfo(workDir string) (*AppInfo, error) {
@@ -303,6 +319,11 @@ func GetAppInfo(workDir string) (*AppInfo, error) {
 		projectRootPath = string(filepath.Separator)
 	} else {
 		projectRootPath = string(filepath.Separator) + projectRootPath
+	}
+
+	gitRoot, gitErr := findGitRoot(cleanPath)
+	if gitErr == nil && strings.HasPrefix(gitRoot, projectRootPath) {
+		projectRootPath = gitRoot
 	}
 
 	// 传入 appPathInProject 用于裁剪模块路径
