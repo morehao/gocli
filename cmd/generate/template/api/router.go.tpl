@@ -1,7 +1,7 @@
 package router
 
 import (
-    "{{.ModulePath}}/{{.AppPathInProject}}/internal/controller/ctr{{.PackageName}}"
+    "{{.BaseModulePath}}/{{.AppModuleName}}/internal/controller/ctr{{.PackageName}}"
 	"github.com/morehao/golib/biz/gconstant"
 	"github.com/morehao/golib/biz/gserver/ginserver"
 )

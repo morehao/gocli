@@ -1,7 +1,7 @@
 package dto{{.PackageName}}
 
 import (
-	"{{.ModulePath}}/{{.AppPathInProject}}/object/obj{{.PackageName}}"
+	"{{.BaseModulePath}}/{{.AppModuleName}}/object/obj{{.PackageName}}"
 	"github.com/morehao/golib/biz/gobject"
 )
 

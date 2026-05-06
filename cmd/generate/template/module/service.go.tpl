@@ -11,15 +11,15 @@ import (
 	"github.com/morehao/golib/biz/gobject"
 	"github.com/morehao/golib/glog"
 	"github.com/morehao/golib/gutil"
-	"{{.ModulePath}}/{{.AppPathInProject}}/{{.DaoPackageName}}"
-	"{{.ModulePath}}/{{.AppPathInProject}}/internal/dto/dto{{.PackageName}}"
+	"{{.BaseModulePath}}/{{.AppModuleName}}/{{.DaoPackageName}}"
+	"{{.BaseModulePath}}/{{.AppModuleName}}/internal/dto/dto{{.PackageName}}"
     {{- if isDefaultModelLayer .ModelLayerName}}
-    "{{.ModulePath}}/{{.AppPathInProject}}/model"
+    "{{.BaseModulePath}}/{{.AppModuleName}}/model"
     {{- else}}
-    "{{.ModulePath}}/{{.AppPathInProject}}/{{.ModelLayerName}}"
+    "{{.BaseModulePath}}/{{.AppModuleName}}/{{.ModelLayerName}}"
     {{- end}}
-	"{{.ModulePath}}/{{.AppPathInProject}}/object/obj{{.PackageName}}"
-	"{{.ModulePath}}/pkg/code"
+	"{{.BaseModulePath}}/{{.AppModuleName}}/object/obj{{.PackageName}}"
+	"{{.BaseModulePath}}/pkg/code"
 )
 
 type {{.StructName}}Svc interface {

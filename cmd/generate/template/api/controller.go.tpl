@@ -2,8 +2,8 @@ package ctr{{.PackageName}}
 
 import (
     "github.com/gin-gonic/gin"
-    "{{.ModulePath}}/{{.AppPathInProject}}/internal/dto/dto{{.PackageName}}"
-    "{{.ModulePath}}/{{.AppPathInProject}}/internal/service/svc{{.PackageName}}"
+    "{{.BaseModulePath}}/{{.AppModuleName}}/internal/dto/dto{{.PackageName}}"
+    "{{.BaseModulePath}}/{{.AppModuleName}}/internal/service/svc{{.PackageName}}"
     "github.com/morehao/golib/biz/gcontext/gincontext"
 )
 {{if not .TargetFileExist}}

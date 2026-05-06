@@ -7,8 +7,8 @@ import (
 
 	"github.com/morehao/golib/biz/genericdao"
 	"gorm.io/gorm"
-	"{{.ModulePath}}/{{.AppPathInProject}}/{{.ModelLayerName}}"
-	"{{.ModulePath}}/pkg/dbclient"
+	"{{.BaseModulePath}}/{{.AppModuleName}}/{{.ModelLayerName}}"
+	"{{.BaseModulePath}}/pkg/dbclient"
 )
 
 type {{.StructName}}Cond struct {

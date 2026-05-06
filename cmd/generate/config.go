@@ -32,11 +32,11 @@ type Config struct {
 }
 
 type AppInfo struct {
-	AppPathInProject string
-	ProjectName      string
-	AppName          string
-	ProjectRootPath  string
-	ModulePath       string
+	ProjectName     string
+	AppName         string
+	ProjectRootPath string
+	BaseModulePath  string
+	AppModuleName   string
 }
 
 type ModuleConfig struct {

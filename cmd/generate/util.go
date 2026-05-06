@@ -291,7 +291,7 @@ func findGitRoot(workDir string) (string, error) {
 }
 
 // GetAppInfo 应用模块路径信息
-// 输入示例：/Users/morehao/xxx/goark/apps/demo
+// 输入示例：/Users/morehao/xxx/ark-iam/apps/iam
 func GetAppInfo(workDir string) (*AppInfo, error) {
 	cleanPath := filepath.Clean(workDir)
 	segments := strings.Split(cleanPath, string(filepath.Separator))
@@ -312,7 +312,6 @@ func GetAppInfo(workDir string) (*AppInfo, error) {
 
 	appName := segments[appsIndex+1]
 	projectName := segments[appsIndex-1]
-	appPathInProject := filepath.Join("apps", appName)
 
 	projectRootPath := filepath.Join(segments[:appsIndex]...)
 	if len(projectRootPath) == 0 {
@@ -326,29 +325,27 @@ func GetAppInfo(workDir string) (*AppInfo, error) {
 		projectRootPath = gitRoot
 	}
 
-	// 传入 appPathInProject 用于裁剪模块路径
-	modulePath, err := getModulePath(filepath.Join(projectRootPath, appPathInProject), appPathInProject)
+	baseModulePath, appModuleName, err := getModuleInfo(filepath.Join(projectRootPath, "apps", appName))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get module path: %v", err)
+		return nil, fmt.Errorf("failed to get module info: %v", err)
 	}
 
 	return &AppInfo{
-		AppPathInProject: appPathInProject,
-		ProjectName:      projectName,
-		AppName:          appName,
-		ProjectRootPath:  projectRootPath,
-		ModulePath:       modulePath,
+		ProjectName:     projectName,
+		AppName:         appName,
+		ProjectRootPath: projectRootPath,
+		BaseModulePath:  baseModulePath,
+		AppModuleName:   appModuleName,
 	}, nil
 }
 
-// getModulePath 从 app 的 go.mod 中读取模块路径，并裁剪掉 appPathInProject 后缀
-// 例如：module=github.com/morehao/goark/apps/demo，suffix=apps/demo → github.com/morehao/goark
-func getModulePath(appRootPath string, appPathInProject string) (string, error) {
+// getModuleInfo 从 app 的 go.mod 中读取模块路径，拆分为基础路径和app模块名
+func getModuleInfo(appRootPath string) (string, string, error) {
 	goModPath := filepath.Join(appRootPath, "go.mod")
 
 	file, err := os.Open(goModPath)
 	if err != nil {
-		return "", fmt.Errorf("failed to open go.mod: %v", err)
+		return "", "", fmt.Errorf("failed to open go.mod: %v", err)
 	}
 	defer file.Close()
 
@@ -357,22 +354,20 @@ func getModulePath(appRootPath string, appPathInProject string) (string, error) 
 		line := strings.TrimSpace(scanner.Text())
 		if strings.HasPrefix(line, "module ") {
 			modulePath := strings.TrimSpace(strings.TrimPrefix(line, "module "))
-
-			// 将路径分隔符统一为 "/"（模块路径始终用 /）
-			suffix := filepath.ToSlash(appPathInProject) // "apps/demo"
-			trimmed := strings.TrimSuffix(modulePath, "/"+suffix)
-			if trimmed == modulePath {
-				// 未能裁剪，说明模块路径与目录结构不符，直接返回原值或报错
-				return "", fmt.Errorf("module path %q does not end with %q", modulePath, "/"+suffix)
+			parts := strings.Split(modulePath, "/")
+			if len(parts) < 2 {
+				return "", "", fmt.Errorf("invalid module path: %s", modulePath)
 			}
-			return trimmed, nil
+			baseModulePath := strings.Join(parts[:len(parts)-1], "/")
+			appModuleName := parts[len(parts)-1]
+			return baseModulePath, appModuleName, nil
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
-		return "", fmt.Errorf("error reading go.mod: %v", err)
+		return "", "", fmt.Errorf("error reading go.mod: %v", err)
 	}
-	return "", fmt.Errorf("module declaration not found in go.mod")
+	return "", "", fmt.Errorf("module declaration not found in go.mod")
 }
 
 // SnakeToLowerCamelWithID 蛇形转小驼峰，特殊处理 _id 后缀转换为 ID

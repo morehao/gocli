@@ -76,11 +76,11 @@ func genApi() error {
 			Template:       v.Template,
 			ExtraParams: ApiExtraParams{
 				AppInfo: AppInfo{
-					ProjectName:      cfg.appInfo.ProjectName,
-					AppPathInProject: cfg.appInfo.AppPathInProject,
-					AppName:          cfg.appInfo.AppName,
-					ProjectRootPath:  cfg.appInfo.ProjectRootPath,
-					ModulePath:       cfg.appInfo.ModulePath,
+					ProjectName:     cfg.appInfo.ProjectName,
+					AppName:         cfg.appInfo.AppName,
+					ProjectRootPath: cfg.appInfo.ProjectRootPath,
+					BaseModulePath:  cfg.appInfo.BaseModulePath,
+					AppModuleName:   cfg.appInfo.AppModuleName,
 				},
 				PackageName:            analysisRes.PackageName,
 				TargetFileExist:        v.TargetFileExist,

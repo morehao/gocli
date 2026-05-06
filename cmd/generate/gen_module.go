@@ -152,11 +152,11 @@ func genModule() error {
 				Template:       v.Template,
 				ExtraParams: ModuleExtraParams{
 					AppInfo: AppInfo{
-						ProjectName:      appInfo.ProjectName,
-						AppPathInProject: appInfo.AppPathInProject,
-						AppName:          appInfo.AppName,
-						ProjectRootPath:  appInfo.ProjectRootPath,
-						ModulePath:       appInfo.ModulePath,
+						ProjectName:     appInfo.ProjectName,
+						AppName:         appInfo.AppName,
+						ProjectRootPath: appInfo.ProjectRootPath,
+						BaseModulePath:  appInfo.BaseModulePath,
+						AppModuleName:   appInfo.AppModuleName,
 					},
 					PackageName:          analysisRes.PackageName,
 					TableName:            analysisRes.TableName,
@@ -191,11 +191,11 @@ func genModule() error {
 		} else {
 			tableExtraParams := ModuleExtraParams{
 				AppInfo: AppInfo{
-					ProjectName:      appInfo.ProjectName,
-					AppPathInProject: appInfo.AppPathInProject,
-					AppName:          appInfo.AppName,
-					ProjectRootPath:  appInfo.ProjectRootPath,
-					ModulePath:       appInfo.ModulePath,
+					ProjectName:     appInfo.ProjectName,
+					AppName:         appInfo.AppName,
+					ProjectRootPath: appInfo.ProjectRootPath,
+					BaseModulePath:  appInfo.BaseModulePath,
+					AppModuleName:   appInfo.AppModuleName,
 				},
 				PackageName:    analysisRes.PackageName,
 				TableName:      analysisRes.TableName,
@@ -266,11 +266,11 @@ func genModule() error {
 
 		codeExtraParams := ModuleExtraParams{
 			AppInfo: AppInfo{
-				ProjectName:      appInfo.ProjectName,
-				AppPathInProject: appInfo.AppPathInProject,
-				AppName:          appInfo.AppName,
-				ProjectRootPath:  appInfo.ProjectRootPath,
-				ModulePath:       appInfo.ModulePath,
+				ProjectName:     appInfo.ProjectName,
+				AppName:         appInfo.AppName,
+				ProjectRootPath: appInfo.ProjectRootPath,
+				BaseModulePath:  appInfo.BaseModulePath,
+				AppModuleName:   appInfo.AppModuleName,
 			},
 			PackageName:          analysisRes.PackageName,
 			TableName:            analysisRes.TableName,
