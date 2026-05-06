@@ -30,6 +30,9 @@ g
 .history
 .opencode
 
+# 忽略 docs 目录
+docs/
+
 # 忽略 demoapp 下生成的代码
 cmd/generate/example/apps/demoapp/**
 
