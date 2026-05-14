@@ -17,8 +17,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"golang.org/x/mod/modfile"
 )
 
 // cloneApp 在同一项目内克隆一个app
@@ -37,25 +35,16 @@ func cloneApp(sourceAppName, newAppName string) error {
 		return fmt.Errorf("get current directory fail: %w", err)
 	}
 
-	// 确认是 Go 项目
-	if !isGoProject(currentDir) {
-		return fmt.Errorf("%s is not a Go project (no go.mod found)", currentDir)
+	// 查找项目根目录（支持 monorepo 和 workspace）
+	rootDir, isWorkspace, modulePath, err := findProjectRoot(currentDir)
+	if err != nil {
+		return fmt.Errorf("find project root fail: %w", err)
 	}
 
-	// 读取 go.mod 获取模块名
-	modFilePath := filepath.Join(currentDir, "go.mod")
-	modContent, err := os.ReadFile(modFilePath)
-	if err != nil {
-		return fmt.Errorf("read go.mod fail: %w", err)
-	}
-	modFile, err := modfile.Parse(modFilePath, modContent, nil)
-	if err != nil {
-		return fmt.Errorf("parse go.mod fail: %w", err)
-	}
-	modulePath := modFile.Module.Mod.Path
+	fmt.Printf("Project root: %s (workspace: %v)\n", rootDir, isWorkspace)
 
 	// 确认 apps 目录存在
-	appsDir := filepath.Join(currentDir, "apps")
+	appsDir := filepath.Join(rootDir, "apps")
 	if _, err := os.Stat(appsDir); os.IsNotExist(err) {
 		return fmt.Errorf("apps directory does not exist: %s", appsDir)
 	}
