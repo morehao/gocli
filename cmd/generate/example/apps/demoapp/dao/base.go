@@ -2,7 +2,7 @@ package dao
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/morehao/go-gin-web/pkg/storages"
+	"github.com/morehao/example/pkg/dbclient"
 	"gorm.io/gorm"
 )
 
@@ -16,6 +16,6 @@ func (base *Base) DB(ctx *gin.Context) (db *gorm.DB) {
 		return base.Tx.WithContext(ctx)
 	}
 
-	db = storages.DBDemo.WithContext(ctx)
+	db = dbclient.DemoDBGetter(ctx)
 	return
 }

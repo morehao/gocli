@@ -28,6 +28,8 @@ g
 .idea
 .DS_Store
 .history
+docs/**
+.opencode
 
 # 忽略 demoapp 下所有内容
 cmd/generate/_example/apps/demoapp/*

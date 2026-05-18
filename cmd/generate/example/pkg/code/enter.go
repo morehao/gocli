@@ -2,13 +2,23 @@ package code
 
 import "github.com/morehao/golib/gerror"
 
+var globalErrorMap = make(gerror.CodeMsgMap)
+
+// GetError 根据错误码获取错误
+func GetError(code int) error {
+	if msg, ok := globalErrorMap[code]; ok {
+		return gerror.Error{Code: code, Msg: msg}
+	}
+	return gerror.Error{Code: code, Msg: "未知错误"}
+}
+
 // registerError 注册错误码
 func registerError(codeMap gerror.CodeMsgMap) {
-	// 这里实现错误码注册逻辑
-	// 在实际项目中，你需要实现这个函数
+	for code, msg := range codeMap {
+		globalErrorMap[code] = msg
+	}
 }
 
 func init() {
-	// 生成的错误码会自动注册到这里
-	// 示例：registerError(userErrorMsgMap)
+	registerError(userErrorMsgMap)
 }
