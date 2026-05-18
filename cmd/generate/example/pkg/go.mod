@@ -1,4 +1,4 @@
-module github.com/morehao/example/pkg
+module github.com/example/pkg
 
 go 1.26.1
 

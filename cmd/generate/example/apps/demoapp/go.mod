@@ -1,10 +1,9 @@
-module github.com/morehao/example/apps/demoapp
+module github.com/example/demoapp
 
 go 1.26.1
 
 require (
 	github.com/gin-gonic/gin v1.12.0
-	github.com/morehao/example/pkg v0.0.0
 	github.com/morehao/golib v0.1.7
 	gorm.io/gorm v1.31.1
 )
@@ -59,5 +58,3 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/morehao/example/pkg => ../../pkg

@@ -20,10 +20,6 @@ github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd h1:TRLaZ9cD/w
 github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd/go.mod h1:6dJC0mAP4ikYIbvyc7fijjWJddQyLn8Ig3JB5CqoB9Q=
 github.com/modern-go/reflect2 v1.0.2 h1:xBagoLtFs94CBntxluKeaWgTMpvLxC4ur3nMaC9Gz0M=
 github.com/modern-go/reflect2 v1.0.2/go.mod h1:yWuevngMOJpCy52FWWMvUC8ws7m/LJsjYzDa0/r8luk=
-github.com/morehao/golib v1.2.20 h1:BQHRLTOHflirj2aOOJ2vfAfIwzhTfPHhiRqZwu+/9pQ=
-github.com/morehao/golib v1.2.20/go.mod h1:MsWe5fqQcz1wjIKxsFsqd5bnBXhH/seg6RX2NCmjH0Y=
-github.com/morehao/golib v1.2.21 h1:8wCQ7otW5R24IsvX3jajX96n+BmCJcWEmsIx8/cYi3k=
-github.com/morehao/golib v1.2.21/go.mod h1:MsWe5fqQcz1wjIKxsFsqd5bnBXhH/seg6RX2NCmjH0Y=
 github.com/morehao/golib v1.2.23 h1:Q1oDgslpea0gzA08WoSR4LT0dTugfSCOWZ/jeuxA5Jo=
 github.com/morehao/golib v1.2.23/go.mod h1:qhpTNgWzzmsEahJIu/wXXz+eIm0i2+VXU9zs6I6pwIU=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=

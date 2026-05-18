@@ -2,8 +2,8 @@ package ctruser
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/morehao/example/apps/demoapp/internal/dto/dtouser"
-	"github.com/morehao/example/apps/demoapp/internal/service/svcuser"
+	"github.com/example/demoapp/internal/dto/dtouser"
+	"github.com/example/demoapp/internal/service/svcuser"
 	"github.com/morehao/golib/biz/gcontext/gincontext"
 )
 

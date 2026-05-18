@@ -1,8 +1,8 @@
 package dao
 
 import (
-	"github.com/morehao/example/apps/demoapp/model"
-	"github.com/morehao/example/pkg/dbclient"
+	"github.com/example/demoapp/model"
+	"github.com/example/pkg/dbclient"
 	"github.com/morehao/golib/biz/genericdao"
 	"gorm.io/gorm"
 )

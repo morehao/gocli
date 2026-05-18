@@ -2,7 +2,7 @@ package dao
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/morehao/example/pkg/dbclient"
+	"github.com/example/pkg/dbclient"
 	"gorm.io/gorm"
 )
 

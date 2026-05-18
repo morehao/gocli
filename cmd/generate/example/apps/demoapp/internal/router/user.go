@@ -1,7 +1,7 @@
 package router
 
 import (
-	"github.com/morehao/example/apps/demoapp/internal/controller/ctruser"
+	"github.com/example/demoapp/internal/controller/ctruser"
 	"github.com/morehao/golib/biz/gconstant"
 	"github.com/morehao/golib/biz/gserver/ginserver"
 )
