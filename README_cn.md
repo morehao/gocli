@@ -226,21 +226,31 @@ pkg/code/               # 共享错误码
 
 #### 1. 克隆整个项目
 
-- 在现有项目根路径下执行命令可创建新的Go项目
-- 创建新项目时基于.gitignore文件过滤创建的文件
+- 需要在模板项目根目录执行，根目录可以是包含 `go.mod` 或 `go.work` 的位置
+- 创建新项目时基于 `.gitignore` 文件过滤复制内容
 - 自动替换 import 路径
-- 自动更新 go.mod 文件中的模块名称
-- 自动删除 .git 目录
+- 只有复制结果的目标根目录存在 `go.mod` 时，才会改写根模块名
+- 自动删除 `.git` 目录
 
-> ⚠️ 注意：一定要在模板项目的根路径下执行命令
+> ⚠️ 注意：请在包含 `go.mod` 或 `go.work` 的项目根目录执行命令
 
-#### 2. 克隆项目内的应用（新功能！）
+#### 2. 克隆项目内的应用
 
 - 在同一项目内将现有应用克隆到新应用
 - 必须在项目根目录下执行命令
+- 同时支持单模块项目和 workspace 项目
 - 自动替换包名和 import 路径
 - 替换配置文件（`.yaml`、`.yml`）中的应用名称
 - 遵循 `.gitignore` 规则
+
+`cutter app` 的模块路径解析优先级如下：
+1. `apps/<source>/go.mod`
+2. 根目录 `go.mod`
+3. 根据 `go.work use` 自动推断
+
+补充说明：
+- 如果源 app 自带 `go.mod`，优先使用 app 自己的模块路径
+- 如果无法唯一解析模块路径，`cutter app` 会返回明确错误，而不是猜测
 
 ### 命令使用说明
 
@@ -282,8 +292,11 @@ gocli cutter app -s demoapp -n adminapp
 
 此命令会自动完成：
 1. 复制整个应用目录结构
-2. 替换所有 import 路径：`module/apps/demoapp/...` → `module/apps/newapp/...`
-3. 替换配置文件中的应用名称
-4. 保持 Go 代码的正确格式
-
+2. 从 `apps/<source>/go.mod`、根目录 `go.mod` 或 `go.work use` 解析源 app 的模块路径
+3. 当源 app 自带 `go.mod` 时，优先使用 app 模块路径
+4. 替换 import 路径，例如：
+   * app 模块：`example.com/apps/demoapp/...` → `example.com/apps/newapp/...`
+   * 根模块：`example.com/root/apps/demoapp/...` → `example.com/root/apps/newapp/...`
+5. 替换配置文件中的应用名称
+6. 保持 Go 代码的正确格式
 

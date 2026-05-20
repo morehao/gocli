@@ -231,21 +231,31 @@ pkg/code/               # Shared error codes
 
 #### 1. Clone Entire Project
 
-* Must be executed from the root directory of the template project.
+* Must be executed from the template project root, which may contain either `go.mod` or `go.work`.
 * Filters copied files using `.gitignore`.
 * Replaces import paths automatically.
-* Updates the module name in `go.mod`.
+* Rewrites the root module name only when the copied destination root contains `go.mod`.
 * Deletes the `.git` directory from the new project.
 
-> ⚠️ Note: Be sure to run the command from the **root directory** of the template project.
+> ⚠️ Note: Run the command from the project root where `go.mod` or `go.work` is located.
 
-#### 2. Clone App Within Project (New!)
+#### 2. Clone App Within Project
 
 * Clone an existing app to a new app within the same project.
 * Must be executed from the project root directory.
+* Supports both single-module projects and workspace projects.
 * Automatically replaces package names and import paths.
 * Replaces app names in configuration files (`.yaml`, `.yml`).
 * Follows `.gitignore` rules.
+
+Module path resolution for `cutter app` uses this priority:
+1. `apps/<source>/go.mod`
+2. root `go.mod`
+3. inferred module from `go.work use`
+
+Additional rules:
+* If the source app already has its own `go.mod`, that app module path is used first.
+* If the module cannot be resolved uniquely, `cutter app` returns a clear error instead of guessing.
 
 ### Command Usage
 
@@ -287,7 +297,10 @@ gocli cutter app -s demoapp -n adminapp
 
 This command will:
 1. Copy the entire app directory structure
-2. Replace all import paths: `module/apps/demoapp/...` → `module/apps/newapp/...`
-3. Replace app names in configuration files
-4. Maintain proper Go code formatting
-
+2. Resolve the source app module path from `apps/<source>/go.mod`, root `go.mod`, or `go.work use`
+3. Prefer the app module path when the source app has its own `go.mod`
+4. Replace import paths, for example:
+   * app module: `example.com/apps/demoapp/...` → `example.com/apps/newapp/...`
+   * root module: `example.com/root/apps/demoapp/...` → `example.com/root/apps/newapp/...`
+5. Replace app names in configuration files
+6. Maintain proper Go code formatting

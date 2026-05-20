@@ -35,16 +35,21 @@ func cloneApp(sourceAppName, newAppName string) error {
 		return fmt.Errorf("get current directory fail: %w", err)
 	}
 
-	// 查找项目根目录（支持 monorepo 和 workspace）
-	rootDir, isWorkspace, modulePath, err := findProjectRoot(currentDir)
+	// 查找项目上下文并解析源 app 的模块信息
+	ctx, err := detectProjectContext(currentDir)
 	if err != nil {
 		return fmt.Errorf("find project root fail: %w", err)
 	}
 
-	fmt.Printf("Project root: %s (workspace: %v)\n", rootDir, isWorkspace)
+	resolvedModule, err := resolveAppModulePath(ctx, sourceAppName)
+	if err != nil {
+		return fmt.Errorf("resolve source app module fail: %w", err)
+	}
+
+	fmt.Printf("Project root: %s (workspace: %v)\n", ctx.rootDir, ctx.goWorkPath != "")
 
 	// 确认 apps 目录存在
-	appsDir := filepath.Join(rootDir, "apps")
+	appsDir := filepath.Join(ctx.rootDir, "apps")
 	if _, err := os.Stat(appsDir); os.IsNotExist(err) {
 		return fmt.Errorf("apps directory does not exist: %s", appsDir)
 	}
@@ -69,17 +74,22 @@ func cloneApp(sourceAppName, newAppName string) error {
 	fmt.Printf("Cloning %s to %s...\n", sourceAppName, newAppName)
 
 	// 复制并替换内容
-	if err := copyAndReplaceApp(sourceAppDir, newAppDir, sourceAppName, newAppName, modulePath); err != nil {
+	if err := copyAndReplaceApp(sourceAppDir, newAppDir, sourceAppName, newAppName, resolvedModule); err != nil {
 		// 如果出错，清理已创建的目录
 		os.RemoveAll(newAppDir)
 		return fmt.Errorf("copy and replace app fail: %w", err)
+	}
+
+	if err := maybeModifyAppGoMod(newAppDir, sourceAppName, newAppName); err != nil {
+		os.RemoveAll(newAppDir)
+		return fmt.Errorf("modify app go.mod fail: %w", err)
 	}
 
 	return nil
 }
 
 // copyAndReplaceApp 复制app目录并替换相关的包名和import路径
-func copyAndReplaceApp(srcDir, dstDir, oldAppName, newAppName, modulePath string) error {
+func copyAndReplaceApp(srcDir, dstDir, oldAppName, newAppName string, resolvedModule resolvedModule) error {
 	err := filepath.Walk(srcDir, func(path string, fileInfo os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -110,7 +120,7 @@ func copyAndReplaceApp(srcDir, dstDir, oldAppName, newAppName, modulePath string
 
 		// 如果是 .go 文件，需要替换内容
 		if strings.HasSuffix(fileInfo.Name(), ".go") {
-			return copyAndReplaceGoFileInApp(path, targetPath, oldAppName, newAppName, modulePath)
+			return copyAndReplaceGoFileInApp(path, targetPath, oldAppName, newAppName, resolvedModule)
 		}
 
 		// 如果是 .yaml 或 .yml 配置文件，也需要替换内容
@@ -125,7 +135,7 @@ func copyAndReplaceApp(srcDir, dstDir, oldAppName, newAppName, modulePath string
 }
 
 // copyAndReplaceGoFileInApp 复制并替换 Go 文件中的包名和 import 路径
-func copyAndReplaceGoFileInApp(srcFile, dstFile, oldAppName, newAppName, modulePath string) error {
+func copyAndReplaceGoFileInApp(srcFile, dstFile, oldAppName, newAppName string, resolvedModule resolvedModule) error {
 	fs := token.NewFileSet()
 	node, err := parser.ParseFile(fs, srcFile, nil, parser.ParseComments)
 	if err != nil {
@@ -142,9 +152,9 @@ func copyAndReplaceGoFileInApp(srcFile, dstFile, oldAppName, newAppName, moduleP
 		importSpec, ok := n.(*ast.ImportSpec)
 		if ok {
 			importPath := strings.Trim(importSpec.Path.Value, `"`)
-			// 只替换包含当前模块路径和旧app名称的import
-			if strings.Contains(importPath, modulePath+"/apps/"+oldAppName) {
-				updatedImportPath := strings.Replace(importPath, "/apps/"+oldAppName, "/apps/"+newAppName, -1)
+			// 只替换当前 app 旧模块前缀
+			if hasModulePathPrefix(importPath, resolvedModule.oldImportPrefix) {
+				updatedImportPath := renameImportedAppPath(importPath, resolvedModule.oldImportPrefix, oldAppName, newAppName)
 				importSpec.Path.Value = fmt.Sprintf(`"%s"`, updatedImportPath)
 			}
 		}
@@ -162,6 +172,19 @@ func copyAndReplaceGoFileInApp(srcFile, dstFile, oldAppName, newAppName, moduleP
 		return fmt.Errorf("format and write file %s fail: %w", dstFile, err)
 	}
 	return nil
+}
+
+func renameImportedAppPath(importPath, oldImportPrefix, oldAppName, newAppName string) string {
+	if importPath == oldImportPrefix {
+		return renameAppModulePath(importPath, oldImportPrefix, oldAppName, newAppName)
+	}
+
+	if strings.HasPrefix(importPath, oldImportPrefix+"/") {
+		newPrefix := renameAppModulePath(oldImportPrefix, oldImportPrefix, oldAppName, newAppName)
+		return newPrefix + strings.TrimPrefix(importPath, oldImportPrefix)
+	}
+
+	return importPath
 }
 
 // copyAndReplaceTextFile 复制并替换文本文件中的app名称
