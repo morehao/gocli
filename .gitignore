@@ -21,6 +21,9 @@
 go.work
 go.work.sum
 
+# 但允许 example 目录下的 go.work
+!cmd/generate/example/go.work
+
 # env file
 .env
 g
@@ -28,6 +31,7 @@ g
 .idea
 .DS_Store
 .history
+docs/**
 .opencode
 
 # 忽略 docs 目录

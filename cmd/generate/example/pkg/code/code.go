@@ -34,4 +34,5 @@ func init() {
 	registerError(genericdao.DBErrorMsgMap)
 	registerError(gconstant.SystemErrorMsgMap)
 	registerError(gconstant.AuthErrorMsgMap)
+	registerError(userErrorMsgMap)
 }

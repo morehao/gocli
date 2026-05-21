@@ -19,18 +19,30 @@ func cloneProject(newProjectPath string) error {
 		return fmt.Errorf("new project path is empty")
 	}
 
-	// 获取当前执行目录，确认它是Go项目
+	// 获取当前执行目录，确认它是项目根目录
 	currentDir, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("get current directory fail, err: %w", err)
 	}
-	if !isGoProject(currentDir) {
-		return fmt.Errorf("%s is not a Go project", currentDir)
+	ctx, err := detectProjectContext(currentDir)
+	if err != nil {
+		return err
 	}
+	if filepath.Clean(currentDir) != filepath.Clean(ctx.rootDir) {
+		return fmt.Errorf("%s is not project root", currentDir)
+	}
+	cloneMode := resolveProjectCloneMode(ctx)
 
 	// 获取模板项目名称
 	templateName := filepath.Base(currentDir)
 	newProjectName := filepath.Base(newProjectPath)
+	isInsideRoot, err := isPathWithinDir(currentDir, newProjectPath)
+	if err != nil {
+		return fmt.Errorf("resolve new project path fail, err: %w", err)
+	}
+	if isInsideRoot {
+		return fmt.Errorf("%s is inside project root %s", newProjectPath, currentDir)
+	}
 
 	// 确认新项目目录不存在或为空
 	if _, err := os.Stat(newProjectPath); !os.IsNotExist(err) {
@@ -45,6 +57,24 @@ func cloneProject(newProjectPath string) error {
 	// 复制模板项目到新项目目录，并替换import路径
 	if err := copyAndReplaceProject(currentDir, newProjectPath, templateName, newProjectName); err != nil {
 		return fmt.Errorf("copy and replace fail, err: %w", err)
+	}
+	var modulePathMappings map[string]string
+	if cloneMode == projectCloneModeRootModule {
+		modulePathMappings, err = buildRootModulePathMappings(newProjectPath, newProjectName)
+		if err != nil {
+			return fmt.Errorf("modify go.mod fail, err: %w", err)
+		}
+	} else {
+		modulePathMappings, err = buildModulePathMappings(newProjectPath, templateName, newProjectName)
+		if err != nil {
+			return fmt.Errorf("build workspace module mapping fail, err: %w", err)
+		}
+		if err := maybeModifyWorkspaceGoMods(newProjectPath, templateName, newProjectName); err != nil {
+			return fmt.Errorf("modify workspace go.mod fail, err: %w", err)
+		}
+	}
+	if err := rewriteGoImportsInProject(newProjectPath, modulePathMappings); err != nil {
+		return fmt.Errorf("rewrite go imports fail, err: %w", err)
 	}
 	if err := removeGitDir(newProjectPath); err != nil {
 		return fmt.Errorf("remove .git dir fail, err: %w", err)
@@ -82,7 +112,7 @@ func copyAndReplaceProject(srcDir, dstDir, oldName, newName string) error {
 
 		// 复制文件并替换 import 路径
 		if strings.HasSuffix(fileInfo.Name(), ".go") {
-			return copyAndReplaceGoFile(path, targetPath, oldName, newName)
+			return copyAndReplaceGoFile(path, targetPath)
 		}
 
 		// 复制其他文件
@@ -91,34 +121,16 @@ func copyAndReplaceProject(srcDir, dstDir, oldName, newName string) error {
 	if err != nil {
 		return err
 	}
-	if _, err := os.Stat(filepath.Join(dstDir, "go.mod")); !os.IsNotExist(err) {
-		if err := modifyGoMod(dstDir, newName); err != nil {
-			return err
-		}
-	}
-	return nil
+	return err
 }
 
 // copyAndReplaceGoFile 复制并替换 Go 文件中的 import 路径
-func copyAndReplaceGoFile(srcFile, dstFile, oldName, newName string) error {
+func copyAndReplaceGoFile(srcFile, dstFile string) error {
 	fs := token.NewFileSet()
 	node, err := parser.ParseFile(fs, srcFile, nil, parser.ParseComments)
 	if err != nil {
 		return err
 	}
-
-	// 遍历文件中的所有 import 语句，替换路径中的 oldName 为 newName
-	ast.Inspect(node, func(n ast.Node) bool {
-		importSpec, ok := n.(*ast.ImportSpec)
-		if ok {
-			importPath := strings.Trim(importSpec.Path.Value, `"`)
-			if strings.Contains(importPath, oldName) {
-				updatedImportPath := strings.Replace(importPath, oldName, newName, -1)
-				importSpec.Path.Value = fmt.Sprintf(`"%s"`, updatedImportPath)
-			}
-		}
-		return true
-	})
 
 	// 将更新后的代码写入目标文件
 	file, err := os.Create(dstFile)
@@ -130,6 +142,59 @@ func copyAndReplaceGoFile(srcFile, dstFile, oldName, newName string) error {
 		return err
 	}
 	return nil
+}
+
+func rewriteGoImportsInProject(rootDir string, mappings map[string]string) error {
+	if len(mappings) == 0 {
+		return nil
+	}
+
+	return filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		if !strings.HasSuffix(info.Name(), ".go") {
+			return nil
+		}
+		return rewriteGoFileImports(path, mappings)
+	})
+}
+
+func rewriteGoFileImports(filePath string, mappings map[string]string) error {
+	fs := token.NewFileSet()
+	node, err := parser.ParseFile(fs, filePath, nil, parser.ParseComments)
+	if err != nil {
+		return err
+	}
+
+	changed := false
+	ast.Inspect(node, func(n ast.Node) bool {
+		importSpec, ok := n.(*ast.ImportSpec)
+		if !ok {
+			return true
+		}
+		importPath := strings.Trim(importSpec.Path.Value, `"`)
+		updatedImportPath, ok := rewriteModulePathForProjectClone(importPath, mappings)
+		if !ok {
+			return true
+		}
+		importSpec.Path.Value = fmt.Sprintf(`"%s"`, updatedImportPath)
+		changed = true
+		return true
+	})
+	if !changed {
+		return nil
+	}
+
+	file, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	return format.Node(file, fs, node)
 }
 
 // modifyGoMod 修改go.mod中的包名
