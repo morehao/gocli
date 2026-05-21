@@ -6,9 +6,7 @@ import (
 	"github.com/morehao/golib/biz/gserver/ginserver"
 )
 
-func RegisterRouter(groups *ginserver.RouterGroups) {
-	userRouter(groups)
-}
+
 
 // userRouter 初始化用户登录记录路由信息
 func userRouter(groups *ginserver.RouterGroups) {

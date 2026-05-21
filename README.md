@@ -1,4 +1,4 @@
-[English](./README.md) | [简体中文](./README_cn.md)
+[简体中文](./README.zh.md) | [English](./README.md)
 
 # gocli Introduction
 
@@ -14,16 +14,16 @@ go install github.com/morehao/gocli@latest
 
 ## generate
 
-`generate` is a powerful code generation tool based on template files and database schema. The project structure and style are modeled after [go-gin-web](https://github.com/morehao/go-gin-web).
+`generate` is a powerful code generation tool based on template files and database schema. The project structure and style are modeled after [goark](https://github.com/morehao/goark).
 
 ### Features
 
-* 🚀 **Fast Development**: Quickly generate a complete CRUD module based on MySQL table structure
+* 🚀 **Fast Development**: Quickly generate a complete CRUD module based on MySQL/PostgreSQL table structure
 * 📦 **Multi-Layer Generation**: Supports model, dao, service, controller, dto, router, and more
 * 🎯 **Three Generation Modes**: module (full module), model (data layer only), api (single API endpoint)
 * 🔧 **Highly Customizable**: Configure layer names, parent directories, and file name prefixes
 * ✨ **Auto Formatting**: Automatically formats generated code using `gofmt`
-* 📖 **Database-Driven**: Reads MySQL table structure to generate accurate model definitions
+* 📖 **Database-Driven**: Reads MySQL/PostgreSQL table structure to generate accurate model definitions
 
 ### Generation Modes
 
@@ -42,7 +42,7 @@ Generates a complete CRUD module including all layers:
 **Use Case**: Creating a new feature module from scratch
 
 ```bash
-gocli generate -m module -a demoapp
+gocli generate module -a demoapp
 ```
 
 #### 2. **model** - Data Layer Generation
@@ -55,7 +55,7 @@ Generates only the data layer code:
 **Use Case**: Adding a new database table without full CRUD operations
 
 ```bash
-gocli generate -m model -a demoapp
+gocli generate model -a demoapp
 ```
 
 #### 3. **api** - Single API Endpoint
@@ -69,7 +69,7 @@ Adds a new API endpoint to an existing module:
 **Use Case**: Adding a new endpoint to an existing feature
 
 ```bash
-gocli generate -m api -a demoapp
+gocli generate api -a demoapp
 ```
 
 ### Prerequisites
@@ -81,23 +81,18 @@ gocli generate -m api -a demoapp
 Example configuration file:
 
 ```yaml
-mysql_dsn: root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local
-#layer_parent_dir_map:
-#  model: model
-#  dao: dao
-#layer_name_map:
-#  model: mysqlmodel
-#  dao: mysqldao
-#layer_prefix_map:
-#  service: srv
+database_dsn: mysql://root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local
+service_name: mysql
 module:
   package_name: user
   description: User login records
   table_name: user_login_log
+  table_prefix: ""   # Optional: Table name prefix, will be removed when generating struct name (e.g., "iam_")
 model:
   package_name: user
   description: User
   table_name: user
+  table_prefix: ""   # Optional: Table name prefix
 api:
   package_name: user
   target_filename: user_login_log.go
@@ -107,43 +102,39 @@ api:
   api_doc_tag: User login records
 ```
 
+**Database Connection Format:**
+
+| Database Type | DSN Format |
+|---------------|------------|
+| MySQL | `mysql://user:password@tcp(host:port)/dbname?params` |
+| PostgreSQL | `postgresql://user:password@host:port/dbname?params` |
+
+**Examples:**
+```yaml
+# MySQL
+database_dsn: mysql://root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local
+
+# PostgreSQL
+database_dsn: postgresql://postgres:password@localhost:5432/demo?sslmode=disable
+```
+
 ### Configuration Reference
 
 #### Global Configuration
 
 | Field | Description | Example | Required |
 | ----- | ----------- | ------- | -------- |
-| `mysql_dsn` | MySQL database connection string | `root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local` | ✅ Yes |
-| `layer_parent_dir_map` | Parent directory mapping for each layer | `model: model`<br>`controller: internal` | ❌ Optional |
-| `layer_name_map` | Custom layer directory names | `model: mysqlmodel`<br>`dao: mysqldao` | ❌ Optional |
-| `layer_prefix_map` | File name prefix for each layer | `service: svc`<br>`controller: ctr` | ❌ Optional |
+| `database_dsn` | Database connection string, format: schema://dsn | `mysql://root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local` | ✅ Yes |
+| `service_name` | Layer name prefix for model/dao directories and DB connection name | `mysql` | ✅ Yes |
 
-**Example custom configuration:**
-```yaml
-# Customize layer parent directories
-layer_parent_dir_map:
-  controller: internal
-  service: internal
-  dto: internal
 
-# Customize layer names
-layer_name_map:
-  model: mysqlmodel
-  dao: mysqldao
-
-# Customize file name prefixes
-layer_prefix_map:
-  service: svc
-  controller: ctr
-```
-
-#### Module Configuration (for `module` mode)
 
 | Field | Description | Example | Required |
 | ----- | ----------- | ------- | -------- |
 | `package_name` | Package name for the module | `user` | ✅ Yes |
 | `description` | Module description (for comments) | `User login records` | ✅ Yes |
-| `table_name` | MySQL table name | `user_login_log` | ✅ Yes |
+| `table_name` | Database table name | `user_login_log` | ✅ Yes |
+| `table_prefix` | Table name prefix, removed when generating struct name | `iam_` | ❌ Optional |
 
 #### Model Configuration (for `model` mode)
 
@@ -151,7 +142,8 @@ layer_prefix_map:
 | ----- | ----------- | ------- | -------- |
 | `package_name` | Package name for the model | `user` | ✅ Yes |
 | `description` | Model description | `User` | ✅ Yes |
-| `table_name` | MySQL table name | `user` | ✅ Yes |
+| `table_name` | Database table name | `user` | ✅ Yes |
+| `table_prefix` | Table name prefix, removed when generating struct name | `iam_` | ❌ Optional |
 
 #### API Configuration (for `api` mode)
 
@@ -170,36 +162,34 @@ layer_prefix_map:
 # Run commands in the project root directory (e.g., go-gin-web)
 
 # Generate a complete module (model + dao + service + controller + dto + router + code)
-gocli generate -m module -a demoapp
+gocli generate module -a demoapp
 
 # Generate only data layer (model + dao + object)
-gocli generate -m model -a demoapp
+gocli generate model -a demoapp
 
 # Generate a single API endpoint (controller + service + dto + router)
-gocli generate -m api -a demoapp
+gocli generate api -a demoapp
 ```
 
 **Parameters:**
-- `-m, --mode`: Generation mode - `module`, `model`, or `api` (required)
 - `-a, --app`: Application name, e.g., `demoapp` (required)
 
 **Quick Tips:**
-- 💡 Use `module` mode when starting a new feature from scratch
-- 💡 Use `model` mode when you only need database models
-- 💡 Use `api` mode to add new endpoints to existing modules
-- 💡 Check the [go-gin-web](https://github.com/morehao/go-gin-web) `Makefile` for practical examples
+- 💡 Use `module` when starting a new feature from scratch
+- 💡 Use `model` when you only need database models
+- 💡 Use `api` to add new endpoints to existing modules
+- 💡 Check the [goark](https://github.com/morehao/goark) `Makefile` for practical examples
 
 ### Generated File Structure
 
-When you run `gocli generate -m module -a demoapp`, the tool generates:
+When you run `gocli generate module -a demoapp`, the tool generates:
 
 ```
 apps/demoapp/
 ├── model/              # Database models
 │   └── user.go
-├── dao/                # Data access layer
-│   └── daouser/
-│       └── user.go
+├── demoappdao/         # Data access layer (named as {appName}dao)
+│   └── user.go
 ├── object/             # Business objects
 │   └── objuser/
 │       └── user.go
@@ -210,16 +200,19 @@ apps/demoapp/
 │   ├── service/        # Business logic
 │   │   └── svcuser/
 │   │       └── user.go
-│   └── dto/            # Request/Response DTOs
-│       └── dtouser/
-│           ├── request.go
-│           └── response.go
-└── router/             # Route registration
-    └── user.go
+│   ├── dto/            # Request/Response DTOs
+│   │   └── dtouser/
+│   │       ├── request.go
+│   │       └── response.go
+│   └── router/         # Route registration
+│       ├── router.go
+│       └── user.go
 
 pkg/code/               # Shared error codes
 └── user.go
 ```
+
+**Note**: The dao layer is generated as a single-level directory named `{appName}dao` (e.g., `demoappdao`), using `genericdao.GenericDao` for common CRUD operations.
 
 ---
 

@@ -1,8 +1,8 @@
 package dao
 
 import (
-	"github.com/gin-gonic/gin"
 	"github.com/example/pkg/dbclient"
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 

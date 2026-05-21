@@ -1,4 +1,4 @@
-[English](./README.md) | [简体中文](./README_cn.md)
+[简体中文](./README.zh.md) | [English](./README.md)
 
 
 # gocli 介绍
@@ -14,16 +14,16 @@ go install github.com/morehao/gocli@latest
 
 ## generate
 
-`generate`是一个强大的代码生成工具，基于模板文件和数据库结构快速生成代码。项目结构和风格参照[go-gin-web](https://github.com/morehao/go-gin-web)。
+`generate`是一个强大的代码生成工具，基于模板文件和数据库结构快速生成代码。项目结构和风格参照[goark](https://github.com/morehao/goark)。
 
 ### 功能特性
 
-* 🚀 **快速开发**：基于 MySQL 表结构快速生成完整的 CRUD 模块
+* 🚀 **快速开发**：基于 MySQL/PostgreSQL 表结构快速生成完整的 CRUD 模块
 * 📦 **多层代码生成**：支持 model、dao、service、controller、dto、router 等多层代码
 * 🎯 **三种生成模式**：module（完整模块）、model（仅数据层）、api（单个接口）
 * 🔧 **高度可定制**：可配置层级名称、父级目录、文件名前缀
 * ✨ **自动格式化**：生成的代码自动使用 `gofmt` 格式化
-* 📖 **数据库驱动**：读取 MySQL 表结构生成准确的模型定义
+* 📖 **数据库驱动**：读取 MySQL/PostgreSQL 表结构生成准确的模型定义
 
 ### 生成模式
 
@@ -42,7 +42,7 @@ go install github.com/morehao/gocli@latest
 **使用场景**：从零开始创建新功能模块
 
 ```bash
-gocli generate -m module -a demoapp
+gocli generate module -a demoapp
 ```
 
 #### 2. **model** - 数据层生成
@@ -55,7 +55,7 @@ gocli generate -m module -a demoapp
 **使用场景**：只需添加数据库表，无需完整 CRUD 操作
 
 ```bash
-gocli generate -m model -a demoapp
+gocli generate model -a demoapp
 ```
 
 #### 3. **api** - 单个接口生成
@@ -69,7 +69,7 @@ gocli generate -m model -a demoapp
 **使用场景**：为已有功能添加新的接口
 
 ```bash
-gocli generate -m api -a demoapp
+gocli generate api -a demoapp
 ```
 
 ### 命令执行前提
@@ -80,23 +80,18 @@ gocli generate -m api -a demoapp
 
 示例配置文件：
 ```yaml
-mysql_dsn: root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local
-#layer_parent_dir_map:
-#  model: model
-#  dao: dao
-#layer_name_map:
-#  model: mysqlmodel
-#  dao: mysqldao
-#layer_prefix_map:
-#  service: srv
+database_dsn: mysql://root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local
+service_name: mysql
 module:
   package_name: user
   description: 用户登录记录
   table_name: user_login_log
+  table_prefix: ""   # 可选：表名前缀，生成结构体名时会去除此前缀（如 "iam_"）
 model:
   package_name: user
   description: 用户
   table_name: user
+  table_prefix: ""   # 可选：表名前缀
 api:
   package_name: user
   target_filename: user_login_log.go
@@ -105,43 +100,39 @@ api:
   description: 删除登录记录
   api_doc_tag: 用户登录记录
 ```
+
+**数据库连接格式说明：**
+
+| 数据库类型 | DSN 格式 |
+|-----------|---------|
+| MySQL | `mysql://user:password@tcp(host:port)/dbname?params` |
+| PostgreSQL | `postgres1l://user:password@host:port/dbname?params` |
+
+**示例：**
+```yaml
+# MySQL
+database_dsn: mysql://root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local
+
+# PostgreSQL
+database_dsn: postgresql://postgres:password@localhost:5432/demo?sslmode=disable
+```
 ### 配置说明
 
 #### 全局配置
 
 | 配置项 | 说明 | 示例值 | 是否必填 |
 | ----- | ---- | ------ | ------- |
-| `mysql_dsn` | MySQL 数据库连接字符串 | `root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local` | ✅ 必填 |
-| `layer_parent_dir_map` | 各层代码的父目录映射 | `model: model`<br>`controller: internal` | ❌ 可选 |
-| `layer_name_map` | 自定义层级目录名称 | `model: mysqlmodel`<br>`dao: mysqldao` | ❌ 可选 |
-| `layer_prefix_map` | 各层文件名前缀 | `service: svc`<br>`controller: ctr` | ❌ 可选 |
+| `database_dsn` | 数据库连接字符串，格式：schema://dsn | `mysql://root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local` | ✅ 必填 |
+| `service_name` | model/dao 层目录名称前缀及数据库连接名 | `mysql` | ✅ 必填 |
 
-**自定义配置示例：**
-```yaml
-# 自定义层级父目录
-layer_parent_dir_map:
-  controller: internal
-  service: internal
-  dto: internal
 
-# 自定义层级名称
-layer_name_map:
-  model: mysqlmodel
-  dao: mysqldao
-
-# 自定义文件名前缀
-layer_prefix_map:
-  service: svc
-  controller: ctr
-```
-
-#### 模块配置（用于 `module` 模式）
 
 | 配置项 | 说明 | 示例值 | 是否必填 |
 | ----- | ---- | ------ | ------- |
 | `package_name` | 模块包名 | `user` | ✅ 必填 |
 | `description` | 模块描述（用于注释） | `用户登录记录` | ✅ 必填 |
-| `table_name` | MySQL 表名 | `user_login_log` | ✅ 必填 |
+| `table_name` | 数据库表名 | `user_login_log` | ✅ 必填 |
+| `table_prefix` | 表名前缀，生成结构体名时会去除此前缀 | `iam_` | ❌ 可选 |
 
 #### 模型配置（用于 `model` 模式）
 
@@ -149,7 +140,8 @@ layer_prefix_map:
 | ----- | ---- | ------ | ------- |
 | `package_name` | 模型包名 | `user` | ✅ 必填 |
 | `description` | 模型描述 | `用户` | ✅ 必填 |
-| `table_name` | MySQL 表名 | `user` | ✅ 必填 |
+| `table_name` | 数据库表名 | `user` | ✅ 必填 |
+| `table_prefix` | 表名前缀，生成结构体名时会去除此前缀 | `iam_` | ❌ 可选 |
 
 #### API 配置（用于 `api` 模式）
 
@@ -168,36 +160,34 @@ layer_prefix_map:
 # 在项目根目录（如 go-gin-web）下执行以下命令
 
 # 生成完整模块（model + dao + service + controller + dto + router + code）
-gocli generate -m module -a demoapp
+gocli generate module -a demoapp
 
 # 仅生成数据层（model + dao + object）
-gocli generate -m model -a demoapp
+gocli generate model -a demoapp
 
 # 生成单个 API 接口（controller + service + dto + router）
-gocli generate -m api -a demoapp
+gocli generate api -a demoapp
 ```
 
 **参数说明：**
-- `-m, --mode`：生成模式 - `module`、`model` 或 `api`（必填）
 - `-a, --app`：应用名称，例如：`demoapp`（必填）
 
 **使用技巧：**
-- 💡 从零开始新功能时使用 `module` 模式
-- 💡 只需数据库模型时使用 `model` 模式
-- 💡 为现有模块添加新接口时使用 `api` 模式
-- 💡 查看 [go-gin-web](https://github.com/morehao/go-gin-web) 项目的 `Makefile` 了解实际使用示例
+- 💡 从零开始新功能时使用 `module`
+- 💡 只需数据库模型时使用 `model`
+- 💡 为现有模块添加新接口时使用 `api`
+- 💡 查看 [goark](https://github.com/morehao/goark) 项目的 `Makefile` 了解实际使用示例
 
 ### 生成的文件结构
 
-当你执行 `gocli generate -m module -a demoapp` 时，工具会生成：
+当你执行 `gocli generate module -a demoapp` 时，工具会生成：
 
 ```
 apps/demoapp/
 ├── model/              # 数据库模型
 │   └── user.go
-├── dao/                # 数据访问层
-│   └── daouser/
-│       └── user.go
+├── demoappdao/         # 数据访问层（命名为 {appName}dao）
+│   └── user.go
 ├── object/             # 业务对象
 │   └── objuser/
 │       └── user.go
@@ -208,16 +198,19 @@ apps/demoapp/
 │   ├── service/        # 业务逻辑层
 │   │   └── svcuser/
 │   │       └── user.go
-│   └── dto/            # 请求/响应 DTO
-│       └── dtouser/
-│           ├── request.go
-│           └── response.go
-└── router/             # 路由注册
-    └── user.go
+│   ├── dto/            # 请求/响应 DTO
+│   │   └── dtouser/
+│   │       ├── request.go
+│   │       └── response.go
+│   └── router/         # 路由注册
+│       ├── router.go
+│       └── user.go
 
 pkg/code/               # 共享错误码
 └── user.go
 ```
+
+**注意**：dao 层以单层目录生成，命名为 `{appName}dao`（如 `demoappdao`），使用 `genericdao.GenericDao` 封装通用 CRUD 操作。
 
 ## cutter
 `cutter`是一个命令行工具，用于快速基于现有 Go 项目创建新的 Go 项目，或在同一项目内克隆应用。

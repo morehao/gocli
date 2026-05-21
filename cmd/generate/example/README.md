@@ -12,8 +12,9 @@ _example/
 │   └── demoapp/                   # 示例应用
 │       ├── config/                # 配置目录
 │       │   └── code_gen.yaml     # 代码生成配置文件
-│       └── router/                # 路由目录
-│           └── enter.go          # 路由注册入口文件
+│       └── internal/              # 内部实现目录
+│           └── router/            # 路由目录
+│               └── router.go      # 路由注册入口文件
 └── pkg/                           # 公共包目录
     └── code/                      # 错误码目录
         └── enter.go              # 错误码注册入口文件
@@ -27,7 +28,7 @@ _example/
 
 在 `apps/demoapp/config/code_gen.yaml` 中配置：
 
-- **mysql_dsn**: MySQL 数据库连接字符串
+- **database_dsn**: 数据库连接字符串，格式：schema://dsn（支持 mysql 和 postgresql）
 - **layer_parent_dir_map**: 各层级代码的父目录映射
 - **layer_name_map**: 层级名称映射（可选）
 - **layer_prefix_map**: 层级文件名前缀映射（可选）
@@ -88,7 +89,7 @@ gocli generate --mode model --app demoapp
 
 ```bash
 # 在项目根目录运行
-gocli generate --mode module --app demoapp
+gocli generate module -a demoapp
 ```
 
 #### api 模式
@@ -100,12 +101,12 @@ gocli generate --mode module --app demoapp
 
 ```bash
 # 在项目根目录运行
-gocli generate --mode api --app demoapp
+gocli generate api -a demoapp
 ```
 
 ## 注意事项
 
-1. **数据库连接**: 运行测试前请确保 MySQL 数据库可访问，并且配置文件中的连接字符串正确
+1. **数据库连接**: 运行测试前请确保数据库可访问，并且配置文件中的连接字符串正确（支持 MySQL 和 PostgreSQL）
 2. **表结构**: 确保配置的数据表在数据库中存在
 3. **测试位置**: 单元测试位于 `cmd/generate/generate_test.go`，在 `cmd/generate` 目录运行测试
 4. **工作目录**: 测试会自动切换到 `_example` 目录作为项目根目录
@@ -113,9 +114,10 @@ gocli generate --mode api --app demoapp
 
 ## 生成的文件位置
 
-- **model/dao/object**: 在 `apps/demoapp/` 下生成（可通过 layer_parent_dir_map 配置）
+- **model/object**: 在 `apps/demoapp/` 下生成（可通过 layer_parent_dir_map 配置）
+- **dao**: 在 `apps/demoapp/{appName}dao/` 下生成（如 `demoappdao`），使用 `genericdao.GenericDao` 封装
 - **controller/service/dto**: 在 `apps/demoapp/internal/` 下生成（可通过 layer_parent_dir_map 配置）
-- **router**: 在 `apps/demoapp/router/` 下生成
+- **router**: 在 `apps/demoapp/internal/router/` 下生成
 - **code**: 在项目根目录的 `pkg/code/` 下生成
 
 ## 自定义配置
@@ -129,14 +131,13 @@ layer_parent_dir_map:
   service: internal
   dto: internal
 
-# 自定义层级名称（例如：model -> mysqlmodel）
+# 自定义层级名称（例如：model -> pgmodel）
 layer_name_map:
-  model: mysqlmodel
-  dao: mysqldao
+  model: pgmodel
 
-# 自定义文件名前缀（例如：model 文件前缀为 mysql_）
+# 自定义文件名前缀（例如：model 文件前缀为 pg_）
 layer_prefix_map:
-  model: mysql_
-  dao: mysql_
+  model: pg_
 ```
 
+**注意**：dao 层会自动生成到 `{appName}dao` 目录下（如 `demoappdao`），包名也为 `{appName}dao`，无需额外配置。

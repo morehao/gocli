@@ -65,7 +65,7 @@ func init() {
 	Cmd.Flags().StringP("destination", "d", "", "Destination directory for the new project. For example: ./your/project/path")
 
 	// Flags for app cloning
-	AppCmd.Flags().StringP("source", "s", "demoapp", "Source app name to clone from")
+	AppCmd.Flags().StringP("source", "s", "demo", "Source app name to clone from")
 	AppCmd.Flags().StringP("name", "n", "", "New app name")
 
 	// Add app subcommand to main command

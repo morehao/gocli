@@ -19,6 +19,37 @@ import (
 	"strings"
 )
 
+func parseModulePathFromGoWork(workDir string) (string, error) {
+	workFilePath := filepath.Join(workDir, "go.work")
+	content, err := os.ReadFile(workFilePath)
+	if err != nil {
+		return "", fmt.Errorf("read go.work fail: %w", err)
+	}
+
+	workFile, err := modfile.ParseWork(workFilePath, content, nil)
+	if err != nil {
+		return "", fmt.Errorf("parse go.work fail: %w", err)
+	}
+
+	for _, use := range workFile.Use {
+		usePath := filepath.Join(workDir, use.Path)
+		if _, err := os.Stat(filepath.Join(usePath, "go.mod")); os.IsNotExist(err) {
+			continue
+		}
+		modContent, err := os.ReadFile(filepath.Join(usePath, "go.mod"))
+		if err != nil {
+			continue
+		}
+		modFile, err := modfile.Parse(filepath.Join(usePath, "go.mod"), modContent, nil)
+		if err != nil {
+			continue
+		}
+		return modFile.Module.Mod.Path, nil
+	}
+
+	return "", fmt.Errorf("no valid module found in go.work")
+}
+
 // cloneApp 在同一项目内克隆一个app
 func cloneApp(sourceAppName, newAppName string) error {
 	if sourceAppName == "" || newAppName == "" {
@@ -66,6 +97,30 @@ func cloneApp(sourceAppName, newAppName string) error {
 		return fmt.Errorf("new app already exists: %s", newAppDir)
 	}
 
+	// 检查源 app 是否有自己的 go.mod
+	sourceAppGoMod := filepath.Join(sourceAppDir, "go.mod")
+	hasOwnGoMod := true
+	if _, err := os.Stat(sourceAppGoMod); os.IsNotExist(err) {
+		hasOwnGoMod = false
+	}
+
+	// 如果源 app 有自己的 go.mod，获取其 module path 作为项目级 module path
+	if hasOwnGoMod {
+		appModContent, err := os.ReadFile(sourceAppGoMod)
+		if err != nil {
+			return fmt.Errorf("read source app go.mod fail: %w", err)
+		}
+		appModFile, err := modfile.Parse(sourceAppGoMod, appModContent, nil)
+		if err != nil {
+			return fmt.Errorf("parse source app go.mod fail: %w", err)
+		}
+		appModulePath := appModFile.Module.Mod.Path
+		// 提取项目级 module path（去掉 /apps/xxx 部分）
+		if idx := strings.LastIndex(appModulePath, "/apps/"); idx != -1 {
+			projectModulePath = appModulePath[:idx]
+		}
+	}
+
 	// 创建新 app 目录
 	if err := os.MkdirAll(newAppDir, os.ModePerm); err != nil {
 		return fmt.Errorf("create new app directory fail: %w", err)
@@ -74,7 +129,11 @@ func cloneApp(sourceAppName, newAppName string) error {
 	fmt.Printf("Cloning %s to %s...\n", sourceAppName, newAppName)
 
 	// 复制并替换内容
+<<<<<<< HEAD
 	if err := copyAndReplaceApp(sourceAppDir, newAppDir, sourceAppName, newAppName, resolvedModule); err != nil {
+=======
+	if err := copyAndReplaceApp(sourceAppDir, newAppDir, sourceAppName, newAppName, projectModulePath, hasOwnGoMod); err != nil {
+>>>>>>> main
 		// 如果出错，清理已创建的目录
 		os.RemoveAll(newAppDir)
 		return fmt.Errorf("copy and replace app fail: %w", err)
@@ -89,7 +148,11 @@ func cloneApp(sourceAppName, newAppName string) error {
 }
 
 // copyAndReplaceApp 复制app目录并替换相关的包名和import路径
+<<<<<<< HEAD
 func copyAndReplaceApp(srcDir, dstDir, oldAppName, newAppName string, resolvedModule resolvedModule) error {
+=======
+func copyAndReplaceApp(srcDir, dstDir, oldAppName, newAppName, modulePath string, hasOwnGoMod bool) error {
+>>>>>>> main
 	err := filepath.Walk(srcDir, func(path string, fileInfo os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -120,12 +183,21 @@ func copyAndReplaceApp(srcDir, dstDir, oldAppName, newAppName string, resolvedMo
 
 		// 如果是 .go 文件，需要替换内容
 		if strings.HasSuffix(fileInfo.Name(), ".go") {
+<<<<<<< HEAD
 			return copyAndReplaceGoFileInApp(path, targetPath, oldAppName, newAppName, resolvedModule)
+=======
+			return copyAndReplaceGoFileInApp(path, targetPath, oldAppName, newAppName, modulePath, hasOwnGoMod)
+>>>>>>> main
 		}
 
 		// 如果是 .yaml 或 .yml 配置文件，也需要替换内容
 		if strings.HasSuffix(fileInfo.Name(), ".yaml") || strings.HasSuffix(fileInfo.Name(), ".yml") {
 			return copyAndReplaceTextFile(path, targetPath, oldAppName, newAppName)
+		}
+
+		// 如果是 go.mod 文件，需要替换 module 路径
+		if fileInfo.Name() == "go.mod" {
+			return copyAndReplaceGoModFile(path, targetPath, oldAppName, newAppName)
 		}
 
 		// 其他文件直接复制
@@ -135,7 +207,11 @@ func copyAndReplaceApp(srcDir, dstDir, oldAppName, newAppName string, resolvedMo
 }
 
 // copyAndReplaceGoFileInApp 复制并替换 Go 文件中的包名和 import 路径
+<<<<<<< HEAD
 func copyAndReplaceGoFileInApp(srcFile, dstFile, oldAppName, newAppName string, resolvedModule resolvedModule) error {
+=======
+func copyAndReplaceGoFileInApp(srcFile, dstFile, oldAppName, newAppName, modulePath string, hasOwnGoMod bool) error {
+>>>>>>> main
 	fs := token.NewFileSet()
 	node, err := parser.ParseFile(fs, srcFile, nil, parser.ParseComments)
 	if err != nil {
@@ -152,10 +228,24 @@ func copyAndReplaceGoFileInApp(srcFile, dstFile, oldAppName, newAppName string, 
 		importSpec, ok := n.(*ast.ImportSpec)
 		if ok {
 			importPath := strings.Trim(importSpec.Path.Value, `"`)
+<<<<<<< HEAD
 			// 只替换当前 app 旧模块前缀
 			if hasModulePathPrefix(importPath, resolvedModule.oldImportPrefix) {
 				updatedImportPath := renameImportedAppPath(importPath, resolvedModule.oldImportPrefix, oldAppName, newAppName)
 				importSpec.Path.Value = fmt.Sprintf(`"%s"`, updatedImportPath)
+=======
+			if hasOwnGoMod {
+				oldAppImportPath := modulePath + "/apps/" + oldAppName
+				if strings.Contains(importPath, oldAppImportPath) {
+					updatedImportPath := strings.Replace(importPath, oldAppImportPath, modulePath+"/apps/"+newAppName, -1)
+					importSpec.Path.Value = fmt.Sprintf(`"%s"`, updatedImportPath)
+				}
+			} else {
+				if strings.Contains(importPath, oldAppName) {
+					updatedImportPath := strings.Replace(importPath, oldAppName, newAppName, -1)
+					importSpec.Path.Value = fmt.Sprintf(`"%s"`, updatedImportPath)
+				}
+>>>>>>> main
 			}
 		}
 		return true
@@ -198,6 +288,34 @@ func copyAndReplaceTextFile(srcFile, dstFile, oldAppName, newAppName string) err
 	newContent := strings.ReplaceAll(string(content), oldAppName, newAppName)
 
 	// 写入新文件
+	err = os.WriteFile(dstFile, []byte(newContent), 0644)
+	if err != nil {
+		return fmt.Errorf("write file %s fail: %w", dstFile, err)
+	}
+	return nil
+}
+
+// copyAndReplaceGoModFile 复制并替换 go.mod 文件中的 module 路径
+func copyAndReplaceGoModFile(srcFile, dstFile, oldAppName, newAppName string) error {
+	content, err := os.ReadFile(srcFile)
+	if err != nil {
+		return fmt.Errorf("read file %s fail: %w", srcFile, err)
+	}
+
+	modFile, err := modfile.Parse(srcFile, content, nil)
+	if err != nil {
+		return fmt.Errorf("parse go.mod fail: %w", err)
+	}
+
+	oldModulePath := modFile.Module.Mod.Path
+	oldModulePrefix := oldModulePath[:len(oldModulePath)-len(oldAppName)]
+	newModulePath := oldModulePrefix + newAppName
+
+	newContent := strings.Replace(string(content),
+		fmt.Sprintf("module %s", oldModulePath),
+		fmt.Sprintf("module %s", newModulePath),
+		1)
+
 	err = os.WriteFile(dstFile, []byte(newContent), 0644)
 	if err != nil {
 		return fmt.Errorf("write file %s fail: %w", dstFile, err)

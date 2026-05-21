@@ -19,7 +19,46 @@ const (
 	TplFuncIsSysField          = "isSysField"
 	TplFuncIsDefaultModelLayer = "isDefaultModelLayer"
 	TplFuncIsDefaultDaoLayer   = "isDefaultDaoLayer"
+	TplFuncHasTimeField        = "hasTimeField"
+	TplFuncGetFieldImports     = "getFieldImports"
+	TplFuncIsBasicType         = "isBasicType"
+
+	DBTypeMySQL    = "mysql"
+	DBTypePostgres = "postgresql"
 )
+
+type DatabaseConfig struct {
+	Type    string
+	ConnStr string
+}
+
+func ParseDatabaseDSN(dsn string) (*DatabaseConfig, error) {
+	if dsn == "" {
+		return nil, fmt.Errorf("database dsn is empty")
+	}
+
+	parts := strings.SplitN(dsn, "://", 2)
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid database dsn format, expected: schema://connection_string, got: %s", dsn)
+	}
+
+	dbType := parts[0]
+
+	switch dbType {
+	case DBTypePostgres:
+		return &DatabaseConfig{
+			Type:    dbType,
+			ConnStr: dsn,
+		}, nil
+	case DBTypeMySQL:
+		return &DatabaseConfig{
+			Type:    dbType,
+			ConnStr: parts[1],
+		}, nil
+	default:
+		return nil, fmt.Errorf("unsupported database type: %s, supported types: mysql, postgres", dbType)
+	}
+}
 
 func IsBuiltInField(name string) bool {
 	buildInFieldMap := map[string]struct{}{
@@ -54,18 +93,69 @@ func IsDefaultDaoLayer(name string) bool {
 	return name == "dao"
 }
 
+func HasTimeField(fields []ModelField) bool {
+	for _, field := range fields {
+		if field.FieldType == "time.Time" && !IsBuiltInField(field.FieldName) {
+			return true
+		}
+	}
+	return false
+}
+
+type FieldTypeImport struct {
+	ImportPath string
+	ImportName string
+}
+
+var fieldTypeImportMap = map[string]FieldTypeImport{
+	"json.RawMessage": {ImportPath: "encoding/json", ImportName: "json"},
+	"time.Time":       {ImportPath: "time", ImportName: "time"},
+}
+
+func GetFieldImports(fields []ModelField) map[string]struct{} {
+	imports := make(map[string]struct{})
+	for _, field := range fields {
+		if importInfo, ok := fieldTypeImportMap[field.FieldType]; ok {
+			imports[importInfo.ImportPath] = struct{}{}
+		}
+	}
+	return imports
+}
+
+func IsBasicType(fieldType string) bool {
+	basicTypes := map[string]struct{}{
+		"string":    {},
+		"int":       {},
+		"int8":      {},
+		"int16":     {},
+		"int32":     {},
+		"int64":     {},
+		"uint":      {},
+		"uint8":     {},
+		"uint16":    {},
+		"uint32":    {},
+		"uint64":    {},
+		"float32":   {},
+		"float64":   {},
+		"time.Time": {},
+	}
+	_, ok := basicTypes[fieldType]
+	return ok
+}
+
 // RemoveTablePrefixFromStructName 从结构体名中去除表名前缀
 // 例如：表名 iam_users，前缀 iam_，结构体名 IamUsers -> Users
 // 参数：
 //   - structName: 原始结构体名（如 IamUsers）
 //   - tableName: 原始表名（如 iam_users）
 //   - prefix: 要去除的前缀（如 iam_）
+//
 // 返回：去除前缀后的结构体名（如 Users）
 func RemoveTablePrefixFromStructName(structName, tableName, prefix string) string {
 	if prefix == "" {
 		return structName
 	}
-	
+
 	// 如果表名以指定前缀开头，则从结构体名中去除对应的前缀部分
 	if strings.HasPrefix(tableName, prefix) {
 		// 将前缀转换为对应的结构体名格式（去除下划线，每个单词首字母大写）
@@ -74,7 +164,7 @@ func RemoveTablePrefixFromStructName(structName, tableName, prefix string) strin
 		if prefixWithoutUnderscore == "" {
 			return structName
 		}
-		
+
 		// 将前缀转换为 PascalCase
 		prefixParts := strings.Split(prefixWithoutUnderscore, "_")
 		var prefixStructName string
@@ -86,7 +176,7 @@ func RemoveTablePrefixFromStructName(structName, tableName, prefix string) strin
 				}
 			}
 		}
-		
+
 		// 如果结构体名以此前缀开头，则去除
 		if strings.HasPrefix(structName, prefixStructName) {
 			remaining := strings.TrimPrefix(structName, prefixStructName)
@@ -98,7 +188,7 @@ func RemoveTablePrefixFromStructName(structName, tableName, prefix string) strin
 			return structName
 		}
 	}
-	
+
 	return structName
 }
 
@@ -108,27 +198,28 @@ func RemoveTablePrefixFromStructName(structName, tableName, prefix string) strin
 //   - filename: 原始文件名（如 iam_user.go）
 //   - tableName: 原始表名（如 iam_users）
 //   - prefix: 要去除的前缀（如 iam_）
+//
 // 返回：去除前缀后的文件名（如 user.go）
 func RemoveTablePrefixFromFilename(filename, tableName, prefix string) string {
 	if prefix == "" {
 		return filename
 	}
-	
+
 	// 如果表名以指定前缀开头，则从文件名中去除对应的前缀部分
 	if strings.HasPrefix(tableName, prefix) {
 		// 分离文件名和扩展名
 		ext := filepath.Ext(filename)
 		nameWithoutExt := strings.TrimSuffix(filename, ext)
-		
+
 		// 将前缀转换为文件名格式（去除下划线）
 		prefixWithoutUnderscore := strings.TrimSuffix(prefix, "_")
 		if prefixWithoutUnderscore == "" {
 			return filename
 		}
-		
+
 		// 构建前缀在文件名中的形式（snake_case）
 		prefixInFilename := prefixWithoutUnderscore + "_"
-		
+
 		// 如果文件名以此前缀开头，则去除
 		if strings.HasPrefix(nameWithoutExt, prefixInFilename) {
 			remaining := strings.TrimPrefix(nameWithoutExt, prefixInFilename)
@@ -137,7 +228,7 @@ func RemoveTablePrefixFromFilename(filename, tableName, prefix string) string {
 			}
 		}
 	}
-	
+
 	return filename
 }
 
@@ -183,14 +274,28 @@ func CopyEmbeddedTemplatesToTempDir(embeddedFS embed.FS, root string) (string, e
 	return tempDir, nil
 }
 
+func findGitRoot(workDir string) (string, error) {
+	current := workDir
+	for {
+		gitPath := filepath.Join(current, ".git")
+		if _, err := os.Stat(gitPath); err == nil {
+			return current, nil
+		}
+		parent := filepath.Dir(current)
+		if parent == current {
+			break
+		}
+		current = parent
+	}
+	return "", fmt.Errorf(".git directory not found")
+}
+
 // GetAppInfo 应用模块路径信息
-// 输入示例：/Users/morehao/xxx/go-gin-web/apps/demoapp
-// 或者：/Users/morehao/xxx/gocli/cmd/generate/_example/apps/demoapp
+// 输入示例：/Users/morehao/xxx/ark-iam/apps/iam
 func GetAppInfo(workDir string) (*AppInfo, error) {
 	cleanPath := filepath.Clean(workDir)
 	segments := strings.Split(cleanPath, string(filepath.Separator))
 
-	// 查找 "apps/{appName}" 结构
 	var appsIndex = -1
 	for i := 0; i < len(segments)-1; i++ {
 		if segments[i] == "apps" {
@@ -201,25 +306,13 @@ func GetAppInfo(workDir string) (*AppInfo, error) {
 	if appsIndex == -1 {
 		return nil, fmt.Errorf("invalid structure: path does not contain /apps/{appName}")
 	}
-
-	// apps 目录前面至少需要有一个父级目录（projectName）
 	if appsIndex < 1 {
 		return nil, fmt.Errorf("invalid structure: apps directory must have at least one parent directory")
 	}
 
-	// 解析 app 名称
 	appName := segments[appsIndex+1]
-
-	// 解析项目名和相对路径
-	// 项目名是 apps 的直接父目录
 	projectName := segments[appsIndex-1]
 
-	// 构建从项目根到app的相对路径
-	// 如果 apps 直接在项目根下：apps/demoapp
-	appPathInProject := filepath.Join("apps", appName)
-
-	// 获取项目根目录的绝对路径
-	// 项目根目录是 apps 的父目录
 	projectRootPath := filepath.Join(segments[:appsIndex]...)
 	if len(projectRootPath) == 0 {
 		projectRootPath = string(filepath.Separator)
@@ -227,28 +320,32 @@ func GetAppInfo(workDir string) (*AppInfo, error) {
 		projectRootPath = string(filepath.Separator) + projectRootPath
 	}
 
-	// 读取 go.mod 文件获取模块路径
-	modulePath, err := getModulePath(projectRootPath)
+	gitRoot, gitErr := findGitRoot(cleanPath)
+	if gitErr == nil && strings.HasPrefix(gitRoot, projectRootPath) {
+		projectRootPath = gitRoot
+	}
+
+	baseModulePath, appModuleName, err := getModuleInfo(filepath.Join(projectRootPath, "apps", appName))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get module path: %v", err)
+		return nil, fmt.Errorf("failed to get module info: %v", err)
 	}
 
 	return &AppInfo{
-		AppPathInProject: appPathInProject,
-		ProjectName:      projectName,
-		AppName:          appName,
-		ProjectRootPath:  projectRootPath,
-		ModulePath:       modulePath,
+		ProjectName:     projectName,
+		AppName:         appName,
+		ProjectRootPath: projectRootPath,
+		BaseModulePath:  baseModulePath,
+		AppModuleName:   appModuleName,
 	}, nil
 }
 
-// getModulePath 从 go.mod 文件中读取模块路径
-func getModulePath(projectRootPath string) (string, error) {
-	goModPath := filepath.Join(projectRootPath, "go.mod")
-	
+// getModuleInfo 从 app 的 go.mod 中读取模块路径，拆分为基础路径和app模块名
+func getModuleInfo(appRootPath string) (string, string, error) {
+	goModPath := filepath.Join(appRootPath, "go.mod")
+
 	file, err := os.Open(goModPath)
 	if err != nil {
-		return "", fmt.Errorf("failed to open go.mod: %v", err)
+		return "", "", fmt.Errorf("failed to open go.mod: %v", err)
 	}
 	defer file.Close()
 
@@ -256,18 +353,21 @@ func getModulePath(projectRootPath string) (string, error) {
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if strings.HasPrefix(line, "module ") {
-			// 提取模块路径，格式：module github.com/morehao/go-gin-web
-			modulePath := strings.TrimPrefix(line, "module ")
-			modulePath = strings.TrimSpace(modulePath)
-			return modulePath, nil
+			modulePath := strings.TrimSpace(strings.TrimPrefix(line, "module "))
+			parts := strings.Split(modulePath, "/")
+			if len(parts) < 2 {
+				return "", "", fmt.Errorf("invalid module path: %s", modulePath)
+			}
+			baseModulePath := strings.Join(parts[:len(parts)-1], "/")
+			appModuleName := parts[len(parts)-1]
+			return baseModulePath, appModuleName, nil
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
-		return "", fmt.Errorf("error reading go.mod: %v", err)
+		return "", "", fmt.Errorf("error reading go.mod: %v", err)
 	}
-
-	return "", fmt.Errorf("module declaration not found in go.mod")
+	return "", "", fmt.Errorf("module declaration not found in go.mod")
 }
 
 // SnakeToLowerCamelWithID 蛇形转小驼峰，特殊处理 _id 后缀转换为 ID
@@ -276,12 +376,12 @@ func SnakeToLowerCamelWithID(s string) string {
 	if s == "" {
 		return ""
 	}
-	
+
 	// 如果整个字符串就是 "id"，直接返回
 	if s == "id" {
 		return "id"
 	}
-	
+
 	// 检查是否以 _id 结尾
 	if strings.HasSuffix(s, "_id") {
 		// 获取 _id 之前的部分
@@ -294,7 +394,7 @@ func SnakeToLowerCamelWithID(s string) string {
 		prefixCamel := gutil.SnakeToLowerCamel(prefix)
 		return prefixCamel + "ID"
 	}
-	
+
 	// 其他情况使用标准的小驼峰转换
 	return gutil.SnakeToLowerCamel(s)
 }

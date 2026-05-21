@@ -1,7 +1,7 @@
 package dto{{.PackageName}}
 
 import (
-	"{{.ModulePath}}/{{.AppPathInProject}}/object/obj{{.PackageName}}"
+	"{{.BaseModulePath}}/{{.AppModuleName}}/object/obj{{.PackageName}}"
 	"github.com/morehao/golib/biz/gobject"
 )
 
@@ -10,14 +10,12 @@ type {{.StructName}}CreateReq struct {
 }
 
 type {{.StructName}}UpdateReq struct {
-	// ID 数据自增 ID
-	ID uint `json:"id" validate:"required" label:"数据自增id"`
+	{{.StructName}}ID uint `json:"{{.StructNameLowerCamel}}ID" binding:"required"` // 自增 ID
 	obj{{.PackageName}}.{{.StructName}}BaseInfo
 }
 
 type {{.StructName}}DetailReq struct {
-	// ID 数据自增 ID
-	ID uint `json:"id" form:"id" validate:"required" label:"数据自增id"`
+	{{.StructName}}ID uint `json:"{{.StructNameLowerCamel}}ID" binding:"required"` // 自增 ID
 }
 
 type {{.StructName}}PageListReq struct {
@@ -25,6 +23,5 @@ type {{.StructName}}PageListReq struct {
 }
 
 type {{.StructName}}DeleteReq struct {
-	// ID 数据自增 ID
-	ID uint `json:"id" form:"id" validate:"required" label:"数据自增id"`
+	{{.StructName}}ID uint `json:"{{.StructNameLowerCamel}}ID" binding:"required"` // 自增 ID
 }

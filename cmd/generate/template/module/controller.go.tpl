@@ -2,8 +2,8 @@ package ctr{{.PackageName}}
 
 import (
     "github.com/gin-gonic/gin"
-    "{{.ModulePath}}/{{.AppPathInProject}}/internal/dto/dto{{.PackageName}}"
-    "{{.ModulePath}}/{{.AppPathInProject}}/internal/service/svc{{.PackageName}}"
+    "{{.BaseModulePath}}/{{.AppModuleName}}/internal/dto/dto{{.PackageName}}"
+    "{{.BaseModulePath}}/{{.AppModuleName}}/internal/service/svc{{.PackageName}}"
     "github.com/morehao/golib/biz/gcontext/gincontext"
 )
 
@@ -34,8 +34,8 @@ func New{{.StructName}}Ctr() {{.StructName}}Ctr {
 // @accept application/json
 // @Produce application/json
 // @Param req body dto{{.PackageName}}.{{.StructName}}CreateReq true "创建{{.Description}}"
-// @Success 200 {object} gincontext.DtoRender{data=dto{{.PackageName}}.{{.StructName}}CreateResp} "{"code": 0,"data": "ok","msg": "success"}"
-// @Router /{{.AppName}}/v1/{{.StructNameLowerCamel}}/create [post]
+// @Success 200 {object} gincontext.DtoRender{data=dto{{.PackageName}}.{{.StructName}}CreateResp} "{"code": 0, "requestID": "xxx", "data": "ok", "msg": "success"}"
+// @Router /v1/{{.AppName}}/{{.StructNameLowerCamel}}/create [post]
 func (ctr *{{.StructNameLowerCamel}}Ctr) Create(ctx *gin.Context) {
 	var req dto{{.PackageName}}.{{.StructName}}CreateReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -46,9 +46,8 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Create(ctx *gin.Context) {
 	if err != nil {
 		gincontext.Fail(ctx, err)
 		return
-	} else {
-		gincontext.Success(ctx, res)
 	}
+	gincontext.Success(ctx, res)
 }
 
 // Delete 删除{{.Description}}
@@ -57,8 +56,8 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Create(ctx *gin.Context) {
 // @accept application/json
 // @Produce application/json
 // @Param req body dto{{.PackageName}}.{{.StructName}}DeleteReq true "删除{{.Description}}"
-// @Success 200 {object} gincontext.DtoRender{data=string} "{"code": 0,"data": "ok","msg": "删除成功"}"
-// @Router /{{.AppName}}/v1/{{.StructNameLowerCamel}}/delete [post]
+// @Success 200 {object} gincontext.DtoRender{data=string} "{"code": 0, "requestID": "xxx", "data": "ok", "msg": "success"}"
+// @Router /v1/{{.AppName}}/{{.StructNameLowerCamel}}/delete [post]
 func (ctr *{{.StructNameLowerCamel}}Ctr) Delete(ctx *gin.Context) {
 	var req dto{{.PackageName}}.{{.StructName}}DeleteReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -69,9 +68,8 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Delete(ctx *gin.Context) {
 	if err := ctr.{{.StructNameLowerCamel}}Svc.Delete(ctx, &req); err != nil {
 		gincontext.Fail(ctx, err)
 		return
-	} else {
-		gincontext.Success(ctx, "删除成功")
 	}
+	gincontext.Success(ctx, "删除成功")
 }
 
 // Update 修改{{.Description}}
@@ -80,8 +78,8 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Delete(ctx *gin.Context) {
 // @accept application/json
 // @Produce application/json
 // @Param req body dto{{.PackageName}}.{{.StructName}}UpdateReq true "修改{{.Description}}"
-// @Success 200 {object} gincontext.DtoRender{data=string} "{"code": 0,"data": "ok","msg": "修改成功"}"
-// @Router /{{.AppName}}/v1/{{.StructNameLowerCamel}}/update [post]
+// @Success 200 {object} gincontext.DtoRender{data=string} "{"code": 0, "requestID": "xxx", "data": "ok", "msg": "修改成功"}"
+// @Router /v1/{{.AppName}}/{{.StructNameLowerCamel}}/update [post]
 func (ctr *{{.StructNameLowerCamel}}Ctr) Update(ctx *gin.Context) {
 	var req dto{{.PackageName}}.{{.StructName}}UpdateReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -91,9 +89,8 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Update(ctx *gin.Context) {
 	if err := ctr.{{.StructNameLowerCamel}}Svc.Update(ctx, &req); err != nil {
 		gincontext.Fail(ctx, err)
 		return
-	} else {
-		gincontext.Success(ctx, "修改成功")
 	}
+	gincontext.Success(ctx, "修改成功")
 }
 
 // Detail {{.Description}}详情
@@ -102,8 +99,8 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Update(ctx *gin.Context) {
 // @accept application/json
 // @Produce application/json
 // @Param req query dto{{.PackageName}}.{{.StructName}}DetailReq true "{{.Description}}详情"
-// @Success 200 {object} gincontext.DtoRender{data=dto{{.PackageName}}.{{.StructName}}DetailResp} "{"code": 0,"data": "ok","msg": "success"}"
-// @Router /{{.AppName}}/v1/{{.StructNameLowerCamel}}/detail [get]
+// @Success 200 {object} gincontext.DtoRender{data=dto{{.PackageName}}.{{.StructName}}DetailResp} "{"code": 0, "requestID": "xxx", "data": "ok", "msg": "success"}"
+// @Router /v1/{{.AppName}}/{{.StructNameLowerCamel}}/detail [get]
 func (ctr *{{.StructNameLowerCamel}}Ctr) Detail(ctx *gin.Context) {
 	var req dto{{.PackageName}}.{{.StructName}}DetailReq
 	if err := ctx.ShouldBindQuery(&req); err != nil {
@@ -114,9 +111,8 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Detail(ctx *gin.Context) {
 	if err != nil {
 		gincontext.Fail(ctx, err)
 		return
-	} else {
-		gincontext.Success(ctx, res)
 	}
+	gincontext.Success(ctx, res)
 }
 
 // PageList {{.Description}}列表
@@ -124,12 +120,12 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Detail(ctx *gin.Context) {
 // @Summary {{.Description}}列表分页
 // @accept application/json
 // @Produce application/json
-// @Param req query dto{{.PackageName}}.{{.StructName}}PageListReq true "{{.Description}}列表"
-// @Success 200 {object} gincontext.DtoRender{data=dto{{.PackageName}}.{{.StructName}}PageListResp} "{"code": 0,"data": "ok","msg": "success"}"
-// @Router /{{.AppName}}/v1/{{.StructNameLowerCamel}}/pageList [post]
+// @Param req body dto{{.PackageName}}.{{.StructName}}PageListReq true "{{.Description}}列表"
+// @Success 200 {object} gincontext.DtoRender{data=dto{{.PackageName}}.{{.StructName}}PageListResp} "{"code": 0, "requestID": "xxx", "data": "ok", "msg": "success"}"
+// @Router /v1/{{.AppName}}/{{.StructNameLowerCamel}}/pageList [post]
 func (ctr *{{.StructNameLowerCamel}}Ctr) PageList(ctx *gin.Context) {
 	var req dto{{.PackageName}}.{{.StructName}}PageListReq
-	if err := ctx.ShouldBindQuery(&req); err != nil {
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		gincontext.Fail(ctx, err)
 		return
 	}
@@ -137,7 +133,6 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) PageList(ctx *gin.Context) {
 	if err != nil {
 		gincontext.Fail(ctx, err)
 		return
-	} else {
-		gincontext.Success(ctx, res)
 	}
+	gincontext.Success(ctx, res)
 }
