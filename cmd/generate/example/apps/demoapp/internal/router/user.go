@@ -2,7 +2,6 @@ package router
 
 import (
 	"github.com/example/demoapp/internal/controller/ctruser"
-	"github.com/morehao/golib/biz/gconstant"
 	"github.com/morehao/golib/biz/gserver/ginserver"
 )
 
@@ -12,7 +11,7 @@ import (
 func userRouter(groups *ginserver.RouterGroups) {
 	userCtr := ctruser.NewUserCtr()
 
-	v1RouterGroup := groups.MustGetGroup(gconstant.ApiVersionV1)
+	v1RouterGroup := groups.MustGetGroup(ginserver.ApiVersionV1)
 
 	v1RouterGroup.POST("/user/create", userCtr.Create)
 	v1RouterGroup.POST("/user/delete", userCtr.Delete)

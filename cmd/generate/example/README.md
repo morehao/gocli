@@ -115,7 +115,7 @@ gocli generate api -a demoapp
 ## 生成的文件位置
 
 - **model/object**: 在 `apps/demoapp/` 下生成（可通过 layer_parent_dir_map 配置）
-- **dao**: 在 `apps/demoapp/{appName}dao/` 下生成（如 `demoappdao`），使用 `genericdao.GenericDao` 封装
+- **dao**: 在 `apps/demoapp/{appName}dao/` 下生成（如 `demoappdao`），使用 `gormdao.Dao` 封装
 - **controller/service/dto**: 在 `apps/demoapp/internal/` 下生成（可通过 layer_parent_dir_map 配置）
 - **router**: 在 `apps/demoapp/internal/router/` 下生成
 - **code**: 在项目根目录的 `pkg/code/` 下生成

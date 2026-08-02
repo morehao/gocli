@@ -1,6 +1,8 @@
 go 1.26.1
 
 use (
-	./pkg
 	./apps/demoapp
+	./pkg
 )
+
+replace github.com/morehao/golib => ../../../../golib

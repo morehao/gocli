@@ -3,12 +3,12 @@ package dao
 import (
 	"github.com/example/demoapp/model"
 	"github.com/example/pkg/dbclient"
-	"github.com/morehao/golib/biz/genericdao"
+	"github.com/morehao/golib/dbaccess/gormdao"
 	"gorm.io/gorm"
 )
 
 type UserCond struct {
-	*genericdao.BaseCond
+	*gormdao.BaseCond
 	CompanyID    uint
 	CreatedBy    uint
 	DeletedBy    uint
@@ -42,12 +42,12 @@ func (c *UserCond) BuildCondition(db *gorm.DB, tableName string) {
 }
 
 type UserDao struct {
-	*genericdao.GenericDao[model.UserEntity, model.UserEntityList]
+	*gormdao.Dao[model.UserEntity, model.UserEntityList]
 }
 
 func NewUserDao() *UserDao {
 	return &UserDao{
-		GenericDao: genericdao.NewGenericDao[model.UserEntity, model.UserEntityList](
+		Dao: gormdao.NewDao[model.UserEntity, model.UserEntityList](
 			model.TableNameUser, "UserDao",
 			dbclient.DemoDBGetter,
 		),

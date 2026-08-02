@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/example/demoapp/internal/router"
-	"github.com/morehao/golib/biz/gconstant"
 	"github.com/morehao/golib/biz/gserver/ginserver"
 )
 
@@ -13,7 +12,7 @@ func main() {
 	groups := ginserver.NewRouterGroups(
 		engine,
 		"demoapp",
-		ginserver.Version{Name: gconstant.ApiVersionV1},
+		ginserver.VersionGroup{Version: ginserver.ApiVersionV1},
 	)
 
 	router.RegisterRouter(groups)
