@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sync"
 
-	_ "github.com/morehao/golib/dbaccess/dbgorm/driver/mysql"
 	"github.com/morehao/golib/dbaccess/dbgorm"
+	_ "github.com/morehao/golib/dbaccess/dbgorm/driver/mysql"
 	"github.com/morehao/golib/dbaccess/gormplugin"
 	"github.com/morehao/golib/glog"
 	"gorm.io/gorm"

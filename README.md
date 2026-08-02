@@ -212,7 +212,7 @@ pkg/code/               # Shared error codes
 └── user.go
 ```
 
-**Note**: The dao layer is generated as a single-level directory named `{appName}dao` (e.g., `demoappdao`), using `genericdao.GenericDao` for common CRUD operations.
+**Note**: The dao layer is generated as a single-level directory named `{appName}dao` (e.g., `demoappdao`), using `gormdao.Dao` for common CRUD operations.
 
 ---
 
