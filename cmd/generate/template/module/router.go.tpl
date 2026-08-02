@@ -2,7 +2,6 @@ package router
 
 import (
 	"{{.BaseModulePath}}/{{.AppModuleName}}/internal/controller/ctr{{.PackageName}}"
-	"github.com/morehao/golib/biz/gconstant"
 	"github.com/morehao/golib/biz/gserver/ginserver"
 )
 
@@ -10,7 +9,7 @@ import (
 func {{.StructNameLowerCamel}}Router(groups *ginserver.RouterGroups) {
 	{{.StructNameLowerCamel}}Ctr := ctr{{.PackageName}}.New{{.StructName}}Ctr()
 
-	v1RouterGroup := groups.MustGetGroup(gconstant.ApiVersionV1)
+	v1RouterGroup := groups.MustGetGroup(ginserver.ApiVersionV1)
 
 	v1RouterGroup.POST("/{{.StructNameLowerCamel}}/create", {{.StructNameLowerCamel}}Ctr.Create)
 	v1RouterGroup.POST("/{{.StructNameLowerCamel}}/delete", {{.StructNameLowerCamel}}Ctr.Delete)

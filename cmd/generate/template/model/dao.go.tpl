@@ -5,14 +5,14 @@ import (
 	"{{.}}"
 	{{- end}}
 
-	"github.com/morehao/golib/biz/genericdao"
+	"github.com/morehao/golib/dbaccess/gormdao"
 	"gorm.io/gorm"
 	"{{.BaseModulePath}}/{{.AppModuleName}}/{{.ModelLayerName}}"
 	"{{.BaseModulePath}}/pkg/dbclient"
 )
 
 type {{.StructName}}Cond struct {
-	*genericdao.BaseCond
+	*gormdao.BaseCond
 {{- range .ModelFields}}
 {{- if not (isBuiltInField .FieldName)}}
 	{{.FieldName}} {{.FieldType}}
@@ -47,12 +47,12 @@ func (c *{{.StructName}}Cond) BuildCondition(db *gorm.DB, tableName string) {
 }
 
 type {{.StructName}}Dao struct {
-	*genericdao.GenericDao[{{.ModelLayerName}}.{{.StructName}}Entity, {{.ModelLayerName}}.{{.StructName}}EntityList]
+	*gormdao.Dao[{{.ModelLayerName}}.{{.StructName}}Entity, {{.ModelLayerName}}.{{.StructName}}EntityList]
 }
 
 func New{{.StructName}}Dao() *{{.StructName}}Dao {
 	return &{{.StructName}}Dao{
-		GenericDao: genericdao.NewGenericDao[{{.ModelLayerName}}.{{.StructName}}Entity, {{.ModelLayerName}}.{{.StructName}}EntityList](
+		Dao: gormdao.NewDao[{{.ModelLayerName}}.{{.StructName}}Entity, {{.ModelLayerName}}.{{.StructName}}EntityList](
 			{{.ModelLayerName}}.TableName{{.StructName}}, "{{.StructName}}Dao",
 			dbclient.{{.DBName}},
 		),
