@@ -33,7 +33,7 @@ g
 .history
 docs/**
 .opencode
-
+.superpowers
 # 忽略 docs 目录
 docs/
 
