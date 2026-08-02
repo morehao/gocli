@@ -4,5 +4,3 @@ use (
 	./apps/demoapp
 	./pkg
 )
-
-replace github.com/morehao/golib => ../../../../golib

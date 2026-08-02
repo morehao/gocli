@@ -23,6 +23,7 @@ go.work.sum
 
 # 但允许 example 目录下的 go.work
 !cmd/generate/example/go.work
+!cmd/generate/example/go.work.sum
 
 # env file
 .env

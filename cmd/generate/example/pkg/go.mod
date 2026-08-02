@@ -3,7 +3,7 @@ module github.com/example/pkg
 go 1.26.1
 
 require (
-	github.com/morehao/golib v1.30.0
+	github.com/morehao/golib v1.31.0
 	gorm.io/gorm v1.31.1
 )
 
