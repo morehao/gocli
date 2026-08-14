@@ -29,6 +29,10 @@ go.work.sum
 .env
 g
 
+# local go build/module caches (sandbox workaround)
+.gocache
+.gomodcache
+
 .idea
 .DS_Store
 .history
@@ -54,4 +58,5 @@ cmd/generate/example/apps/demoapp/**
 cmd/generate/example/pkg/**
 !cmd/generate/example/pkg/dbclient/
 !cmd/generate/example/pkg/dbclient/gorm.go
+!cmd/generate/example/pkg/dbclient/gorm_test.go
 !cmd/generate/example/pkg/code/code.go

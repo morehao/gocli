@@ -15,19 +15,47 @@ import (
 var (
 	dbMap   = make(map[string]*gorm.DB)
 	dbMutex sync.RWMutex
+
+	// companyIDKey 是注入公司（租户）ID 的 context key，
+	// 配合 gormplugin 的 company_id 过滤条件使用。
+	companyIDKey = contextKey("company_id")
 )
+
+type contextKey string
 
 const (
 	dbNameDemo = "demo"
 	dbNameIam  = "ark_iam"
 )
 
+// WithCompanyID 将公司（租户）ID 注入 context，
+// 设置了之后，后续基于该 context 的查询/更新/删除会自动追加 company_id 过滤条件。
+func WithCompanyID(ctx context.Context, companyID uint) context.Context {
+	return context.WithValue(ctx, companyIDKey, companyID)
+}
+
+// companyIDFromCtx 从 context 中提取公司（租户）ID，
+// 未设置或为 0 时返回 (nil, false)，此时 gormplugin 不注入过滤条件。
+func companyIDFromCtx(ctx context.Context) (any, bool) {
+	companyID, ok := ctx.Value(companyIDKey).(uint)
+	if !ok || companyID == 0 {
+		return nil, false
+	}
+	return companyID, true
+}
+
 func InitMultiDB(configs []dbgorm.Config, logConfig *glog.LogConfig) error {
 	if len(configs) == 0 {
 		return fmt.Errorf("mysql config is empty")
 	}
 
-	tenantPlugin := gormplugin.New()
+	tenantPlugin, err := gormplugin.New(&gormplugin.ScopeConfig{
+		FieldName:   "company_id",
+		ExtractFunc: companyIDFromCtx,
+	})
+	if err != nil {
+		return fmt.Errorf("init tenant plugin failed: %v", err)
+	}
 
 	var opts []dbgorm.Option
 	if logConfig != nil {
