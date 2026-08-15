@@ -11,9 +11,9 @@ func {{.StructNameLowerCamel}}Router(groups *ginserver.RouterGroups) {
 
 	v1RouterGroup := groups.MustGetGroup(ginserver.ApiVersionV1)
 
-	v1RouterGroup.POST("/{{.StructNameLowerCamel}}/create", {{.StructNameLowerCamel}}Ctr.Create)
-	v1RouterGroup.POST("/{{.StructNameLowerCamel}}/delete", {{.StructNameLowerCamel}}Ctr.Delete)
-	v1RouterGroup.POST("/{{.StructNameLowerCamel}}/update", {{.StructNameLowerCamel}}Ctr.Update)
-	v1RouterGroup.GET("/{{.StructNameLowerCamel}}/detail", {{.StructNameLowerCamel}}Ctr.Detail)
-	v1RouterGroup.POST("/{{.StructNameLowerCamel}}/pageList", {{.StructNameLowerCamel}}Ctr.PageList)
+	v1RouterGroup.POST("/{{toKebabCase (pluralize .StructNameLowerCamel)}}", {{.StructNameLowerCamel}}Ctr.Create)
+	v1RouterGroup.GET("/{{toKebabCase (pluralize .StructNameLowerCamel)}}", {{.StructNameLowerCamel}}Ctr.PageList)
+	v1RouterGroup.GET("/{{toKebabCase (pluralize .StructNameLowerCamel)}}/:{{.StructNameLowerCamel}}ID", {{.StructNameLowerCamel}}Ctr.Detail)
+	v1RouterGroup.PUT("/{{toKebabCase (pluralize .StructNameLowerCamel)}}/:{{.StructNameLowerCamel}}ID", {{.StructNameLowerCamel}}Ctr.Update)
+	v1RouterGroup.DELETE("/{{toKebabCase (pluralize .StructNameLowerCamel)}}/:{{.StructNameLowerCamel}}ID", {{.StructNameLowerCamel}}Ctr.Delete)
 }

@@ -43,6 +43,8 @@ func genModule() error {
 				TplFuncHasTimeField:        HasTimeField,
 				TplFuncGetFieldImports:     GetFieldImports,
 				TplFuncIsBasicType:         IsBasicType,
+				TplFuncToKebabCase:        toKebabCase,
+				TplFuncPluralize:          pluralize,
 			},
 		},
 		TableName: moduleGenCfg.TableName,
