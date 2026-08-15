@@ -24,6 +24,7 @@ type {{.StructName}}Entity struct {
 	{{- if $field.IndexName}}{{$tagStr = printf "%s;index:%s" $tagStr $field.IndexName}}{{end}}
 	{{- if and $field.IndexName $field.IsUniqueIndex}}{{$tagStr = printf "%s;uniqueIndex" $tagStr}}{{end}}
 	{{- if $field.Comment}}{{$tagStr = printf "%s;comment:%s" $tagStr $field.Comment}}{{end}}
+	{{- if $field.IsPrimaryKey}}{{$tagStr = printf "%s;primaryKey" $tagStr}}{{end}}
 	{{.FieldName}} {{.FieldType}} `gorm:"{{$tagStr}}"`
 	{{- end}}
 {{- end}}
