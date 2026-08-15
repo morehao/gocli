@@ -43,6 +43,7 @@ func TestDaoTplRenderGenericID(t *testing.T) {
 	}
 	params := map[string]any{
 		"PKFieldType":    "uint",
+		"PackageName":    "user",
 		"DaoPackageName": "dao",
 		"ModelLayerName": "model",
 		"StructName":     "User",
@@ -63,6 +64,10 @@ func TestDaoTplRenderGenericID(t *testing.T) {
 				t.Errorf("%s missing %q\n---\n%s", fsPath, want, out)
 			}
 		}
+	}
+	// service 模板的 PageList 构造 Cond 时同样需要携带主键类型参数。
+	if out := renderTpl(t, "generate/module/service.go.tpl", params); !strings.Contains(out, "&gormdao.BaseCond[uint]{") {
+		t.Errorf("generate/module/service.go.tpl missing &gormdao.BaseCond[uint]{:\n%s", out)
 	}
 }
 
