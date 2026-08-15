@@ -72,6 +72,14 @@ gocli generate model -a demoapp
 gocli generate api -a demoapp
 ```
 
+**路由风格**：接口路径统一为 restful 风格 —— `/{资源复数 kebab-case}/{动作}`，例如删除登录记录（`target_filename: user_login_log.go`、`function_name: Delete`、`http_method: POST`）生成：
+
+```
+POST /v1/demoapp/user-login-logs/delete
+```
+
+资源路径与 `module` 模式一致（kebab-case 复数），动作作为子路径追加。
+
 ### 命令执行前提
 
 1. **在项目根目录执行**：需在项目根目录下执行命令（例如 `go-gin-web` 目录）
@@ -211,6 +219,75 @@ pkg/code/               # 共享错误码
 ```
 
 **注意**：dao 层以单层目录生成，命名为 `{appName}dao`（如 `demoappdao`），使用 `gormdao.Dao` 封装通用 CRUD 操作。
+
+---
+
+## create
+`create` 是一个脚手架工具，基于 gocli 内置的 monorepo 模板快速创建后端项目，或在既有 monorepo 中新增应用。模板通过 `go:embed` 内嵌在二进制中，`go install` 后即可离线使用。
+
+### 功能特性
+
+#### 1. 创建 monorepo 项目（`create project`）
+
+- 基于内置模板生成完整的后端 monorepo：`go.work`（workspace）+ `apps/demoapp`（示例应用）+ `pkg`（公共库）
+- 自动重写模块路径与 import（`github.com/example` → 你指定的模块路径）
+- 默认执行 `go work sync`（可用 `--no-tidy` 关闭）
+- 可选 `git init`（`--git`）
+
+```bash
+gocli create project my-backend -m github.com/acme/backend
+cd my-backend
+```
+
+生成结构：
+
+```
+my-backend/
+├── go.work                  # workspace：apps/demoapp + pkg
+├── apps/
+│   └── demoapp/             # 示例应用（gin + gorm）
+│       ├── config/code_gen.yaml
+│       ├── go.mod
+│       └── internal/ ...    # controller/service/dto/router 分层
+└── pkg/                     # 公共库（code、dbclient）
+    └── go.mod
+```
+
+**参数说明：**
+- `-m, --module`：根模块路径，如 `github.com/acme/backend`（必填）
+- 位置参数 `[dir]`：目标目录（默认取模块路径最后一段）
+- `--git`：创建后执行 `git init`
+- `--no-tidy`：跳过 `go work sync`
+
+#### 2. 在既有 monorepo 中新增应用（`create app`）
+
+- 在 monorepo 根目录执行，基于内置示例应用生成 `apps/<name>`
+- 自动替换模块路径、import、包名以及配置/注释中的 app 名
+- 自动注册进 `go.work`（追加 `use ./apps/<name>`）
+- 默认对新应用执行 `go mod tidy`（可用 `--no-tidy` 关闭）
+
+```bash
+cd /path/to/my-backend
+gocli create app -n userapp
+```
+
+**参数说明：**
+- `-n, --name`：新应用名称（必填，仅限小写字母与数字）
+- `-m, --module`：覆盖新应用的模块路径
+- `--no-tidy`：跳过 `go mod tidy`
+
+**新应用模块路径推断优先级：**
+1. `--module` 显式指定
+2. `pkg/go.mod` 的父路径（如 `github.com/acme/backend/pkg` → `github.com/acme/backend`）
+3. 根目录 `go.mod` 的模块路径，或任意 `apps/*/go.mod` 的父路径
+
+新应用可与 `generate` 无缝衔接：
+
+```bash
+gocli generate module -a userapp   # 基于数据库表结构生成代码
+```
+
+---
 
 ## cutter
 `cutter`是一个命令行工具，用于快速基于现有 Go 项目创建新的 Go 项目，或在同一项目内克隆应用。

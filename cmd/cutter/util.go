@@ -2,11 +2,11 @@ package cutter
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/morehao/gocli/internal/scaffold"
 	"golang.org/x/mod/modfile"
 )
 
@@ -31,108 +31,30 @@ const (
 	projectCloneModeWorkspaceOnly projectCloneMode = "workspace-only"
 )
 
-var defaultIgnoreDirMap = map[string]struct{}{
-	".git":         {},
-	".idea":        {},
-	".vscode":      {},
-	".history":     {},
-	"node_modules": {},
-	"vendor":       {},
-	"log":          {},
-	"logs":         {},
-	"tmp":          {},
-	"temp":         {},
-}
-
-// shouldIgnore 检查路径是否应该被忽略
-var defaultIgnoreFiles = []string{
-	".DS_Store",
-	"*.log",
-	"*.tmp",
-}
-
 // isGoProject 检查指定路径是否为Go项目
 func isGoProject(path string) bool {
-	if _, err := os.Stat(filepath.Join(path, "go.mod")); !os.IsNotExist(err) {
-		return true
-	}
-	if _, err := os.Stat(filepath.Join(path, "go.work")); !os.IsNotExist(err) {
-		return true
-	}
-	return false
+	return scaffold.IsGoProject(path)
 }
 
+// shouldIgnore 检查路径是否应该被忽略（实现见 internal/scaffold.ShouldIgnore）
 func shouldIgnore(relativePath string) bool {
-	// 将路径里的 系统特定的路径分隔符 转成 统一的 / 形式
-	normalizedPath := filepath.ToSlash(relativePath)
-	parts := strings.Split(normalizedPath, "/")
-
-	// 忽略目录
-	for _, part := range parts {
-		if _, ok := defaultIgnoreDirMap[part]; ok {
-			return true
-		}
-	}
-
-	// 忽略文件
-	fileName := parts[len(parts)-1]
-	for _, pattern := range defaultIgnoreFiles {
-		if strings.HasPrefix(pattern, "*.") {
-			ext := pattern[1:] // ".log"
-			if strings.HasSuffix(fileName, ext) {
-				return true
-			}
-		} else if fileName == pattern {
-			return true
-		}
-	}
-
-	return false
+	return scaffold.ShouldIgnore(relativePath)
 }
 
-// copyFile 复制文件
+// copyFile 复制文件（实现见 internal/scaffold.CopyFile）
 func copyFile(src, dst string) error {
-	sourceFileStat, err := os.Stat(src)
-	if err != nil {
-		return err
-	}
-
-	if !sourceFileStat.Mode().IsRegular() {
-		return fmt.Errorf("%s is not a regular file", src)
-	}
-
-	source, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer source.Close()
-
-	destination, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer destination.Close()
-	_, err = io.Copy(destination, source)
-	return err
+	return scaffold.CopyFile(src, dst)
 }
 
 // isGoWork 检查指定路径是否为 Go workspace（是否包含 go.work 文件）
+// isGoWork 检查指定路径是否为 Go workspace（是否包含 go.work 文件）
 func isGoWork(path string) bool {
-	_, err := os.Stat(filepath.Join(path, "go.work"))
-	return !os.IsNotExist(err)
+	return scaffold.IsGoWork(path)
 }
 
-// readModulePath 读取 go.mod 的 module 路径
+// readModulePath 读取 go.mod 的 module 路径（实现见 internal/scaffold.ReadModulePath）
 func readModulePath(goModPath string) (string, error) {
-	content, err := os.ReadFile(goModPath)
-	if err != nil {
-		return "", fmt.Errorf("read go.mod fail: %w", err)
-	}
-	modFile, err := modfile.Parse(goModPath, content, nil)
-	if err != nil {
-		return "", fmt.Errorf("parse go.mod fail: %w", err)
-	}
-	return modFile.Module.Mod.Path, nil
+	return scaffold.ReadModulePath(goModPath)
 }
 
 func resolveProjectCloneMode(ctx projectContext) projectCloneMode {
@@ -624,8 +546,9 @@ func rewriteModulePathForProjectClone(modulePath string, mappings map[string]str
 	return bestNewPath + strings.TrimPrefix(modulePath, bestOldPath), true
 }
 
+// hasModulePathPrefix 判断 path 是否等于 prefix 或以 prefix/ 开头（实现见 internal/scaffold.HasModulePathPrefix）
 func hasModulePathPrefix(path, prefix string) bool {
-	return path == prefix || strings.HasPrefix(path, prefix+"/")
+	return scaffold.HasModulePathPrefix(path, prefix)
 }
 
 func isModulePathReplacement(path string) bool {

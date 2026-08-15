@@ -18,7 +18,7 @@ func genModule() error {
 	fmt.Printf("[Module] Generating module based on table: %s\n", moduleGenCfg.TableName)
 
 	// 使用工具函数复制嵌入的模板文件到临时目录
-	tplDir, getTplErr := CopyEmbeddedTemplatesToTempDir(TemplatesFS, "template/module")
+	tplDir, getTplErr := CopyEmbeddedTemplatesToTempDir(TemplatesFS, "generate/module")
 	if getTplErr != nil {
 		return getTplErr
 	}

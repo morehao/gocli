@@ -1,13 +1,16 @@
 package generate
 
 import (
+	"bytes"
 	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"text/template"
 
+	"github.com/morehao/gocli/internal/scaffold"
 	"github.com/morehao/golib/gutil"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
@@ -17,7 +20,7 @@ import (
 // 测试模板文件加载
 func TestLoadTemplates(t *testing.T) {
 	// 测试模板目录是否存在
-	dirs := []string{"template/module", "template/model", "template/api"}
+	dirs := []string{"generate/module", "generate/model", "generate/api"}
 	for _, dir := range dirs {
 		entries, err := TemplatesFS.ReadDir(dir)
 		if err != nil {
@@ -54,12 +57,21 @@ func copyDir(t *testing.T, srcDir, dstDir string) {
 	}
 }
 
-// chdirToExample 切换到 example 目录（优先使用临时副本，避免生成代码污染仓库）
+// monorepoTemplateDir 返回 monorepo 模板目录（原 cmd/generate/example，已迁移至 template/monorepo）
+func monorepoTemplateDir() string {
+	abs, err := filepath.Abs(filepath.Join("..", "..", "template", "monorepo"))
+	if err != nil {
+		return ""
+	}
+	return abs
+}
+
+// chdirToExample 切换到 monorepo 模板目录（优先使用临时副本，避免生成代码污染仓库）
 func chdirToExample(t *testing.T) func() {
 	t.Helper()
-	exampleDir, err := filepath.Abs("example")
-	if err != nil {
-		t.Fatalf("abs example dir: %v", err)
+	exampleDir := monorepoTemplateDir()
+	if exampleDir == "" {
+		t.Fatalf("resolve monorepo template dir fail")
 	}
 	originalDir, err := os.Getwd()
 	if err != nil {
@@ -71,6 +83,11 @@ func chdirToExample(t *testing.T) func() {
 
 	tmpExampleDir := filepath.Join(t.TempDir(), "example")
 	copyDir(t, exampleDir, tmpExampleDir)
+
+	// 模板中以 .tmpl 后缀存放 go.mod/go.sum/go.work，恢复为标准文件名
+	if err := scaffold.RestoreTemplateFiles(tmpExampleDir); err != nil {
+		t.Fatalf("restore template module files: %v", err)
+	}
 
 	if err := os.Chdir(tmpExampleDir); err != nil {
 		t.Fatalf("chdir to example copy: %v", err)
@@ -92,7 +109,7 @@ func resetGenerateState() {
 // skipIfDBUnavailable 数据库不可达时跳过测试
 func skipIfDBUnavailable(t *testing.T) {
 	t.Helper()
-	exampleDir, _ := filepath.Abs("example")
+	exampleDir := monorepoTemplateDir()
 	configFilepath := filepath.Join(exampleDir, "apps", "demoapp", "config", "code_gen.yaml")
 	if _, err := os.Stat(configFilepath); err != nil {
 		t.Skipf("Skipping test: config file not found: %v", err)
@@ -226,6 +243,68 @@ func TestGenerateModuleCode(t *testing.T) {
 	}
 }
 
+// TestApiTemplateRestfulPath 验证 api 模板生成的路径为 kebab-case 复数资源 + 动作子路径（与 module 模板的 restful 风格一致）
+func TestApiTemplateRestfulPath(t *testing.T) {
+	tplFuncs := template.FuncMap{
+		TplFuncToKebabCase: toKebabCase,
+		TplFuncPluralize:   pluralize,
+	}
+	params := map[string]interface{}{
+		"AppName":                "demoapp",
+		"PackageName":            "user",
+		"BaseModulePath":         "github.com/example",
+		"AppModuleName":          "demoapp",
+		"StructName":             "UserLoginLog",
+		"StructNameLowerCamel":   "userLoginLog",
+		"FunctionName":           "Delete",
+		"FunctionNameLowerCamel": "delete",
+		"HttpMethod":             "POST",
+		"Description":            "删除登录记录",
+		"ApiDocTag":              "用户登录记录",
+		"TargetFileExist":        false,
+		"IsNewRouter":            true,
+	}
+
+	controllerTpl, err := template.New("controller.go.tpl").Funcs(tplFuncs).ParseFS(TemplatesFS, "generate/api/controller.go.tpl")
+	if err != nil {
+		t.Fatalf("parse api controller template: %v", err)
+	}
+	var buf bytes.Buffer
+	if err := controllerTpl.ExecuteTemplate(&buf, "controller.go.tpl", params); err != nil {
+		t.Fatalf("render api controller template: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "@Router /v1/demoapp/user-login-logs/delete [post]") {
+		t.Errorf("controller template missing restful POST route:\n%s", out)
+	}
+
+	// GET 分支：路由 restful 化，且函数定义与方法名之间应有空格
+	params["HttpMethod"] = "GET"
+	buf.Reset()
+	if err := controllerTpl.ExecuteTemplate(&buf, "controller.go.tpl", params); err != nil {
+		t.Fatalf("render api controller template (GET): %v", err)
+	}
+	out = buf.String()
+	if !strings.Contains(out, "@Router /v1/demoapp/user-login-logs/delete [get]") {
+		t.Errorf("controller template missing restful GET route:\n%s", out)
+	}
+	if !strings.Contains(out, ") Delete(ctx *gin.Context)") {
+		t.Errorf("controller template GET method missing space before function name:\n%s", out)
+	}
+
+	routerTpl, err := template.New("router.go.tpl").Funcs(tplFuncs).ParseFS(TemplatesFS, "generate/api/router.go.tpl")
+	if err != nil {
+		t.Fatalf("parse api router template: %v", err)
+	}
+	buf.Reset()
+	if err := routerTpl.ExecuteTemplate(&buf, "router.go.tpl", params); err != nil {
+		t.Fatalf("render api router template: %v", err)
+	}
+	if out := buf.String(); !strings.Contains(out, `"/user-login-logs/delete"`) {
+		t.Errorf("router template missing restful route:\n%s", out)
+	}
+}
+
 // TestGenerateApiCode 测试生成 API 代码
 // 依赖数据库（example/apps/demoapp/config/code_gen.yaml 中的 DSN），数据库不可达时自动跳过。
 func TestGenerateApiCode(t *testing.T) {
@@ -249,7 +328,7 @@ func TestGenerateApiCode(t *testing.T) {
 	if !strings.Contains(string(userRouterContent), "userLoginLogRouter") {
 		t.Errorf("router/user.go missing userLoginLogRouter function:\n%s", userRouterContent)
 	}
-	if !strings.Contains(string(userRouterContent), `"/userLoginLog/delete1"`) {
+	if !strings.Contains(string(userRouterContent), `"/user-login-logs/delete1"`) {
 		t.Errorf("router/user.go missing generated route:\n%s", userRouterContent)
 	}
 	routerGoContent, err := os.ReadFile(filepath.Join("apps", "demoapp", "internal", "router", "router.go"))
@@ -574,7 +653,7 @@ func TestGetModuleInfo(t *testing.T) {
 
 // 测试嵌入模板复制到临时目录
 func TestCopyEmbeddedTemplatesToTempDir(t *testing.T) {
-	tempDir, err := CopyEmbeddedTemplatesToTempDir(TemplatesFS, "template/model")
+	tempDir, err := CopyEmbeddedTemplatesToTempDir(TemplatesFS, "generate/model")
 	if err != nil {
 		t.Fatalf("CopyEmbeddedTemplatesToTempDir error: %v", err)
 	}

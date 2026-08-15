@@ -15,7 +15,7 @@ func genApi() error {
 	apiGenCfg := cfg.Api
 
 	// 使用工具函数复制嵌入的模板文件到临时目录
-	tplDir, getTplErr := CopyEmbeddedTemplatesToTempDir(TemplatesFS, "template/api")
+	tplDir, getTplErr := CopyEmbeddedTemplatesToTempDir(TemplatesFS, "generate/api")
 	if getTplErr != nil {
 		return getTplErr
 	}
@@ -30,6 +30,10 @@ func genApi() error {
 			LayerParentDirMap: defaultLayerParentDirMap,
 			LayerNameMap:      defaultLayerNameMap,
 			LayerPrefixMap:    defaultLayerPrefixMap,
+			TplFuncMap: template.FuncMap{
+				TplFuncToKebabCase: toKebabCase,
+				TplFuncPluralize:   pluralize,
+			},
 		},
 		TargetFilename: apiGenCfg.TargetFilename,
 	}
@@ -43,9 +47,11 @@ func genApi() error {
 	structNameLowerCamel := gutil.FirstLetterToLower(structName)
 	functionName := gutil.FirstLetterToUpper(apiGenCfg.FunctionName)
 	functionNameLowerCamel := gutil.FirstLetterToLower(apiGenCfg.FunctionName)
+	// 资源路径统一为 kebab-case 复数（与 module 模板的 restful 风格一致）
+	resourcePath := toKebabCase(pluralize(structNameLowerCamel))
 
 	fmt.Printf("[API] Generating API - Method: %s, Path: /%s/%s, Description: %s\n",
-		apiGenCfg.HttpMethod, structNameLowerCamel, functionNameLowerCamel, apiGenCfg.Description)
+		apiGenCfg.HttpMethod, resourcePath, functionNameLowerCamel, apiGenCfg.Description)
 	var genParamsList []codegen.GenParamsItem
 	var isNewRouter, isNewController bool
 	var controllerFilepath, serviceFilepath string
@@ -125,13 +131,13 @@ func genApi() error {
 		}
 		fmt.Printf("[API] Registered new router: %sRouter\n", structNameLowerCamel)
 	} else {
-		routerCallContent := fmt.Sprintf(`v1RouterGroup.%s("/%s/%s", %sCtr.%s)`, apiGenCfg.HttpMethod, structNameLowerCamel, functionNameLowerCamel, structNameLowerCamel, functionName)
+		routerCallContent := fmt.Sprintf(`v1RouterGroup.%s("/%s/%s", %sCtr.%s)`, apiGenCfg.HttpMethod, resourcePath, functionNameLowerCamel, structNameLowerCamel, functionName)
 		routerEnterFilepath := filepath.Join(workDir, fmt.Sprintf("/internal/router/%s.go", gutil.TrimFileExtension(apiGenCfg.PackageName)))
 		// 使用 AddContentToFunc 添加到函数末尾，避免注释丢失
 		if err := gast.AddContentToFuncWithLineNumber(routerEnterFilepath, fmt.Sprintf("%sRouter", structNameLowerCamel), routerCallContent, -1); err != nil {
 			return fmt.Errorf("appendContentToFunc error: %v", err)
 		}
-		fmt.Printf("[API] Added route to existing router: %s %s\n", apiGenCfg.HttpMethod, fmt.Sprintf("/%s/%s", structNameLowerCamel, functionNameLowerCamel))
+		fmt.Printf("[API] Added route to existing router: %s %s\n", apiGenCfg.HttpMethod, fmt.Sprintf("/%s/%s", resourcePath, functionNameLowerCamel))
 	}
 	return nil
 }
