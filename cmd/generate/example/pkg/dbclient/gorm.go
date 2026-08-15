@@ -89,3 +89,10 @@ func IamDB(ctx context.Context) *gorm.DB {
 func DemoDB(ctx context.Context) *gorm.DB {
 	return GetDB(ctx, dbNameDemo)
 }
+
+// MysqlDB 是代码生成器约定的 DB getter：
+// 生成模板会引用 dbclient.{{ServiceName首字母大写}}DB（如 service_name: mysql -> dbclient.MysqlDB），
+// 示例骨架按该约定提供对应 getter，保证新生成的 dao 代码可直接编译。
+func MysqlDB(ctx context.Context) *gorm.DB {
+	return GetDB(ctx, dbNameDemo)
+}
