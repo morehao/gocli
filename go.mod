@@ -3,7 +3,7 @@ module github.com/morehao/gocli
 go 1.26.1
 
 require (
-	github.com/morehao/golib v1.31.0
+	github.com/morehao/golib v1.32.2
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/mod v0.34.0
 	gorm.io/driver/mysql v1.6.0
@@ -14,6 +14,7 @@ require (
 require (
 	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/go-sql-driver/mysql v1.9.3 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
