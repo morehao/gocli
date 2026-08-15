@@ -20,7 +20,7 @@ import (
 // 测试模板文件加载
 func TestLoadTemplates(t *testing.T) {
 	// 测试模板目录是否存在
-	dirs := []string{"template/module", "template/model", "template/api"}
+	dirs := []string{"generate/module", "generate/model", "generate/api"}
 	for _, dir := range dirs {
 		entries, err := TemplatesFS.ReadDir(dir)
 		if err != nil {
@@ -265,7 +265,7 @@ func TestApiTemplateRestfulPath(t *testing.T) {
 		"IsNewRouter":            true,
 	}
 
-	controllerTpl, err := template.New("controller.go.tpl").Funcs(tplFuncs).ParseFS(TemplatesFS, "template/api/controller.go.tpl")
+	controllerTpl, err := template.New("controller.go.tpl").Funcs(tplFuncs).ParseFS(TemplatesFS, "generate/api/controller.go.tpl")
 	if err != nil {
 		t.Fatalf("parse api controller template: %v", err)
 	}
@@ -292,7 +292,7 @@ func TestApiTemplateRestfulPath(t *testing.T) {
 		t.Errorf("controller template GET method missing space before function name:\n%s", out)
 	}
 
-	routerTpl, err := template.New("router.go.tpl").Funcs(tplFuncs).ParseFS(TemplatesFS, "template/api/router.go.tpl")
+	routerTpl, err := template.New("router.go.tpl").Funcs(tplFuncs).ParseFS(TemplatesFS, "generate/api/router.go.tpl")
 	if err != nil {
 		t.Fatalf("parse api router template: %v", err)
 	}
@@ -653,7 +653,7 @@ func TestGetModuleInfo(t *testing.T) {
 
 // 测试嵌入模板复制到临时目录
 func TestCopyEmbeddedTemplatesToTempDir(t *testing.T) {
-	tempDir, err := CopyEmbeddedTemplatesToTempDir(TemplatesFS, "template/model")
+	tempDir, err := CopyEmbeddedTemplatesToTempDir(TemplatesFS, "generate/model")
 	if err != nil {
 		t.Fatalf("CopyEmbeddedTemplatesToTempDir error: %v", err)
 	}

@@ -9,11 +9,11 @@
 package generate
 
 import (
-	"embed"
 	"fmt"
 	"os"
 	"path/filepath"
 
+	tpl "github.com/morehao/gocli/template"
 	"github.com/morehao/golib/gutil"
 	"github.com/spf13/cobra"
 	"gorm.io/driver/mysql"
@@ -21,8 +21,8 @@ import (
 	"gorm.io/gorm"
 )
 
-//go:embed template
-var TemplatesFS embed.FS
+// TemplatesFS 代码生成模板（内嵌于顶层 template 包，见 template/generate）
+var TemplatesFS = tpl.GenerateFS
 
 var workDir string
 var cfg *Config

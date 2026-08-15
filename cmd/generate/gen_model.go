@@ -25,7 +25,7 @@ func genModel() error {
 	fmt.Printf("[Model] Generating model based on table: %s\n", modelGenCfg.TableName)
 
 	// 使用工具函数复制嵌入的模板文件到临时目录
-	tplDir, getTplErr := CopyEmbeddedTemplatesToTempDir(TemplatesFS, "template/model")
+	tplDir, getTplErr := CopyEmbeddedTemplatesToTempDir(TemplatesFS, "generate/model")
 	if getTplErr != nil {
 		return getTplErr
 	}
