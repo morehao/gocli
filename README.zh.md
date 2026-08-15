@@ -348,7 +348,7 @@ gocli cutter app -s demoapp -n myapp
 ```
 
 **参数说明：**
-- `-s, --source`：要克隆的源应用名称（默认值：`demoapp`）
+- `-s, --source`：要克隆的源应用名称（默认值：`demo`）
 - `-n, --name`：新应用名称（必填）
 
 **使用示例：**
