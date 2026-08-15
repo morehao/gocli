@@ -64,6 +64,13 @@ func genModule() error {
 		)
 	}
 
+	// 主键类型兜底：表无主键时 PKFieldType 为空，默认 uint（与模板内嵌 gorm.Model 的 uint 主键一致），
+	// 避免渲染出 BaseCond[] 这类非法泛型代码。
+	pkFieldType := analysisRes.PKFieldType
+	if pkFieldType == "" {
+		pkFieldType = "uint"
+	}
+
 	var modelLayerName, daoLayerName codegen.LayerName
 	for _, v := range analysisRes.TplAnalysisList {
 		if v.OriginLayerName == codegen.LayerNameModel {
@@ -109,7 +116,7 @@ func genModule() error {
 			// Comment 用于 obj 层等其他地方的普通注释，直接使用原始注释
 			comment := field.Comment
 			modelFields = append(modelFields, ModelField{
-				IsPrimaryKey:         field.ColumnKey == codegen.ColumnKeyPRI,
+				IsPrimaryKey:         field.IsPrimaryKey,
 				FieldName:            gutil.ReplaceIdToID(field.FieldName),
 				FieldLowerCaseName:   gutil.SnakeToLowerCamel(field.FieldName),
 				JsonTagName:          SnakeToLowerCamelWithID(field.ColumnName),
@@ -162,6 +169,7 @@ func genModule() error {
 					},
 					PackageName:          analysisRes.PackageName,
 					TableName:            analysisRes.TableName,
+					PKFieldType:          pkFieldType,
 					ModelLayerName:       string(modelLayerName),
 					DaoLayerName:         string(daoLayerName),
 					DaoPackageName:       string(daoLayerName),
@@ -249,7 +257,7 @@ func genModule() error {
 			// Comment 用于 obj 层等其他地方的普通注释，直接使用原始注释
 			comment := field.Comment
 			modelFields = append(modelFields, ModelField{
-				IsPrimaryKey:         field.ColumnKey == codegen.ColumnKeyPRI,
+				IsPrimaryKey:         field.IsPrimaryKey,
 				FieldName:            gutil.ReplaceIdToID(field.FieldName),
 				FieldLowerCaseName:   gutil.SnakeToLowerCamel(field.FieldName),
 				JsonTagName:          SnakeToLowerCamelWithID(field.ColumnName),
@@ -276,6 +284,7 @@ func genModule() error {
 			},
 			PackageName:          analysisRes.PackageName,
 			TableName:            analysisRes.TableName,
+			PKFieldType:          pkFieldType,
 			ModelLayerName:       string(modelLayerName),
 			DaoLayerName:         string(daoLayerName),
 			DaoPackageName:       string(daoLayerName),
@@ -328,6 +337,7 @@ func genModule() error {
 type ModuleExtraParams struct {
 	AppInfo
 	PackageName          string
+	PKFieldType          string
 	ModelLayerName       string
 	DaoLayerName         string
 	DaoPackageName       string

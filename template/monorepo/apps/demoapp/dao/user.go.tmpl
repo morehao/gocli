@@ -8,7 +8,7 @@ import (
 )
 
 type UserCond struct {
-	*gormdao.BaseCond
+	*gormdao.BaseCond[uint]
 	CompanyID    uint
 	CreatedBy    uint
 	DeletedBy    uint
@@ -42,12 +42,12 @@ func (c *UserCond) BuildCondition(db *gorm.DB, tableName string) {
 }
 
 type UserDao struct {
-	*gormdao.Dao[model.UserEntity, model.UserEntityList]
+	*gormdao.Dao[model.UserEntity, model.UserEntityList, uint]
 }
 
 func NewUserDao() *UserDao {
 	return &UserDao{
-		Dao: gormdao.NewDao[model.UserEntity, model.UserEntityList](
+		Dao: gormdao.NewDao[model.UserEntity, model.UserEntityList, uint](
 			model.TableNameUser, "UserDao",
 			dbclient.DemoDBGetter,
 		),

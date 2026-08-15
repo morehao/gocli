@@ -12,7 +12,7 @@ import (
 )
 
 type {{.StructName}}Cond struct {
-	*gormdao.BaseCond
+	*gormdao.BaseCond[{{.PKFieldType}}]
 {{- range .ModelFields}}
 {{- if not (isBuiltInField .FieldName)}}
 	{{.FieldName}} {{.FieldType}}
@@ -47,12 +47,12 @@ func (c *{{.StructName}}Cond) BuildCondition(db *gorm.DB, tableName string) {
 }
 
 type {{.StructName}}Dao struct {
-	*gormdao.Dao[{{.ModelLayerName}}.{{.StructName}}Entity, {{.ModelLayerName}}.{{.StructName}}EntityList]
+	*gormdao.Dao[{{.ModelLayerName}}.{{.StructName}}Entity, {{.ModelLayerName}}.{{.StructName}}EntityList, {{.PKFieldType}}]
 }
 
 func New{{.StructName}}Dao() *{{.StructName}}Dao {
 	return &{{.StructName}}Dao{
-		Dao: gormdao.NewDao[{{.ModelLayerName}}.{{.StructName}}Entity, {{.ModelLayerName}}.{{.StructName}}EntityList](
+		Dao: gormdao.NewDao[{{.ModelLayerName}}.{{.StructName}}Entity, {{.ModelLayerName}}.{{.StructName}}EntityList, {{.PKFieldType}}](
 			{{.ModelLayerName}}.TableName{{.StructName}}, "{{.StructName}}Dao",
 			dbclient.{{.DBName}},
 		),
