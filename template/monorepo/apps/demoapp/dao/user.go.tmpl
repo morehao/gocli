@@ -8,7 +8,7 @@ import (
 )
 
 type UserCond struct {
-	*gormdao.BaseCond[uint]
+	*gormdao.BaseCond
 	CompanyID    uint
 	CreatedBy    uint
 	DeletedBy    uint

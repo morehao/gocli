@@ -34,8 +34,8 @@ func renderTpl(t *testing.T, fsPath string, params map[string]any) string {
 	return buf.String()
 }
 
-// TestDaoTplRenderGenericID 验证 golib v1.32.4 泛型 gormdao 适配：
-// dao 模板渲染 BaseCond/Dao/NewDao 时携带主键类型参数（如 uint）。
+// TestDaoTplRenderGenericID 验证 golib v1.32.5 gormdao 适配：
+// dao 模板中 Dao/NewDao 携带主键类型参数（如 uint），而 BaseCond 为非泛型纯数据容器。
 func TestDaoTplRenderGenericID(t *testing.T) {
 	fields := []ModelField{
 		{IsPrimaryKey: true, FieldName: "ID", FieldType: "uint", ColumnName: "id", ColumnType: "bigint unsigned"},
@@ -56,7 +56,7 @@ func TestDaoTplRenderGenericID(t *testing.T) {
 	for _, fsPath := range []string{"generate/module/dao.go.tpl", "generate/model/dao.go.tpl"} {
 		out := renderTpl(t, fsPath, params)
 		for _, want := range []string{
-			"*gormdao.BaseCond[uint]",
+			"*gormdao.BaseCond",
 			"*gormdao.Dao[model.UserEntity, model.UserEntityList, uint]",
 			"gormdao.NewDao[model.UserEntity, model.UserEntityList, uint](",
 		} {
@@ -65,9 +65,9 @@ func TestDaoTplRenderGenericID(t *testing.T) {
 			}
 		}
 	}
-	// service 模板的 PageList 构造 Cond 时同样需要携带主键类型参数。
-	if out := renderTpl(t, "generate/module/service.go.tpl", params); !strings.Contains(out, "&gormdao.BaseCond[uint]{") {
-		t.Errorf("generate/module/service.go.tpl missing &gormdao.BaseCond[uint]{:\n%s", out)
+	// service 模板的 PageList 构造 Cond 时使用非泛型 BaseCond。
+	if out := renderTpl(t, "generate/module/service.go.tpl", params); !strings.Contains(out, "&gormdao.BaseCond{") {
+		t.Errorf("generate/module/service.go.tpl missing &gormdao.BaseCond{:\n%s", out)
 	}
 }
 
@@ -93,7 +93,7 @@ func TestModelTplRenderPrimaryKeyTag(t *testing.T) {
 	}
 }
 
-// TestMonorepoTplRenderGenericID 验证 monorepo 模板（create 命令产物）适配泛型 gormdao。
+// TestMonorepoTplRenderGenericID 验证 monorepo 模板（create 命令产物）适配 gormdao。
 func TestMonorepoTplRenderGenericID(t *testing.T) {
 	// 渲染 dao/user.go.tmpl（直接模板，无参数）
 	tpl, err := template.New("").ParseFS(tplPkg.MonorepoFS, "monorepo/apps/demoapp/dao/user.go.tmpl")
@@ -106,7 +106,7 @@ func TestMonorepoTplRenderGenericID(t *testing.T) {
 	}
 	out := buf.String()
 	for _, want := range []string{
-		"*gormdao.BaseCond[uint]",
+		"*gormdao.BaseCond",
 		"*gormdao.Dao[model.UserEntity, model.UserEntityList, uint]",
 		"gormdao.NewDao[model.UserEntity, model.UserEntityList, uint](",
 	} {
@@ -124,7 +124,7 @@ func TestMonorepoTplRenderGenericID(t *testing.T) {
 	if err := tpl2.ExecuteTemplate(&buf, "user.go.tmpl", nil); err != nil {
 		t.Fatalf("render svcuser template: %v", err)
 	}
-	if !strings.Contains(buf.String(), "&gormdao.BaseCond[uint]{") {
-		t.Errorf("svcuser template missing BaseCond[uint]:\n%s", buf.String())
+	if !strings.Contains(buf.String(), "&gormdao.BaseCond{") {
+		t.Errorf("svcuser template missing BaseCond:\n%s", buf.String())
 	}
 }

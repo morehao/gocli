@@ -138,7 +138,7 @@ func (svc *{{.StructNameLowerCamel}}Svc) Detail(ctx *gin.Context, req *dto{{.Pac
 // PageList 分页获取{{.Description}}列表
 func (svc *{{.StructNameLowerCamel}}Svc) PageList(ctx *gin.Context, req *dto{{.PackageName}}.{{.StructName}}PageListReq) (*dto{{.PackageName}}.{{.StructName}}PageListResp, error) {
 	cond := &{{.DaoPackageName}}.{{.StructName}}Cond{
-		BaseCond: &gormdao.BaseCond[{{.PKFieldType}}]{
+		BaseCond: &gormdao.BaseCond{
 			Page:     req.Page,
 			PageSize: req.PageSize,
 		},
