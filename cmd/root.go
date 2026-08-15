@@ -3,6 +3,7 @@ package cmd
 import (
 	"os"
 
+	"github.com/morehao/gocli/cmd/create"
 	"github.com/morehao/gocli/cmd/cutter"
 	"github.com/morehao/gocli/cmd/generate"
 	"github.com/spf13/cobra"
@@ -33,6 +34,6 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.AddCommand(generate.Cmd, cutter.Cmd)
+	rootCmd.AddCommand(generate.Cmd, cutter.Cmd, create.Cmd)
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

@@ -72,6 +72,12 @@ Adds a new API endpoint to an existing module:
 gocli generate api -a demoapp
 ```
 
+**Route style**: Endpoint paths follow the RESTful convention `/{kebab-case plural resource}/{action}`, consistent with the `module` mode. For example, deleting a login log (`target_filename: user_login_log.go`, `function_name: Delete`, `http_method: POST`) generates:
+
+```
+POST /v1/demoapp/user-login-logs/delete
+```
+
 ### Prerequisites
 
 1. **Execute in project root**: Run the command in the project root directory (e.g., `go-gin-web`)
@@ -213,6 +219,74 @@ pkg/code/               # Shared error codes
 ```
 
 **Note**: The dao layer is generated as a single-level directory named `{appName}dao` (e.g., `demoappdao`), using `gormdao.Dao` for common CRUD operations.
+
+---
+
+## create
+
+`create` is a scaffolding tool that builds a backend monorepo project from the built-in template, or adds a new app to an existing monorepo. The template is embedded in the binary via `go:embed`, so it works offline after `go install`.
+
+### Features
+
+#### 1. Create a Monorepo Project (`create project`)
+
+* Generates a complete backend monorepo from the built-in template: `go.work` (workspace) + `apps/demoapp` (sample app) + `pkg` (shared library)
+* Automatically rewrites module paths and imports (`github.com/example` → your module path)
+* Runs `go work sync` by default (disable with `--no-tidy`)
+* Optionally runs `git init` with `--git`
+
+```bash
+gocli create project my-backend -m github.com/acme/backend
+cd my-backend
+```
+
+Generated structure:
+
+```
+my-backend/
+├── go.work                  # workspace: apps/demoapp + pkg
+├── apps/
+│   └── demoapp/             # sample app (gin + gorm)
+│       ├── config/code_gen.yaml
+│       ├── go.mod
+│       └── internal/ ...    # controller/service/dto/router layers
+└── pkg/                     # shared library (code, dbclient)
+    └── go.mod
+```
+
+**Flags:**
+* `-m, --module`: root module path, e.g. `github.com/acme/backend` (required)
+* positional `[dir]`: destination directory (defaults to the last segment of the module path)
+* `--git`: initialize a git repository
+* `--no-tidy`: skip `go work sync`
+
+#### 2. Add an App to an Existing Monorepo (`create app`)
+
+* Run from the monorepo root; creates a new app under `apps/<name>` from the built-in sample app
+* Automatically rewrites module paths, imports, package names, and app names in configs/comments
+* Automatically registers the app into `go.work` (`use ./apps/<name>`)
+* Runs `go mod tidy` for the new app by default (disable with `--no-tidy`)
+
+```bash
+cd /path/to/my-backend
+gocli create app -n userapp
+```
+
+**Flags:**
+* `-n, --name`: new app name (required; lowercase letters and digits only)
+* `-m, --module`: override the app module path
+* `--no-tidy`: skip `go mod tidy`
+
+**Module path inference order for the new app:**
+1. `--module` if provided
+2. Parent path of the `pkg/go.mod` module (e.g. `github.com/acme/backend/pkg` → `github.com/acme/backend`)
+3. Root `go.mod` module path, or the parent path of any `apps/*/go.mod` module
+
+The new app works seamlessly with `generate`:
+
+```bash
+gocli generate module -a userapp   # generate code from DB schema
+```
 
 ---
 

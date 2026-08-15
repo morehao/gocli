@@ -11,6 +11,6 @@ func {{.StructNameLowerCamel}}Router(groups *ginserver.RouterGroups) {
 
 	v1RouterGroup := groups.MustGetGroup(ginserver.ApiVersionV1)
 
-	v1RouterGroup.{{.HttpMethod}}("/{{.StructNameLowerCamel}}/{{.FunctionNameLowerCamel}}", {{.StructNameLowerCamel}}Ctr.{{.FunctionName}})
+	v1RouterGroup.{{.HttpMethod}}("/{{toKebabCase (pluralize .StructNameLowerCamel)}}/{{.FunctionNameLowerCamel}}", {{.StructNameLowerCamel}}Ctr.{{.FunctionName}})
 }
 {{end}}
