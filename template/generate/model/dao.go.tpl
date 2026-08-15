@@ -12,7 +12,7 @@ import (
 )
 
 type {{.StructName}}Cond struct {
-	*gormdao.BaseCond[{{.PKFieldType}}]
+	*gormdao.BaseCond
 {{- range .ModelFields}}
 {{- if not (isBuiltInField .FieldName)}}
 	{{.FieldName}} {{.FieldType}}

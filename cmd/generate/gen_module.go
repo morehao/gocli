@@ -65,7 +65,7 @@ func genModule() error {
 	}
 
 	// 主键类型兜底：表无主键时 PKFieldType 为空，默认 uint（与模板内嵌 gorm.Model 的 uint 主键一致），
-	// 避免渲染出 BaseCond[] 这类非法泛型代码。
+	// 避免渲染出 Dao[] / NewDao[] 这类非法泛型代码。
 	pkFieldType := analysisRes.PKFieldType
 	if pkFieldType == "" {
 		pkFieldType = "uint"

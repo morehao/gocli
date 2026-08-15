@@ -350,7 +350,7 @@ gocli cutter app -s demoapp -n myapp
 ```
 
 **Parameters:**
-* `-s, --source`: Source app name to clone from (default: `demoapp`).
+* `-s, --source`: Source app name to clone from (default: `demo`).
 * `-n, --name`: New app name (required).
 
 **Example:**
