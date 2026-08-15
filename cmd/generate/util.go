@@ -22,6 +22,8 @@ const (
 	TplFuncHasTimeField        = "hasTimeField"
 	TplFuncGetFieldImports     = "getFieldImports"
 	TplFuncIsBasicType         = "isBasicType"
+	TplFuncToKebabCase        = "toKebabCase"
+	TplFuncPluralize          = "pluralize"
 
 	DBTypeMySQL    = "mysql"
 	DBTypePostgres = "postgresql"
@@ -407,4 +409,32 @@ func ExecuteCommand(root *cobra.Command, args ...string) (output string, err err
 	root.SetArgs(args)
 	err = root.Execute()
 	return buf.String(), err
+}
+
+// toKebabCase 将驼峰/帕斯卡命名转为 kebab-case（UserInfo → user-info）
+func toKebabCase(s string) string {
+	return strings.ReplaceAll(gutil.CamelToSnakeCase(s), "_", "-")
+}
+
+// pluralize 简单英文复数化（覆盖常见规则；特殊复数手工处理）
+func pluralize(s string) string {
+	if s == "" {
+		return s
+	}
+	switch {
+	case strings.HasSuffix(s, "y") && len(s) > 2 && !isVowel(s[len(s)-2]):
+		return s[:len(s)-1] + "ies"
+	case strings.HasSuffix(s, "s"), strings.HasSuffix(s, "x"), strings.HasSuffix(s, "z"), strings.HasSuffix(s, "ch"), strings.HasSuffix(s, "sh"):
+		return s + "es"
+	default:
+		return s + "s"
+	}
+}
+
+func isVowel(c byte) bool {
+	switch c {
+	case 'a', 'e', 'i', 'o', 'u':
+		return true
+	}
+	return false
 }
