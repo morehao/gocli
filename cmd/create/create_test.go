@@ -52,7 +52,7 @@ func TestCreateProjectProjectName(t *testing.T) {
 
 // TestCreateAppInvalidName 非法 app 名应被拒绝。
 func TestCreateAppInvalidName(t *testing.T) {
-	if err := createAppX("User-App", false); err == nil {
+	if err := createAppX("User-App", "", false); err == nil {
 		t.Error("createAppX with invalid name should error")
 	}
 }
@@ -76,7 +76,7 @@ func TestCreateAppFromArk(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.Chdir(wd) })
 
-	if err := createAppX("user", false); err != nil {
+	if err := createAppX("user", "", false); err != nil {
 		t.Fatalf("createAppX: %v", err)
 	}
 	assertFileContent(t, filepath.Join(root, "go.work"), "./backend/apps/user")

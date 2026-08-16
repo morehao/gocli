@@ -211,8 +211,8 @@ func appendESClientEntry(path, cap, appName string) error {
 	if idx := strings.Index(text, oldCase); idx >= 0 {
 		// 用一个哨兵字符串实现等价多行插入（保持缩进一致）
 		replacement := "case ESServiceDemo:\n" +
-			"\t\t" + "case " + capService + ":" + "\n" +
-			"\t\t" + cap + "ES = client"
+			"\t\tcase " + capService + ":\n" +
+			"\t\t\t" + cap + "ES = client"
 		text = strings.Replace(text, oldCase+"\n\t\t\tDemoES = client", replacement+"\n\t\t\tDemoES = client", 1)
 	} else {
 		return fmt.Errorf("appendESClientEntry: cannot find switch case %q in %s", oldCase, path)

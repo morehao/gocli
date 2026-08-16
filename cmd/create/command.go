@@ -79,8 +79,13 @@ var appCmd = &cobra.Command{
 			fmt.Println("Error retrieving no-tidy flag:", err)
 			os.Exit(1)
 		}
+		moduleOverride, err := cmd.Flags().GetString("module")
+		if err != nil {
+			fmt.Println("Error retrieving module flag:", err)
+			os.Exit(1)
+		}
 
-		if err := createAppX(appName, !skipTidy); err != nil {
+		if err := createAppX(appName, moduleOverride, !skipTidy); err != nil {
 			fmt.Println("Error creating app:", err)
 			os.Exit(1)
 		}
@@ -96,6 +101,7 @@ func init() {
 
 	// app flags
 	appCmd.Flags().StringP("name", "n", "", "New app name, e.g. userapp (required)")
+	appCmd.Flags().StringP("module", "m", "", "Override the new app module path (by default inferred from the monorepo)")
 	appCmd.Flags().Bool("no-tidy", false, "Skip `go mod tidy` for the new app (runs by default)")
 
 	Cmd.AddCommand(projectCmd, appCmd)

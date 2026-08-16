@@ -11,9 +11,6 @@ import (
 	"github.com/morehao/gocli/template"
 )
 
-// templateBaseModule 模板中使用的占位基础模块路径。
-const templateBaseModule = "github.com/example"
-
 // CreateOptions 描述一次 create project 的全部输入。
 type CreateOptions struct {
 	Dir         string // 目标仓库根目录；空则取 ModulePath 末段
@@ -73,7 +70,7 @@ func createProjectWithOpts(o CreateOptions) error {
 		return fmt.Errorf("create destination directory fail: %w", err)
 	}
 
-	_ = defaultProjectName(dir, o.ModulePath, o.ProjectName) // 项目名用于文档/命名；module 以用户输入为准
+	projName := defaultProjectName(dir, o.ModulePath, o.ProjectName)
 
 	tplFS, err := fs.Sub(template.ArkFS, "ark")
 	if err != nil {
@@ -105,6 +102,9 @@ func createProjectWithOpts(o CreateOptions) error {
 	}
 
 	if err := scaffold.GenerateRootModule(absDir, o.ModulePath); err != nil {
+		return err
+	}
+	if err := scaffold.GenerateRootREADME(absDir, projName); err != nil {
 		return err
 	}
 	if err := scaffold.GenerateRootWorkspace(absDir); err != nil {

@@ -84,33 +84,3 @@ func IsGoProject(path string) bool {
 	}
 	return IsGoWork(path)
 }
-
-// ReplaceTextInTree 遍历 rootDir，对扩展名匹配的文本文件执行 old -> new 全量替换。
-// 用于替换 yaml 等配置中的 app 名称。
-func ReplaceTextInTree(rootDir string, old, new string, exts ...string) error {
-	extSet := make(map[string]struct{}, len(exts))
-	for _, ext := range exts {
-		extSet[strings.ToLower(ext)] = struct{}{}
-	}
-	return filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			return nil
-		}
-		ext := strings.ToLower(filepath.Ext(path))
-		if _, ok := extSet[ext]; !ok {
-			return nil
-		}
-		content, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		if !strings.Contains(string(content), old) {
-			return nil
-		}
-		newContent := strings.ReplaceAll(string(content), old, new)
-		return os.WriteFile(path, []byte(newContent), 0o644)
-	})
-}

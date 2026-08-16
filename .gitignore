@@ -41,6 +41,8 @@ docs/**
 .superpowers
 # 忽略 docs 目录
 docs/
+# 但保留 ark 模板内各 app 的 docs 目录（模板资产需入库）
+!template/ark/**/docs/
 
 # 忽略 demoapp 下生成的代码
 cmd/generate/example/apps/demoapp/**
