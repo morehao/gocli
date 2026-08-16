@@ -24,9 +24,17 @@ func capFirstS(s string) string {
 //
 // 必须覆盖新 app 会引用到的全部 dbclient 连接件：gorm(DB)、es(ES)、以及 testsetup(常量+初始器)。
 // 原因：新 app 的 svchealth 同时引用 dbclient.<X>DB 和 dbclient.<X>ES，两者缺一即编译失败。
+//
+// 原子性约定：在改动 backend/pkg 之前，validateAppendAnchors 会先校验收到的全部 helper 锚点
+// 都存在（或新 entry 已存在可跳过）。只有全部通过才执行实际写入，因此任一 helper 都不可能、
+// 也不会在部分改动后失败，pkg 不会被半打补丁。
 func AppendAppConnector(pkgDir, oldApp, appName string) error {
 	cap := capFirstS(appName)
 	newCap := capFirstS(appName + "app") // Userapp，对应 Demoapp
+
+	if err := validateAppendAnchors(pkgDir, oldApp, appName, cap, newCap); err != nil {
+		return err
+	}
 
 	// 1) constant.go 追加 AppNameUser = "user"
 	constantPath := filepath.Join(pkgDir, "testsetup", "constant.go")
@@ -57,6 +65,67 @@ func AppendAppConnector(pkgDir, oldApp, appName string) error {
 	return nil
 }
 
+// validateAppendAnchors 在任何对 pkg 的写入之前，校验后面每个 helper 依赖的锚点都存在。
+// 若某个 entry 已存在（幂等跳过），则不强求对应的 demo 锚点。这样保证后续 append 步骤
+// 不可能因为锚点缺失而在部分改动后失败，从而 pkg 不会被半打补丁。
+func validateAppendAnchors(pkgDir, oldApp, appName, cap, newCap string) error {
+	constantPath := filepath.Join(pkgDir, "testsetup", "constant.go")
+	if content, err := os.ReadFile(constantPath); err != nil {
+		return err
+	} else if !strings.Contains(string(content), "AppName"+cap) {
+		demoAnchor := "AppName" + capFirstS("demo")
+		if idx := strings.Index(string(content), demoAnchor); idx < 0 {
+			return fmt.Errorf("AppendAppConnector: cannot find anchor %q in %s", demoAnchor, constantPath)
+		}
+	}
+
+	gormPath := filepath.Join(pkgDir, "dbclient", "gorm.go")
+	if content, err := os.ReadFile(gormPath); err != nil {
+		return err
+	} else if !strings.Contains(string(content), "dbName"+cap) {
+		dbDemo := "dbName" + capFirstS("demo")
+		if idx := strings.Index(string(content), dbDemo); idx < 0 {
+			return fmt.Errorf("AppendAppConnector: cannot find anchor %q in %s", dbDemo, gormPath)
+		}
+	}
+
+	esPath := filepath.Join(pkgDir, "dbclient", "es.go")
+	if content, err := os.ReadFile(esPath); err != nil {
+		return err
+	} else if !strings.Contains(string(content), esMarker(cap)+" *elasticsearch.Client") {
+		for _, anchor := range []string{
+			"DemoES *elasticsearch.Client",
+			"ESServiceDemo = \"demo\"",
+			"case ESServiceDemo:",
+		} {
+			if idx := strings.Index(string(content), anchor); idx < 0 {
+				return fmt.Errorf("AppendAppConnector: cannot find anchor %q in %s", anchor, esPath)
+			}
+		}
+	}
+
+	src := filepath.Join(pkgDir, "testsetup", "initializer_"+oldApp+".go")
+	if _, err := os.Stat(src); err != nil {
+		return err
+	}
+
+	initPath := filepath.Join(pkgDir, "testsetup", "init.go")
+	if content, err := os.ReadFile(initPath); err != nil {
+		return err
+	} else if !strings.Contains(string(content), "AppName"+cap+":") {
+		demoLine := "AppName" + capFirstS("demo") + ": new" + capFirstS("demo") + "appInitializer"
+		if idx := strings.Index(string(content), demoLine); idx < 0 {
+			return fmt.Errorf("AppendAppConnector: cannot find anchor %q in %s", demoLine, initPath)
+		}
+	}
+	return nil
+}
+
+// esMarker 返回 <Cap>ES 形态（借 appendESClientEntry 的幂等标记）。
+func esMarker(cap string) string {
+	return cap + "ES"
+}
+
 func appendConstantEntry(path, cap, appName string) error {
 	content, err := os.ReadFile(path)
 	if err != nil {
@@ -74,8 +143,7 @@ func appendConstantEntry(path, cap, appName string) error {
 		line := "\t" + marker + " = " + strconv.Quote(appName) + "\n"
 		return os.WriteFile(path, []byte(string(content[:insertAt])+line+string(content[insertAt:])), 0o644)
 	}
-	line := "\t" + marker + " = " + strconv.Quote(appName) + "\n"
-	return os.WriteFile(path, append(content, []byte(line)...), 0o644)
+	return fmt.Errorf("appendConstantEntry: cannot find anchor %q in %s", demoAnchor, path)
 }
 
 func appendDBClientEntry(path, cap, appName string) error {
