@@ -49,9 +49,43 @@ func TestCreateProjectProjectName(t *testing.T) {
 
 // TestCreateAppInvalidName 非法 app 名应被拒绝。
 func TestCreateAppInvalidName(t *testing.T) {
-	if err := createApp("User-App", "", false); err == nil {
-		t.Error("createApp with invalid name should error")
+	if err := createAppX("User-App", false); err == nil {
+		t.Error("createAppX with invalid name should error")
 	}
+}
+
+// TestCreateAppFromArk 验证 create app 从 backend/apps/demo 复制并做 token 替换 + pkg 联动。
+func TestCreateAppFromArk(t *testing.T) {
+	parent := t.TempDir()
+	if err := createProjectWithOpts(CreateOptions{
+		Dir:         filepath.Join(parent, "my-ark"),
+		ModulePath:  "github.com/acme/my-ark",
+		ProjectName: "my-ark",
+		GitInit:     false,
+		Tidy:        false,
+	}); err != nil {
+		t.Fatalf("createProjectWithOpts: %v", err)
+	}
+	root := filepath.Join(parent, "my-ark")
+	wd, _ := os.Getwd()
+	if err := os.Chdir(filepath.Join(root, "backend")); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(wd) })
+
+	if err := createAppX("user", false); err != nil {
+		t.Fatalf("createAppX: %v", err)
+	}
+	assertFileContent(t, filepath.Join(root, "backend", "go.work"), "./apps/user")
+	assertFileContent(t, filepath.Join(root, "backend", "apps", "user", "go.mod"), "module github.com/acme/my-ark/user")
+	assertNoContent(t, filepath.Join(root, "backend", "apps", "user"), "demo")
+	assertFileContent(t, filepath.Join(root, "backend", "pkg", "testsetup", "constant.go"), "AppNameUser")
+	// 编译关键：新 app 引用的 dbclient 连接件必须补齐（UserDB / UserES / UserappInitializer / AppNameUser）
+	assertFileContent(t, filepath.Join(root, "backend", "pkg", "dbclient", "gorm.go"), "func UserDB")
+	assertFileContent(t, filepath.Join(root, "backend", "pkg", "dbclient", "gorm.go"), "dbNameUser")
+	assertFileContent(t, filepath.Join(root, "backend", "pkg", "dbclient", "es.go"), "ESServiceUser")
+	assertFileContent(t, filepath.Join(root, "backend", "pkg", "dbclient", "es.go"), "UserES")
+	assertFileContent(t, filepath.Join(root, "backend", "pkg", "testsetup", "init.go"), "newUserappInitializer")
 }
 
 func assertFileContent(t *testing.T, path, want string) {

@@ -1,156 +1,144 @@
 package create
 
 import (
-	"bytes"
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/morehao/gocli/internal/scaffold"
-	"github.com/morehao/gocli/template"
 )
 
-// templateAppModule 模板中示例 app 的占位模块路径。
-const templateAppModule = templateBaseModule + "/demoapp"
+// capFirst 首字母大写。
+func capFirst(s string) string {
+	if s == "" {
+		return s
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
+}
 
-// createApp 在既有 monorepo 中基于内置模板新增一个 app。
-func createApp(appName, moduleOverride string, tidy bool) error {
+// renameAppToken 计算 app 名替换映射（key 长度降序由 ReplaceTokensInTree 保证，demoapp 不会被 demo 误伤）。
+func renameAppToken(oldApp, newApp string) map[string]string {
+	return map[string]string{
+		oldApp + "app":  newApp + "app",
+		capFirst(oldApp): capFirst(newApp),
+		oldApp:          newApp,
+	}
+}
+
+// createAppX 在 monorepo 的 backend/ 下新建一个 app。
+// 从已有的 backend/apps/demo（已由 create project 生成为 <module>/demo）复制到 apps/<appName>，
+// 再按 renameAppToken 把 demo/Demo/demoapp 全部替换为 appName 形态（含 import 路径里的
+// <module>/demo/xxx，因为 ReplaceTokensInTree 会把 "demo" 子串一并替换为 appName）。
+func createAppX(appName string, tidy bool) error {
 	if err := scaffold.ValidateAppName(appName); err != nil {
 		return err
 	}
-
-	rootDir, goWorkPath, err := findMonorepoRoot()
+	backendDir, goWorkPath, err := findArkBackendDir()
 	if err != nil {
 		return err
 	}
-	appsDir := filepath.Join(rootDir, "apps")
-	if _, err := os.Stat(appsDir); err != nil {
-		return fmt.Errorf("%s is not a monorepo: apps directory does not exist", rootDir)
+	appsDir := filepath.Join(backendDir, "apps")
+	srcDemo := filepath.Join(appsDir, "demo")
+	if _, err := os.Stat(srcDemo); err != nil {
+		return fmt.Errorf("%s is not an ark monorepo: apps/demo does not exist (run create project first)", backendDir)
 	}
 	newAppDir := filepath.Join(appsDir, appName)
 	if _, err := os.Stat(newAppDir); err == nil {
 		return fmt.Errorf("app already exists: %s", newAppDir)
 	}
 
-	// 推断新 app 的模块路径
-	var newAppModule string
-	if moduleOverride != "" {
-		newAppModule = moduleOverride
-	} else {
-		base, err := scaffold.InferBaseModule(rootDir)
-		if err != nil {
-			return fmt.Errorf("infer base module fail (use --module to override): %w", err)
-		}
-		newAppModule = base + "/" + appName
-	}
-	if err := scaffold.ValidateModulePath(newAppModule); err != nil {
-		return err
-	}
-
-	// 推断 pkg 模块路径（模板 import 的 github.com/example/pkg 需指向本仓库的公共库）
-	pkgModule, err := resolvePkgModulePath(rootDir, newAppModule)
+	base, err := scaffold.InferBaseModule(backendDir)
 	if err != nil {
 		return err
 	}
+	newModule := base + "/" + appName
 
-	tplAppFS, err := fs.Sub(template.MonorepoFS, filepath.ToSlash(filepath.Join("monorepo", "apps", "demoapp")))
-	if err != nil {
-		return fmt.Errorf("load built-in app template fail: %w", err)
-	}
-
-	prefixMappings := map[string]string{
-		templateAppModule:           newAppModule,
-		templateBaseModule + "/pkg": pkgModule,
-	}
-	if err := scaffold.CopyTreeFS(tplAppFS, ".", newAppDir, func(relPath string, content []byte) ([]byte, error) {
-		if strings.HasSuffix(relPath, ".go") || strings.HasSuffix(relPath, ".go.tmpl") {
-			content, err = scaffold.RewriteGoContent(relPath, content, "demoapp", appName, prefixMappings)
-			if err != nil {
-				return nil, err
-			}
-			// 注释与字符串字面量中的 app 名（如 Swagger 路由、路由组名）做文本替换
-			return bytes.ReplaceAll(content, []byte("demoapp"), []byte(appName)), nil
-		}
-		return content, nil
-	}); err != nil {
+	// 复制 backend/apps/demo -> apps/<appName>（保留已生成的 <module>/demo 模块路径，稍后整体替换）
+	if err := scaffold.CopyDirTree(srcDemo, newAppDir); err != nil {
 		scaffold.RemoveDirIfExists(newAppDir)
-		return fmt.Errorf("copy app template fail: %w", err)
+		return fmt.Errorf("copy app demo dir fail: %w", err)
 	}
-
-	// 恢复模板化的 go.mod/go.sum 文件名
-	if err := scaffold.RestoreTemplateFiles(newAppDir); err != nil {
+	// token 替换 demo/Demo/demoapp（demo→X 同时把 import 路径中的 <module>/demo/... 改为 <module>/X/...）
+	if err := scaffold.ReplaceTokensInTree(newAppDir, renameAppToken("demo", appName), ".go", ".yaml", ".yml", ".md"); err != nil {
 		scaffold.RemoveDirIfExists(newAppDir)
-		return fmt.Errorf("restore app template module files fail: %w", err)
+		return err
 	}
-
-	// 重写新 app 的 go.mod 模块路径
+	// scripts/Dockerfile 无扩展名，无法被上一步按 ext 匹配；单独做文本替换（引用 apps/demo/cmd、/app/demo）
+	if err := replaceTokensInFile(filepath.Join(newAppDir, "scripts", "Dockerfile"), renameAppToken("demo", appName)); err != nil {
+		scaffold.RemoveDirIfExists(newAppDir)
+		return err
+	}
+	// 模块重写
 	appGoMod := filepath.Join(newAppDir, "go.mod")
-	if _, err := os.Stat(appGoMod); err == nil {
-		if err := scaffold.RewriteModuleStmt(appGoMod, newAppModule); err != nil {
-			scaffold.RemoveDirIfExists(newAppDir)
-			return fmt.Errorf("rewrite app go.mod fail: %w", err)
-		}
-	}
-
-	// 替换 yaml 等配置文本中的 app 名
-	if err := scaffold.ReplaceTextInTree(newAppDir, "demoapp", appName, ".yaml", ".yml"); err != nil {
+	if err := scaffold.RewriteModuleStmt(appGoMod, newModule); err != nil {
 		scaffold.RemoveDirIfExists(newAppDir)
-		return fmt.Errorf("replace app name in configs fail: %w", err)
+		return err
 	}
-
-	// 注册进 go.work
+	// pkg 联动追加
+	if err := scaffold.AppendAppConnector(filepath.Join(backendDir, "pkg"), "demo", appName); err != nil {
+		scaffold.RemoveDirIfExists(newAppDir)
+		return err
+	}
 	if goWorkPath != "" {
 		if err := scaffold.AddGoWorkUse(goWorkPath, filepath.ToSlash(filepath.Join("apps", appName))); err != nil {
 			scaffold.RemoveDirIfExists(newAppDir)
-			return fmt.Errorf("add app to go.work fail: %w", err)
+			return err
 		}
 	}
-
 	if tidy {
 		if err := scaffold.RunGoModTidy(newAppDir); err != nil {
 			fmt.Printf("Warning: go mod tidy failed (run it manually in %s): %v\n", newAppDir, err)
 		}
 	}
-
-	fmt.Printf("Successfully created app %s at %s (module: %s)\n", appName, newAppDir, newAppModule)
+	fmt.Printf("Successfully created app %s at %s (module: %s)\n", appName, newAppDir, newModule)
 	fmt.Printf("  gocli generate module -a %s   # generate code for the new app\n", appName)
 	return nil
 }
 
-// resolvePkgModulePath 返回 monorepo 内公共库 pkg 的模块路径。
-// 优先读取 <root>/pkg/go.mod；不存在时按 <base>/pkg 约定推断。
-func resolvePkgModulePath(rootDir, newAppModule string) (string, error) {
-	pkgGoMod := filepath.Join(rootDir, "pkg", "go.mod")
-	if _, err := os.Stat(pkgGoMod); err == nil {
-		modulePath, err := scaffold.ReadModulePath(pkgGoMod)
-		if err != nil {
-			return "", fmt.Errorf("read pkg/go.mod fail: %w", err)
-		}
-		return modulePath, nil
+// replaceTokensInFile 对单个文件按 repl 做全量文本替换（key 长度降序）。
+func replaceTokensInFile(path string, repl map[string]string) error {
+	if _, err := os.Stat(path); err != nil {
+		return nil // 文件不存在则跳过
 	}
-	base := scaffold.BaseModulePath(newAppModule)
-	if base == "" {
-		return "", fmt.Errorf("cannot infer pkg module path from %s", newAppModule)
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return err
 	}
-	return base + "/pkg", nil
+	text := string(content)
+	for _, k := range orderedKeys(repl) {
+		text = strings.ReplaceAll(text, k, repl[k])
+	}
+	return os.WriteFile(path, []byte(text), 0o644)
 }
 
-// findMonorepoRoot 从当前目录向上查找 monorepo 根（含 go.work 或 go.mod 的最近目录）。
-func findMonorepoRoot() (rootDir, goWorkPath string, err error) {
+// orderedKeys 返回 repl 的 key，按长度降序（避免短 token 吞长 token）。
+func orderedKeys(repl map[string]string) []string {
+	keys := make([]string, 0, len(repl))
+	for k := range repl {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool { return len(keys[i]) > len(keys[j]) })
+	return keys
+}
+
+// findArkBackendDir 定位含 backend/go.work 的 backend 目录；找不到则向上层查找仓库根下的 backend/。
+func findArkBackendDir() (backendDir, goWorkPath string, err error) {
 	dir, err := os.Getwd()
 	if err != nil {
-		return "", "", fmt.Errorf("get current directory fail: %w", err)
+		return "", "", err
 	}
 	for {
-		goWork := filepath.Join(dir, "go.work")
-		if _, err := os.Stat(goWork); err == nil {
-			return dir, goWork, nil
+		cand := filepath.Join(dir, "backend", "go.work")
+		if fi, err := os.Stat(cand); err == nil && !fi.IsDir() {
+			return filepath.Join(dir, "backend"), cand, nil
 		}
-		goMod := filepath.Join(dir, "go.mod")
-		if _, err := os.Stat(goMod); err == nil {
-			return dir, "", nil
+		gw := filepath.Join(dir, "go.work")
+		if fi, err := os.Stat(gw); err == nil && !fi.IsDir() {
+			if fi2, err := os.Stat(filepath.Join(dir, "apps")); err == nil && fi2.IsDir() {
+				return dir, gw, nil // 已在 backend 目录
+			}
 		}
 		parent := filepath.Dir(dir)
 		if parent == dir {
@@ -158,5 +146,5 @@ func findMonorepoRoot() (rootDir, goWorkPath string, err error) {
 		}
 		dir = parent
 	}
-	return "", "", fmt.Errorf("current directory is not inside a Go project: no go.mod or go.work found")
+	return "", "", fmt.Errorf("not inside an ark monorepo: no backend/go.work found")
 }

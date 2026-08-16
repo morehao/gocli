@@ -67,16 +67,11 @@ var projectCmd = &cobra.Command{
 
 var appCmd = &cobra.Command{
 	Use:   "app",
-	Short: "Add a new app to the current monorepo from the built-in template",
+	Short: "Add a new app to the current monorepo from the ark demo app",
 	Run: func(cmd *cobra.Command, args []string) {
 		appName, err := cmd.Flags().GetString("name")
 		if err != nil {
 			fmt.Println("Error retrieving name flag:", err)
-			os.Exit(1)
-		}
-		moduleOverride, err := cmd.Flags().GetString("module")
-		if err != nil {
-			fmt.Println("Error retrieving module flag:", err)
 			os.Exit(1)
 		}
 		skipTidy, err := cmd.Flags().GetBool("no-tidy")
@@ -85,7 +80,7 @@ var appCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		if err := createApp(appName, moduleOverride, !skipTidy); err != nil {
+		if err := createAppX(appName, !skipTidy); err != nil {
 			fmt.Println("Error creating app:", err)
 			os.Exit(1)
 		}
@@ -101,7 +96,6 @@ func init() {
 
 	// app flags
 	appCmd.Flags().StringP("name", "n", "", "New app name, e.g. userapp (required)")
-	appCmd.Flags().StringP("module", "m", "", "Override the new app module path (by default inferred from the monorepo)")
 	appCmd.Flags().Bool("no-tidy", false, "Skip `go mod tidy` for the new app (runs by default)")
 
 	Cmd.AddCommand(projectCmd, appCmd)
