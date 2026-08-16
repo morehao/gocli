@@ -42,11 +42,23 @@ var projectCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+		projName, err := cmd.Flags().GetString("name")
+		if err != nil {
+			fmt.Println("Error retrieving name flag:", err)
+			os.Exit(1)
+		}
+
 		dir := ""
 		if len(args) == 1 {
 			dir = args[0]
 		}
-		if err := createProject(dir, modulePath, gitInit, !skipTidy); err != nil {
+		if err := createProjectWithOpts(CreateOptions{
+			Dir:         dir,
+			ModulePath:  modulePath,
+			ProjectName: projName,
+			GitInit:     gitInit,
+			Tidy:        !skipTidy,
+		}); err != nil {
 			fmt.Println("Error creating project:", err)
 			os.Exit(1)
 		}
@@ -83,6 +95,7 @@ var appCmd = &cobra.Command{
 func init() {
 	// project flags
 	projectCmd.Flags().StringP("module", "m", "", "Root module path, e.g. github.com/acme/backend (required)")
+	projectCmd.Flags().StringP("name", "p", "", "Project name (defaults to dir basename or module last segment)")
 	projectCmd.Flags().Bool("git", false, "Initialize a git repository after creation")
 	projectCmd.Flags().Bool("no-tidy", false, "Skip `go work sync` after creation (runs by default)")
 

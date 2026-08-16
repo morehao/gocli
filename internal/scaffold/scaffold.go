@@ -145,7 +145,7 @@ func RemoveDirIfExists(dir string) error {
 }
 
 // RestoreTemplateFiles 将模板中模板化的文件恢复为标准文件名：
-//   - go.mod.tmpl -> go.mod、go.sum.tmpl -> go.sum、go.work.tmpl -> go.work
+//   - go.mod.tmpl -> go.mod、go.sum.tmpl -> go.sum、go.work.tmpl -> go.work、go.work.sum.tmpl -> go.work.sum
 //   - *.go.tmpl    -> *.go
 //
 // 模板使用 .tmpl 后缀存放这些文件，原因有二：
@@ -171,6 +171,8 @@ func RestoreTemplateFiles(rootDir string) error {
 			newBase = "go.sum"
 		case "go.work.tmpl":
 			newBase = "go.work"
+		case "go.work.sum.tmpl":
+			newBase = "go.work.sum"
 		default:
 			if strings.HasSuffix(base, ".go.tmpl") {
 				newBase = strings.TrimSuffix(base, ".tmpl")

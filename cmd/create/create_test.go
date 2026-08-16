@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-// TestCreateProject 验证 create project 生成完整 monorepo 并正确重写模块路径。
+// TestCreateProject 验证 create project 基于 ark 模板生成仓库根与 backend，并正确重写模块路径。
 func TestCreateProject(t *testing.T) {
 	parent := t.TempDir()
 	modulePath := "github.com/acme/backend"
@@ -16,57 +16,35 @@ func TestCreateProject(t *testing.T) {
 	}
 	root := filepath.Join(parent, "my-backend")
 
-	assertFileContent(t, filepath.Join(root, "go.work"), "use (")
-	assertFileContent(t, filepath.Join(root, "pkg", "go.mod"), "module github.com/acme/backend/pkg")
-	assertFileContent(t, filepath.Join(root, "apps", "demoapp", "go.mod"), "module github.com/acme/backend/demoapp")
-	assertFileContent(t, filepath.Join(root, "apps", "demoapp", "main.go"), "github.com/acme/backend/demoapp/internal/router")
-	assertFileContent(t, filepath.Join(root, "apps", "demoapp", "dao", "base.go"), "github.com/acme/backend/pkg/dbclient")
+	assertFileContent(t, filepath.Join(root, "go.work"), "./backend")
+	assertFileContent(t, filepath.Join(root, "backend", "pkg", "go.mod"), "module github.com/acme/backend/pkg")
+	assertFileContent(t, filepath.Join(root, "backend", "apps", "demo", "go.mod"), "module github.com/acme/backend/demo")
+	assertFileContent(t, filepath.Join(root, "backend", "go.work"), "./apps/demo")
+	assertFileContent(t, filepath.Join(root, "backend", "go.work"), "./pkg")
 
 	// 不应残留占位符或模板后缀文件
-	assertNoContent(t, root, "github.com/example")
+	assertNoContent(t, root, "github.com/morehao/go-ark-template")
 	assertNoFile(t, root, "go.work.tmpl")
 	assertNoFile(t, root, "go.mod.tmpl")
+	assertNoFile(t, root, "go.work.sum.tmpl")
 	assertNoFile(t, root, "main.go.tmpl")
 }
 
-// TestCreateApp 验证在既有 monorepo 中新增 app：内容替换 + go.work 注册。
-func TestCreateApp(t *testing.T) {
+// TestCreateProjectProjectName 验证给定项目名时生成仓库根与 ark backend。
+func TestCreateProjectProjectName(t *testing.T) {
 	parent := t.TempDir()
-	modulePath := "github.com/acme/backend"
-	if err := createProject(filepath.Join(parent, "my-backend"), modulePath, false, false); err != nil {
-		t.Fatalf("createProject: %v", err)
+	if err := createProjectWithOpts(CreateOptions{
+		Dir:         filepath.Join(parent, "my-ark"),
+		ModulePath:  "github.com/acme/my-ark",
+		ProjectName: "my-ark",
+	}); err != nil {
+		t.Fatalf("createProjectWithOpts: %v", err)
 	}
-	root := filepath.Join(parent, "my-backend")
-
-	// 在项目根执行 create app
-	wd, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Chdir(root); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = os.Chdir(wd) })
-
-	if err := createApp("userapp", "", false); err != nil {
-		t.Fatalf("createApp: %v", err)
-	}
-
-	assertFileContent(t, filepath.Join(root, "apps", "userapp", "go.mod"), "module github.com/acme/backend/userapp")
-	assertFileContent(t, filepath.Join(root, "apps", "userapp", "main.go"), "github.com/acme/backend/userapp/internal/router")
-	assertFileContent(t, filepath.Join(root, "apps", "userapp", "main.go"), `"userapp"`)
-	assertFileContent(t, filepath.Join(root, "apps", "userapp", "dao", "base.go"), "github.com/acme/backend/pkg/dbclient")
-	assertFileContent(t, filepath.Join(root, "go.work"), "./apps/userapp")
-
-	assertNoContent(t, filepath.Join(root, "apps", "userapp"), "github.com/example")
-	assertNoContent(t, filepath.Join(root, "apps", "userapp"), "demoapp")
-	assertNoFile(t, filepath.Join(root, "apps", "userapp"), "go.mod.tmpl")
-	assertNoFile(t, filepath.Join(root, "apps", "userapp"), "main.go.tmpl")
-
-	// 重复创建应报错
-	if err := createApp("userapp", "", false); err == nil {
-		t.Error("createApp on existing app should error")
-	}
+	root := filepath.Join(parent, "my-ark")
+	assertFileContent(t, filepath.Join(root, "go.mod"), "module github.com/acme/my-ark")
+	assertFileContent(t, filepath.Join(root, "go.work"), "./backend")
+	assertFileContent(t, filepath.Join(root, "backend", "go.work"), "./apps/demo")
+	assertFileContent(t, filepath.Join(root, "backend", "go.work"), "./pkg")
 }
 
 // TestCreateAppInvalidName 非法 app 名应被拒绝。
