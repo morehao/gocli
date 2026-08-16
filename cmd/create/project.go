@@ -99,6 +99,10 @@ func createProjectWithOpts(o CreateOptions) error {
 	if err := scaffold.RewriteGoModsInTree(filepath.Join(absDir, "backend"), scaffold.ArkTemplateModule, o.ModulePath); err != nil {
 		return fmt.Errorf("rewrite backend go.mod paths fail: %w", err)
 	}
+	// 移除 backend/ 内嵌套的 go.work/go.work.sum，根 go.work 成为唯一 workspace
+	if err := scaffold.RemoveNestedWorkspaceFiles(filepath.Join(absDir, "backend")); err != nil {
+		return fmt.Errorf("remove nested backend workspace fail: %w", err)
+	}
 
 	if err := scaffold.GenerateRootModule(absDir, o.ModulePath); err != nil {
 		return err

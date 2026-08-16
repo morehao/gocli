@@ -35,7 +35,7 @@ func createAppX(appName string, tidy bool) error {
 	if err := scaffold.ValidateAppName(appName); err != nil {
 		return err
 	}
-	backendDir, goWorkPath, err := findArkBackendDir()
+	backendDir, err := findArkBackendDir()
 	if err != nil {
 		return err
 	}
@@ -81,8 +81,8 @@ func createAppX(appName string, tidy bool) error {
 		scaffold.RemoveDirIfExists(newAppDir)
 		return err
 	}
-	if goWorkPath != "" {
-		if err := scaffold.AddGoWorkUse(goWorkPath, filepath.ToSlash(filepath.Join("apps", appName))); err != nil {
+	if goWorkPath := filepath.Join(filepath.Dir(backendDir), "go.work"); goWorkPath != "" {
+		if err := scaffold.AddGoWorkUse(goWorkPath, filepath.ToSlash(filepath.Join("backend", "apps", appName))); err != nil {
 			scaffold.RemoveDirIfExists(newAppDir)
 			return err
 		}
@@ -123,22 +123,22 @@ func orderedKeys(repl map[string]string) []string {
 	return keys
 }
 
-// findArkBackendDir 定位含 backend/go.work 的 backend 目录；找不到则向上层查找仓库根下的 backend/。
-func findArkBackendDir() (backendDir, goWorkPath string, err error) {
+// findArkBackendDir 定位仓库下的 backend 目录：
+//   - 从当前目录向上，找到"含 backend/apps/ 或 backend/pkg/ 的目录"视为仓库根，返回其 backend/ 子目录；
+//   - 若当前已在 backend/（其下直接有 apps/ 且 apps/demo 存在），返回当前目录。
+func findArkBackendDir() (backendDir string, err error) {
 	dir, err := os.Getwd()
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 	for {
-		cand := filepath.Join(dir, "backend", "go.work")
-		if fi, err := os.Stat(cand); err == nil && !fi.IsDir() {
-			return filepath.Join(dir, "backend"), cand, nil
+		// 当前目录即 backend/ ？
+		if isBackendDir(dir) {
+			return dir, nil
 		}
-		gw := filepath.Join(dir, "go.work")
-		if fi, err := os.Stat(gw); err == nil && !fi.IsDir() {
-			if fi2, err := os.Stat(filepath.Join(dir, "apps")); err == nil && fi2.IsDir() {
-				return dir, gw, nil // 已在 backend 目录
-			}
+		// 当前目录含 backend/ 子目录 ？
+		if isBackendDir(filepath.Join(dir, "backend")) {
+			return filepath.Join(dir, "backend"), nil
 		}
 		parent := filepath.Dir(dir)
 		if parent == dir {
@@ -146,5 +146,16 @@ func findArkBackendDir() (backendDir, goWorkPath string, err error) {
 		}
 		dir = parent
 	}
-	return "", "", fmt.Errorf("not inside an ark monorepo: no backend/go.work found")
+	return "", fmt.Errorf("not inside an ark monorepo: no backend/apps found (run create project first)")
+}
+
+// isBackendDir 判断 dir 是否为 ark backend 目录：其下有 apps/ 目录且 apps/demo 存在（或 pkg/ 存在）。
+func isBackendDir(dir string) bool {
+	if fi, err := os.Stat(filepath.Join(dir, "apps", "demo")); err == nil && fi.IsDir() {
+		return true
+	}
+	if fi, err := os.Stat(filepath.Join(dir, "pkg")); err == nil && fi.IsDir() {
+		return true
+	}
+	return false
 }

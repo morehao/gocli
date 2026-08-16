@@ -16,11 +16,12 @@ func TestCreateProject(t *testing.T) {
 	}
 	root := filepath.Join(parent, "my-backend")
 
-	assertFileContent(t, filepath.Join(root, "go.work"), "./backend")
+	assertFileContent(t, filepath.Join(root, "go.work"), "./backend/apps/demo")
+	assertFileContent(t, filepath.Join(root, "go.work"), "./backend/pkg")
 	assertFileContent(t, filepath.Join(root, "backend", "pkg", "go.mod"), "module github.com/acme/backend/pkg")
 	assertFileContent(t, filepath.Join(root, "backend", "apps", "demo", "go.mod"), "module github.com/acme/backend/demo")
-	assertFileContent(t, filepath.Join(root, "backend", "go.work"), "./apps/demo")
-	assertFileContent(t, filepath.Join(root, "backend", "go.work"), "./pkg")
+	// backend/ 内不再有嵌套 go.work
+	assertNoFile(t, filepath.Join(root, "backend"), "go.work")
 
 	// 不应残留占位符或模板后缀文件
 	assertNoContent(t, root, "github.com/morehao/go-ark-template")
@@ -42,9 +43,11 @@ func TestCreateProjectProjectName(t *testing.T) {
 	}
 	root := filepath.Join(parent, "my-ark")
 	assertFileContent(t, filepath.Join(root, "go.mod"), "module github.com/acme/my-ark")
-	assertFileContent(t, filepath.Join(root, "go.work"), "./backend")
-	assertFileContent(t, filepath.Join(root, "backend", "go.work"), "./apps/demo")
-	assertFileContent(t, filepath.Join(root, "backend", "go.work"), "./pkg")
+	// 根 go.work 是唯一 workspace，指向 backend 下子模块
+	assertFileContent(t, filepath.Join(root, "go.work"), "./backend/apps/demo")
+	assertFileContent(t, filepath.Join(root, "go.work"), "./backend/pkg")
+	// backend/ 内不再有嵌套 go.work
+	assertNoFile(t, filepath.Join(root, "backend"), "go.work")
 }
 
 // TestCreateAppInvalidName 非法 app 名应被拒绝。
@@ -76,7 +79,7 @@ func TestCreateAppFromArk(t *testing.T) {
 	if err := createAppX("user", false); err != nil {
 		t.Fatalf("createAppX: %v", err)
 	}
-	assertFileContent(t, filepath.Join(root, "backend", "go.work"), "./apps/user")
+	assertFileContent(t, filepath.Join(root, "go.work"), "./backend/apps/user")
 	assertFileContent(t, filepath.Join(root, "backend", "apps", "user", "go.mod"), "module github.com/acme/my-ark/user")
 	assertNoContent(t, filepath.Join(root, "backend", "apps", "user"), "demo")
 	assertFileContent(t, filepath.Join(root, "backend", "pkg", "testsetup", "constant.go"), "AppNameUser")
