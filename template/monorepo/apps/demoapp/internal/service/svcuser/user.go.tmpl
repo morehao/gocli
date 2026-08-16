@@ -60,8 +60,9 @@ func (svc *userSvc) Delete(ctx *gin.Context, req *dtouser.UserDeleteReq) error {
 	}
 
 	userID := gincontext.GetUserID(ctx)
+	deletedBy := uint(gutil.VToUint64(userID))
 
-	if err := dao.NewUserDao().Delete(ctx, req.UserID, userID); err != nil {
+	if err := dao.NewUserDao().Delete(ctx, req.UserID, deletedBy); err != nil {
 		glog.Errorf(ctx, "[svcuser.Delete] dao Delete fail, err:%v, req:%s", err, gutil.ToJsonString(req))
 		return code.GetError(code.UserDeleteError)
 	}
