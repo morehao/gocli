@@ -24,6 +24,9 @@ const (
 	TplFuncIsBasicType         = "isBasicType"
 	TplFuncToKebabCase        = "toKebabCase"
 	TplFuncPluralize          = "pluralize"
+	TplFuncIsNumID            = "isNumID"
+	TplFuncIsStringID         = "isStringID"
+	TplFuncHasTimeFieldAny    = "hasTimeFieldAny"
 
 	DBTypeMySQL    = "mysql"
 	DBTypePostgres = "postgresql"
@@ -122,6 +125,31 @@ func GetFieldImports(fields []ModelField) map[string]struct{} {
 		}
 	}
 	return imports
+}
+
+// IsNumID 判断主键是否是数值类型（uint 系列默认主键），用于决定是否复用 gorm.Model 的 uint 主键
+func IsNumID(pkFieldType string) bool {
+	switch pkFieldType {
+	case "uint", "uint8", "uint16", "uint32", "uint64":
+		return true
+	}
+	return false
+}
+
+// IsStringID 判断主键是否是字符串类型，用于生成 string 主键相关的零值判断
+func IsStringID(pkFieldType string) bool {
+	return pkFieldType == "string"
+}
+
+// HasTimeFieldAny 判断字段列表中是否含 time.Time 字段（含内置时间字段），
+// 用于非数值主键场景下决定是否引入 "time" 包。
+func HasTimeFieldAny(fields []ModelField) bool {
+	for _, field := range fields {
+		if field.FieldType == "time.Time" {
+			return true
+		}
+	}
+	return false
 }
 
 func IsBasicType(fieldType string) bool {

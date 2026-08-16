@@ -50,6 +50,8 @@ func genModel() error {
 				TplFuncHasTimeField:        HasTimeField,
 				TplFuncGetFieldImports:     GetFieldImports,
 				TplFuncIsBasicType:         IsBasicType,
+				TplFuncIsNumID:             IsNumID,
+				TplFuncHasTimeFieldAny:     HasTimeFieldAny,
 			},
 		},
 		TableName: modelGenCfg.TableName,
