@@ -54,7 +54,7 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Create(ctx *gin.Context) {
 // @Summary 删除{{.Description}}
 // @accept application/json
 // @Produce application/json
-// @Param {{.StructNameLowerCamel}}ID path int true "{{.StructNameLowerCamel}}ID"
+// @Param {{.StructNameLowerCamel}}ID path {{if isStringID .PKFieldType}}string{{else}}int{{end}} true "{{.StructNameLowerCamel}}ID"
 // @Success 200 {object} gincontext.DtoRender{data=string} "{"code": 0, "requestID": "xxx", "data": "ok", "msg": "success"}"
 // @Router /v1/{{.AppName}}/{{toKebabCase (pluralize .StructNameLowerCamel)}}/{{`{`}}{{.StructNameLowerCamel}}ID{{`}`}} [delete]
 func (ctr *{{.StructNameLowerCamel}}Ctr) Delete(ctx *gin.Context) {
@@ -76,7 +76,7 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Delete(ctx *gin.Context) {
 // @Summary 修改{{.Description}}
 // @accept application/json
 // @Produce application/json
-// @Param {{.StructNameLowerCamel}}ID path int true "{{.StructNameLowerCamel}}ID"
+// @Param {{.StructNameLowerCamel}}ID path {{if isStringID .PKFieldType}}string{{else}}int{{end}} true "{{.StructNameLowerCamel}}ID"
 // @Param req body dto{{.PackageName}}.{{.StructName}}UpdateReq true "修改{{.Description}}"
 // @Success 200 {object} gincontext.DtoRender{data=string} "{"code": 0, "requestID": "xxx", "data": "ok", "msg": "修改成功"}"
 // @Router /v1/{{.AppName}}/{{toKebabCase (pluralize .StructNameLowerCamel)}}/{{`{`}}{{.StructNameLowerCamel}}ID{{`}`}} [put]
@@ -102,7 +102,7 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Update(ctx *gin.Context) {
 // @Summary {{.Description}}详情
 // @accept application/json
 // @Produce application/json
-// @Param {{.StructNameLowerCamel}}ID path int true "{{.StructNameLowerCamel}}ID"
+// @Param {{.StructNameLowerCamel}}ID path {{if isStringID .PKFieldType}}string{{else}}int{{end}} true "{{.StructNameLowerCamel}}ID"
 // @Success 200 {object} gincontext.DtoRender{data=dto{{.PackageName}}.{{.StructName}}DetailResp} "{"code": 0, "requestID": "xxx", "data": "ok", "msg": "success"}"
 // @Router /v1/{{.AppName}}/{{toKebabCase (pluralize .StructNameLowerCamel)}}/{{`{`}}{{.StructNameLowerCamel}}ID{{`}`}} [get]
 func (ctr *{{.StructNameLowerCamel}}Ctr) Detail(ctx *gin.Context) {

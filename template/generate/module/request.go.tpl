@@ -10,12 +10,12 @@ type {{.StructName}}CreateReq struct {
 }
 
 type {{.StructName}}UpdateReq struct {
-	{{.StructName}}ID uint `json:"-" uri:"{{.StructNameLowerCamel}}ID" binding:"required"` // 自增 ID
+	{{.StructName}}ID {{.PKFieldType}} `json:"-" uri:"{{.StructNameLowerCamel}}ID" binding:"required"` // 主键 ID
 	obj{{.PackageName}}.{{.StructName}}BaseInfo
 }
 
 type {{.StructName}}DetailReq struct {
-	{{.StructName}}ID uint `json:"-" uri:"{{.StructNameLowerCamel}}ID" binding:"required"` // 自增 ID
+	{{.StructName}}ID {{.PKFieldType}} `json:"-" uri:"{{.StructNameLowerCamel}}ID" binding:"required"` // 主键 ID
 }
 
 type {{.StructName}}PageListReq struct {
@@ -23,5 +23,5 @@ type {{.StructName}}PageListReq struct {
 }
 
 type {{.StructName}}DeleteReq struct {
-	{{.StructName}}ID uint `json:"-" uri:"{{.StructNameLowerCamel}}ID" binding:"required"` // 自增 ID
+	{{.StructName}}ID {{.PKFieldType}} `json:"-" uri:"{{.StructNameLowerCamel}}ID" binding:"required"` // 主键 ID
 }

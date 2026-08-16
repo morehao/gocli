@@ -70,13 +70,21 @@ func (svc *{{.StructNameLowerCamel}}Svc) Delete(ctx *gin.Context, req *dto{{.Pac
 		glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}Delete] {{.DaoPackageName}} GetByID fail, err:%v, req:%s", err, gutil.ToJsonString(req))
 		return code.GetError(code.{{.StructName}}DeleteError)
 	}
+	{{- if isStringID .PKFieldType}}
+	if {{.StructNameLowerCamel}}Entity == nil || {{.StructNameLowerCamel}}Entity.ID == "" {
+	{{- else}}
 	if {{.StructNameLowerCamel}}Entity == nil || {{.StructNameLowerCamel}}Entity.ID == 0 {
+	{{- end}}
 		return code.GetError(code.{{.StructName}}NotExistError)
 	}
 
 
 	userID := gincontext.GetUserID(ctx)
+	{{- if isStringID .PKFieldType}}
+	deletedBy := gutil.ToString(userID)
+	{{- else}}
 	deletedBy := uint(gutil.VToUint64(userID))
+	{{- end}}
 
 	if err := {{.DaoPackageName}}.New{{.StructName}}Dao().Delete(ctx, req.{{.StructName}}ID, deletedBy); err != nil {
 		glog.Errorf(ctx, "[svc{{.PackageName}}.Delete] {{.DaoPackageName}} Delete fail, err:%v, req:%s", err, gutil.ToJsonString(req))
@@ -92,7 +100,11 @@ func (svc *{{.StructNameLowerCamel}}Svc) Update(ctx *gin.Context, req *dto{{.Pac
 		glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}Update] {{.DaoPackageName}} GetByID fail, err:%v, req:%s", err, gutil.ToJsonString(req))
 		return code.GetError(code.{{.StructName}}UpdateError)
 	}
+	{{- if isStringID .PKFieldType}}
+	if {{.StructNameLowerCamel}}Entity == nil || {{.StructNameLowerCamel}}Entity.ID == "" {
+	{{- else}}
 	if {{.StructNameLowerCamel}}Entity == nil || {{.StructNameLowerCamel}}Entity.ID == 0 {
+	{{- end}}
 		return code.GetError(code.{{.StructName}}NotExistError)
 	}
 
@@ -111,7 +123,11 @@ func (svc *{{.StructNameLowerCamel}}Svc) Detail(ctx *gin.Context, req *dto{{.Pac
 		glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}Detail] {{.DaoPackageName}} GetByID fail, err:%v, req:%s", err, gutil.ToJsonString(req))
 		return nil, code.GetError(code.{{.StructName}}GetDetailError)
 	}
+	{{- if isStringID .PKFieldType}}
+	if {{.StructNameLowerCamel}}Entity == nil || {{.StructNameLowerCamel}}Entity.ID == "" {
+	{{- else}}
 	if {{.StructNameLowerCamel}}Entity == nil || {{.StructNameLowerCamel}}Entity.ID == 0 {
+	{{- end}}
 		return nil, code.GetError(code.{{.StructName}}NotExistError)
 	}
 	resp := &dto{{.PackageName}}.{{.StructName}}DetailResp{

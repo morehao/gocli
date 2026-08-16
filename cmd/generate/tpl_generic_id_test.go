@@ -23,6 +23,9 @@ func renderTpl(t *testing.T, fsPath string, params map[string]any) string {
 		TplFuncIsBasicType:         IsBasicType,
 		TplFuncToKebabCase:        toKebabCase,
 		TplFuncPluralize:          pluralize,
+		TplFuncIsNumID:            IsNumID,
+		TplFuncIsStringID:         IsStringID,
+		TplFuncHasTimeFieldAny:    HasTimeFieldAny,
 	}).ParseFS(TemplatesFS, fsPath)
 	if err != nil {
 		t.Fatalf("parse %s: %v", fsPath, err)
@@ -83,6 +86,7 @@ func TestModelTplRenderPrimaryKeyTag(t *testing.T) {
 		"StructName":     "Dict",
 		"ModelFields":    fields,
 		"FieldImports":   []string{},
+		"PKFieldType":    "string",
 	}
 	out := renderTpl(t, "generate/module/model.go.tpl", params)
 	if !strings.Contains(out, "Code string `gorm:\"column:code;type:varchar(64);not null;default '';primaryKey\"`") {
@@ -90,6 +94,12 @@ func TestModelTplRenderPrimaryKeyTag(t *testing.T) {
 	}
 	if !strings.Contains(out, "Name string `gorm:\"column:name;type:varchar(255)\"`") {
 		t.Errorf("non-pk field should not get primaryKey tag:\n%s", out)
+	}
+	if !strings.Contains(out, "map[string]DictEntity") {
+		t.Errorf("model template should use PKFieldType in ToMap when pk is string:\n%s", out)
+	}
+	if strings.Contains(out, "gorm.Model") {
+		t.Errorf("model template should not embed gorm.Model for non-numeric pk:\n%s", out)
 	}
 }
 
@@ -126,5 +136,61 @@ func TestMonorepoTplRenderGenericID(t *testing.T) {
 	}
 	if !strings.Contains(buf.String(), "&gormdao.BaseCond{") {
 		t.Errorf("svcuser template missing BaseCond:\n%s", buf.String())
+	}
+}
+
+// TestStringPKServiceTpl 验证字符串主键时 service 模板生成正确的零值判断与 deletedBy 类型，
+// 数值主键时保持原行为。
+func TestStringPKServiceTpl(t *testing.T) {
+	fields := []ModelField{
+		{IsPrimaryKey: true, FieldName: "ID", FieldType: "string", ColumnName: "id", ColumnType: "varchar(36)", NullableDesc: "not null"},
+		{FieldName: "Name", FieldType: "string", ColumnName: "name", ColumnType: "varchar(255)"},
+	}
+	base := map[string]any{
+		"PackageName":          "coreconfig",
+		"DaoPackageName":       "dao",
+		"ModelLayerName":       "model",
+		"StructName":           "CoreConfig",
+		"StructNameLowerCamel": "coreConfig",
+		"BaseModulePath":       "github.com/example",
+		"AppModuleName":        "demoapp",
+		"DBName":               "DemoDB",
+		"ModelFields":          fields,
+		"FieldImports":         []string{},
+	}
+
+	// 字符串主键
+	strParams := map[string]any{}
+	for k, v := range base {
+		strParams[k] = v
+	}
+	strParams["PKFieldType"] = "string"
+	strOut := renderTpl(t, "generate/module/service.go.tpl", strParams)
+	for _, want := range []string{
+		"coreConfigEntity.ID == \"\"",
+		"deletedBy := gutil.ToString(userID)",
+	} {
+		if !strings.Contains(strOut, want) {
+			t.Errorf("string-pk service missing %q\n---\n%s", want, strOut)
+		}
+	}
+	if strings.Contains(strOut, "coreConfigEntity.ID == 0") || strings.Contains(strOut, "deletedBy := uint(") {
+		t.Errorf("string-pk service should not use numeric zero/uint cast:\n%s", strOut)
+	}
+
+	// 数值主键（uint）保持原行为
+	uintParams := map[string]any{}
+	for k, v := range base {
+		uintParams[k] = v
+	}
+	uintParams["PKFieldType"] = "uint"
+	uintOut := renderTpl(t, "generate/module/service.go.tpl", uintParams)
+	for _, want := range []string{
+		"coreConfigEntity.ID == 0",
+		"deletedBy := uint(gutil.VToUint64(userID))",
+	} {
+		if !strings.Contains(uintOut, want) {
+			t.Errorf("uint-pk service missing %q\n---\n%s", want, uintOut)
+		}
 	}
 }
