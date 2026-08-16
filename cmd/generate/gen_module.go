@@ -47,6 +47,7 @@ func genModule() error {
 				TplFuncPluralize:          pluralize,
 				TplFuncIsNumID:            IsNumID,
 				TplFuncIsStringID:         IsStringID,
+				TplFuncIsIntID:            IsIntID,
 				TplFuncHasTimeFieldAny:    HasTimeFieldAny,
 			},
 		},

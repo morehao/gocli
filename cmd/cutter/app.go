@@ -48,8 +48,8 @@ func cloneApp(sourceAppName, newAppName string) error {
 
 	fmt.Printf("Project root: %s (workspace: %v)\n", ctx.rootDir, ctx.goWorkPath != "")
 
-	// 确认 apps 目录存在
-	appsDir := filepath.Join(ctx.rootDir, "apps")
+	// 确认 apps 目录存在（兼容 ark 的 backend/apps 与经典 apps 两种结构）
+	appsDir := ctx.appsDir()
 	if _, err := os.Stat(appsDir); os.IsNotExist(err) {
 		return fmt.Errorf("apps directory does not exist: %s", appsDir)
 	}
@@ -134,7 +134,8 @@ func copyAndReplaceApp(srcDir, dstDir, oldAppName, newAppName string, resolvedMo
 	return err
 }
 
-// copyAndReplaceGoFileInApp 复制并替换 Go 文件中的包名和 import 路径
+// copyAndReplaceGoFileInApp 复制并替换 Go 文件中的包名和 import 路径，
+// 以及代码中对被重写 import 的包标识符引用。
 func copyAndReplaceGoFileInApp(srcFile, dstFile, oldAppName, newAppName string, resolvedModule resolvedModule) error {
 	fs := token.NewFileSet()
 	node, err := parser.ParseFile(fs, srcFile, nil, parser.ParseComments)
@@ -147,19 +148,60 @@ func copyAndReplaceGoFileInApp(srcFile, dstFile, oldAppName, newAppName string, 
 		node.Name.Name = strings.Replace(node.Name.Name, oldAppName, newAppName, -1)
 	}
 
+	// 收集被重写 import 的别名映射：旧别名 -> 新别名
+	// import 默认别名取路径末段（如 .../fixapp -> fixapp）；显式别名用 importSpec.Name。
+	// 重写路径后新天然小写末段为新 app 名；显式别名则按 oldAppName 同名替换。
+	aliases := make(map[string]string)
 	// 遍历文件中的所有 import 语句，替换路径中的 oldAppName 为 newAppName
 	ast.Inspect(node, func(n ast.Node) bool {
 		importSpec, ok := n.(*ast.ImportSpec)
-		if ok {
-			importPath := strings.Trim(importSpec.Path.Value, `"`)
-			// 只替换当前 app 旧模块前缀
-			if hasModulePathPrefix(importPath, resolvedModule.oldImportPrefix) {
-				updatedImportPath := renameImportedAppPath(importPath, resolvedModule.oldImportPrefix, oldAppName, newAppName)
-				importSpec.Path.Value = fmt.Sprintf(`"%s"`, updatedImportPath)
+		if !ok {
+			return true
+		}
+		importPath := strings.Trim(importSpec.Path.Value, `"`)
+		// 只替换当前 app 旧模块前缀
+		if !hasModulePathPrefix(importPath, resolvedModule.oldImportPrefix) {
+			return true
+		}
+		updatedImportPath := renameImportedAppPath(importPath, resolvedModule.oldImportPrefix, oldAppName, newAppName)
+		importSpec.Path.Value = fmt.Sprintf(`"%s"`, updatedImportPath)
+
+		if importSpec.Name != nil {
+			alias := importSpec.Name.Name
+			if alias != "_" && alias != "." && strings.Contains(alias, oldAppName) {
+				newAlias := strings.Replace(alias, oldAppName, newAppName, -1)
+				importSpec.Name.Name = newAlias
+				aliases[alias] = newAlias
+			}
+			return true
+		}
+		// 只有 app 根模块（import 路径等于旧模块前缀，如 <module>/fixapp）的引用
+		// 才需要在重写包名时同步替换代码中的包标识符；子包（如 objuser）保持自身包名。
+		if importPath == resolvedModule.oldImportPrefix {
+			oldAlias := pathBase(importPath)
+			if oldAlias != "" && oldAlias != "_" {
+				aliases[oldAlias] = newAppName
 			}
 		}
 		return true
 	})
+	// 重写代码中对被替换 import 包名的引用（如 fixapp.Routers -> cutapp.Routers）
+	if len(aliases) > 0 {
+		ast.Inspect(node, func(n ast.Node) bool {
+			sel, ok := n.(*ast.SelectorExpr)
+			if !ok {
+				return true
+			}
+			x, ok := sel.X.(*ast.Ident)
+			if !ok {
+				return true
+			}
+			if newAlias, ok := aliases[x.Name]; ok {
+				x.Name = newAlias
+			}
+			return true
+		})
+	}
 
 	// 将更新后的代码写入目标文件
 	file, err := os.Create(dstFile)
@@ -172,6 +214,14 @@ func copyAndReplaceGoFileInApp(srcFile, dstFile, oldAppName, newAppName string, 
 		return fmt.Errorf("format and write file %s fail: %w", dstFile, err)
 	}
 	return nil
+}
+
+// pathBase 返回 import 路径的最后一段作为默认包名（去除路径）。
+func pathBase(importPath string) string {
+	if idx := strings.LastIndex(importPath, "/"); idx >= 0 {
+		return importPath[idx+1:]
+	}
+	return importPath
 }
 
 func renameImportedAppPath(importPath, oldImportPrefix, oldAppName, newAppName string) string {

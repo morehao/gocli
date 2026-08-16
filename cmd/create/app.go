@@ -101,8 +101,11 @@ func createAppX(appName, moduleOverride string, tidy bool) error {
 		}
 	}
 	if tidy {
-		if err := scaffold.RunGoModTidy(newAppDir); err != nil {
-			fmt.Printf("Warning: go mod tidy failed (run it manually in %s): %v\n", newAppDir, err)
+		// 新 app 是 go.work 的本地模块，单独 `go mod tidy` 无法解析同 workspace 内的 pkg。
+		// 改为在 workspace 根执行 `go work sync`（与 create project 保持一致）同步依赖。
+		workRoot := filepath.Dir(backendDir)
+		if err := scaffold.RunGoWorkSync(workRoot); err != nil {
+			fmt.Printf("Warning: go work sync failed (run it manually in %s): %v\n", workRoot, err)
 		}
 	}
 	fmt.Printf("Successfully created app %s at %s (module: %s)\n", appName, newAppDir, newModule)

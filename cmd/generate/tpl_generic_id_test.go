@@ -25,6 +25,7 @@ func renderTpl(t *testing.T, fsPath string, params map[string]any) string {
 		TplFuncPluralize:          pluralize,
 		TplFuncIsNumID:            IsNumID,
 		TplFuncIsStringID:         IsStringID,
+		TplFuncIsIntID:            IsIntID,
 		TplFuncHasTimeFieldAny:    HasTimeFieldAny,
 	}).ParseFS(TemplatesFS, fsPath)
 	if err != nil {

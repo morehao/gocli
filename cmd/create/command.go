@@ -102,7 +102,7 @@ func init() {
 	// app flags
 	appCmd.Flags().StringP("name", "n", "", "New app name, e.g. userapp (required)")
 	appCmd.Flags().StringP("module", "m", "", "Override the new app module path (by default inferred from the monorepo)")
-	appCmd.Flags().Bool("no-tidy", false, "Skip `go mod tidy` for the new app (runs by default)")
+	appCmd.Flags().Bool("no-tidy", false, "Skip `go work sync` after creating the app (runs by default)")
 
 	Cmd.AddCommand(projectCmd, appCmd)
 }
