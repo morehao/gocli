@@ -76,8 +76,9 @@ func (svc *{{.StructNameLowerCamel}}Svc) Delete(ctx *gin.Context, req *dto{{.Pac
 
 
 	userID := gincontext.GetUserID(ctx)
+	deletedBy := uint(gutil.VToUint64(userID))
 
-	if err := {{.DaoPackageName}}.New{{.StructName}}Dao().Delete(ctx, req.{{.StructName}}ID, userID); err != nil {
+	if err := {{.DaoPackageName}}.New{{.StructName}}Dao().Delete(ctx, req.{{.StructName}}ID, deletedBy); err != nil {
 		glog.Errorf(ctx, "[svc{{.PackageName}}.Delete] {{.DaoPackageName}} Delete fail, err:%v, req:%s", err, gutil.ToJsonString(req))
 		return code.GetError(code.{{.StructName}}DeleteError)
 	}
