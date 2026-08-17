@@ -79,13 +79,15 @@ func (svc *{{.StructNameLowerCamel}}Svc) Delete(ctx *gin.Context, req *dto{{.Pac
 	}
 
 
-	userID := gincontext.GetUserID(ctx)
 	{{- if isStringID .PKFieldType}}
-	deletedBy := gutil.ToString(userID)
-	{{- else if isIntID .PKFieldType}}
-	deletedBy := {{.PKFieldType}}(gutil.VToInt64(userID))
+	deletedBy := gincontext.GetUserIDString(ctx)
 	{{- else}}
-	deletedBy := uint(gutil.VToUint64(userID))
+	userID := gincontext.GetUserID(ctx)
+	{{- if isIntID .PKFieldType}}
+	deletedBy := {{.PKFieldType}}(userID)
+	{{- else}}
+	deletedBy := uint(userID)
+	{{- end}}
 	{{- end}}
 
 	if err := {{.DaoPackageName}}.New{{.StructName}}Dao().Delete(ctx, req.{{.StructName}}ID, deletedBy); err != nil {

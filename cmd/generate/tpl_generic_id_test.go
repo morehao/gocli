@@ -169,7 +169,7 @@ func TestStringPKServiceTpl(t *testing.T) {
 	strOut := renderTpl(t, "generate/module/service.go.tpl", strParams)
 	for _, want := range []string{
 		"coreConfigEntity.ID == \"\"",
-		"deletedBy := gutil.ToString(userID)",
+		"deletedBy := gincontext.GetUserIDString(ctx)",
 	} {
 		if !strings.Contains(strOut, want) {
 			t.Errorf("string-pk service missing %q\n---\n%s", want, strOut)
@@ -188,7 +188,8 @@ func TestStringPKServiceTpl(t *testing.T) {
 	uintOut := renderTpl(t, "generate/module/service.go.tpl", uintParams)
 	for _, want := range []string{
 		"coreConfigEntity.ID == 0",
-		"deletedBy := uint(gutil.VToUint64(userID))",
+		"deletedBy := uint(userID)",
+		"userID := gincontext.GetUserID(ctx)",
 	} {
 		if !strings.Contains(uintOut, want) {
 			t.Errorf("uint-pk service missing %q\n---\n%s", want, uintOut)
