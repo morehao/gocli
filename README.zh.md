@@ -261,10 +261,10 @@ my-backend/
 
 #### 2. 在既有 monorepo 中新增应用（`create app`）
 
-- 在 monorepo 根目录执行，基于内置示例应用生成 `apps/<name>`
+- 在 monorepo 根目录执行，基于内置示例应用生成 `backend/apps/<name>`
 - 自动替换模块路径、import、包名以及配置/注释中的 app 名
-- 自动注册进 `go.work`（追加 `use ./apps/<name>`）
-- 默认对新应用执行 `go mod tidy`（可用 `--no-tidy` 关闭）
+- 自动注册进 `go.work`（追加 `use ./backend/apps/<name>`）
+- 默认在 workspace 根执行 `go work sync` 同步依赖（可用 `--no-tidy` 关闭）
 
 ```bash
 cd /path/to/my-backend
@@ -274,7 +274,7 @@ gocli create app -n userapp
 **参数说明：**
 - `-n, --name`：新应用名称（必填，仅限小写字母与数字）
 - `-m, --module`：覆盖新应用的模块路径
-- `--no-tidy`：跳过 `go mod tidy`
+- `--no-tidy`：跳过 `go work sync`
 
 **新应用模块路径推断优先级：**
 1. `--module` 显式指定

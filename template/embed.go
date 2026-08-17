@@ -14,3 +14,6 @@ var MonorepoFS embed.FS
 
 //go:embed generate
 var GenerateFS embed.FS
+
+//go:embed ark
+var ArkFS embed.FS

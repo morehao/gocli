@@ -47,6 +47,7 @@ func genModule() error {
 				TplFuncPluralize:          pluralize,
 				TplFuncIsNumID:            IsNumID,
 				TplFuncIsStringID:         IsStringID,
+				TplFuncIsIntID:            IsIntID,
 				TplFuncHasTimeFieldAny:    HasTimeFieldAny,
 			},
 		},
@@ -138,7 +139,11 @@ func genModule() error {
 
 		// 如果配置了表名前缀，则从文件名中去除前缀
 		targetFilename := v.TargetFilename
-		if moduleGenCfg.TablePrefix != "" {
+		// router 文件统一使用带下划线的 snake_case 文件名（如 core_task.go），
+		// 与 api 模式生成的 router 文件名保持一致，避免同名 router 函数落入不同文件导致重复声明。
+		if v.OriginLayerName == codegen.LayerNameRouter {
+			targetFilename = fmt.Sprintf("%s%s", cfg.Module.PackageName, ".go")
+		} else if moduleGenCfg.TablePrefix != "" {
 			targetFilename = RemoveTablePrefixFromFilename(
 				v.TargetFilename,
 				analysisRes.TableName,

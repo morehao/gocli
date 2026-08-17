@@ -17,6 +17,19 @@ type projectContext struct {
 	goWorkUseDirs []string
 }
 
+// appsDir 返回项目内的应用目录。兼容两种 monorepo 布局：
+//   - ark 结构（create project 生成）：backend/apps
+//   - 经典结构（cutter 原支持）：apps
+//
+// 若 rootDir 下存在 backend/apps 目录则优先使用，否则回退到 rootDir/apps。
+func (ctx projectContext) appsDir() string {
+	arkApps := filepath.Join(ctx.rootDir, "backend", "apps")
+	if fi, err := os.Stat(arkApps); err == nil && fi.IsDir() {
+		return arkApps
+	}
+	return filepath.Join(ctx.rootDir, "apps")
+}
+
 type resolvedModule struct {
 	rootDir         string
 	goModPath       string
@@ -690,7 +703,7 @@ func pathInDirs(path string, dirs []string) bool {
 }
 
 func resolveAppModulePath(ctx projectContext, sourceAppName string) (resolvedModule, error) {
-	appDir := filepath.Join(ctx.rootDir, "apps", sourceAppName)
+	appDir := filepath.Join(ctx.appsDir(), sourceAppName)
 	appGoModPath := filepath.Join(appDir, "go.mod")
 	if _, err := os.Stat(appGoModPath); err == nil {
 		modulePath, err := readModulePath(appGoModPath)

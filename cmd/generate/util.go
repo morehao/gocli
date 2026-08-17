@@ -26,6 +26,7 @@ const (
 	TplFuncPluralize          = "pluralize"
 	TplFuncIsNumID            = "isNumID"
 	TplFuncIsStringID         = "isStringID"
+	TplFuncIsIntID            = "isIntID"
 	TplFuncHasTimeFieldAny    = "hasTimeFieldAny"
 
 	DBTypeMySQL    = "mysql"
@@ -139,6 +140,17 @@ func IsNumID(pkFieldType string) bool {
 // IsStringID 判断主键是否是字符串类型，用于生成 string 主键相关的零值判断
 func IsStringID(pkFieldType string) bool {
 	return pkFieldType == "string"
+}
+
+// IsIntID 判断主键是否是有符号整型（如 PostgreSQL 的 int8→int64、bigserial→int64、
+// 或手工定义的 int/int64 主键）。这类主键下 dao.Delete 的 deletedBy 参数同为主键类型，
+// 而 MySQL 默认 bigint unsigned 主键映射为 uint，二者需区分生成。
+func IsIntID(pkFieldType string) bool {
+	switch pkFieldType {
+	case "int", "int8", "int16", "int32", "int64":
+		return true
+	}
+	return false
 }
 
 // HasTimeFieldAny 判断字段列表中是否含 time.Time 字段（含内置时间字段），

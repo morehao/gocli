@@ -262,10 +262,10 @@ my-backend/
 
 #### 2. Add an App to an Existing Monorepo (`create app`)
 
-* Run from the monorepo root; creates a new app under `apps/<name>` from the built-in sample app
+* Run from the monorepo root; creates a new app under `backend/apps/<name>` from the built-in sample app
 * Automatically rewrites module paths, imports, package names, and app names in configs/comments
-* Automatically registers the app into `go.work` (`use ./apps/<name>`)
-* Runs `go mod tidy` for the new app by default (disable with `--no-tidy`)
+* Automatically registers the app into `go.work` (`use ./backend/apps/<name>`)
+* Runs `go work sync` at the workspace root by default to sync dependencies (disable with `--no-tidy`)
 
 ```bash
 cd /path/to/my-backend
@@ -275,7 +275,7 @@ gocli create app -n userapp
 **Flags:**
 * `-n, --name`: new app name (required; lowercase letters and digits only)
 * `-m, --module`: override the app module path
-* `--no-tidy`: skip `go mod tidy`
+* `--no-tidy`: skip `go work sync`
 
 **Module path inference order for the new app:**
 1. `--module` if provided

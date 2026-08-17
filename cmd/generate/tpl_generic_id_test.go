@@ -25,6 +25,7 @@ func renderTpl(t *testing.T, fsPath string, params map[string]any) string {
 		TplFuncPluralize:          pluralize,
 		TplFuncIsNumID:            IsNumID,
 		TplFuncIsStringID:         IsStringID,
+		TplFuncIsIntID:            IsIntID,
 		TplFuncHasTimeFieldAny:    HasTimeFieldAny,
 	}).ParseFS(TemplatesFS, fsPath)
 	if err != nil {
@@ -106,7 +107,7 @@ func TestModelTplRenderPrimaryKeyTag(t *testing.T) {
 // TestMonorepoTplRenderGenericID 验证 monorepo 模板（create 命令产物）适配 gormdao。
 func TestMonorepoTplRenderGenericID(t *testing.T) {
 	// 渲染 dao/user.go.tmpl（直接模板，无参数）
-	tpl, err := template.New("").ParseFS(tplPkg.MonorepoFS, "monorepo/apps/demoapp/dao/user.go.tmpl")
+	tpl, err := template.New("").ParseFS(tplPkg.ArkFS, "ark/apps/demo/dao/user.go.tmpl")
 	if err != nil {
 		t.Fatalf("parse monorepo dao template: %v", err)
 	}
@@ -126,7 +127,7 @@ func TestMonorepoTplRenderGenericID(t *testing.T) {
 	}
 
 	// 渲染 svcuser/user.go.tmpl
-	tpl2, err := template.New("").ParseFS(tplPkg.MonorepoFS, "monorepo/apps/demoapp/internal/service/svcuser/user.go.tmpl")
+	tpl2, err := template.New("").ParseFS(tplPkg.ArkFS, "ark/apps/demo/internal/service/svcuser/user.go.tmpl")
 	if err != nil {
 		t.Fatalf("parse svcuser template: %v", err)
 	}

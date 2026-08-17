@@ -1,0 +1,75 @@
+server:
+  name: demo
+  port: 8099
+  env: prod
+
+client:
+  httpbingo:
+    host: https://httpbingo.org
+    module: httpbingo
+    retry: 3
+    timeout: 5s
+
+log:
+  default:
+    logger_type: zap
+    service: demo
+    module: default
+    level: info
+    writers:
+      - type: console
+      - type: file
+        dir: ../../../log
+    extra_keys:
+      - requestId
+  gorm:
+    logger_type: zap
+    service: demo
+    module: gorm
+    level: debug
+    writers:
+      - type: console
+      - type: file
+        dir: ../../../log
+    extra_keys:
+      - requestId
+  redis:
+    logger_type: zap
+    service: demo
+    module: redis
+    level: debug
+    writers:
+      - type: console
+      - type: file
+        dir: ../../../log
+    extra_keys:
+      - requestId
+  es:
+    logger_type: zap
+    service: demo
+    module: es
+    level: debug
+    writers:
+      - type: console
+      - type: file
+        dir: ../../../log
+    extra_keys:
+      - requestId
+
+
+db_configs:
+  - url: "mysql://root:123456@127.0.0.1:3306/demo?charset=utf8mb4&parseTime=True&loc=Local&timeout=5s&readTimeout=3s&writeTimeout=3s"
+    service: demo
+
+redis_config:
+  service: demo
+  addr: 127.0.0.1:6379
+  password: 123456
+  db: 0
+  dial_timeout: 5s
+  read_timeout: 3s
+  write_timeout: 3s
+
+es_configs:
+  - service: demo
+    addr: http://127.0.0.1:9200

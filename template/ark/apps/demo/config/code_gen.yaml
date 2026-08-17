@@ -1,0 +1,22 @@
+# mysql数据库连接字符串
+database_dsn: mysql://root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local
+# 也可以使用postgresql，示例如下：
+# database_dsn: postgresql://postgres:123456@localhost:5432/demo?sslmode=disable&TimeZone=Asia/Shanghai
+service_name: demo
+module:
+  package_name: company
+  description: 公司管理
+  table_name: company
+  table_prefix: ""
+model:
+  package_name: company
+  description: 公司管理
+  table_name: company
+  table_prefix: ""
+api:
+  package_name: company
+  target_filename: company.go
+  function_name: Refresh
+  http_method: POST
+  description: 刷新公司信息
+  api_doc_tag: 公司管理

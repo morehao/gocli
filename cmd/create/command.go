@@ -42,11 +42,23 @@ var projectCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+		projName, err := cmd.Flags().GetString("name")
+		if err != nil {
+			fmt.Println("Error retrieving name flag:", err)
+			os.Exit(1)
+		}
+
 		dir := ""
 		if len(args) == 1 {
 			dir = args[0]
 		}
-		if err := createProject(dir, modulePath, gitInit, !skipTidy); err != nil {
+		if err := createProjectWithOpts(CreateOptions{
+			Dir:         dir,
+			ModulePath:  modulePath,
+			ProjectName: projName,
+			GitInit:     gitInit,
+			Tidy:        !skipTidy,
+		}); err != nil {
 			fmt.Println("Error creating project:", err)
 			os.Exit(1)
 		}
@@ -55,16 +67,11 @@ var projectCmd = &cobra.Command{
 
 var appCmd = &cobra.Command{
 	Use:   "app",
-	Short: "Add a new app to the current monorepo from the built-in template",
+	Short: "Add a new app to the current monorepo from the ark demo app",
 	Run: func(cmd *cobra.Command, args []string) {
 		appName, err := cmd.Flags().GetString("name")
 		if err != nil {
 			fmt.Println("Error retrieving name flag:", err)
-			os.Exit(1)
-		}
-		moduleOverride, err := cmd.Flags().GetString("module")
-		if err != nil {
-			fmt.Println("Error retrieving module flag:", err)
 			os.Exit(1)
 		}
 		skipTidy, err := cmd.Flags().GetBool("no-tidy")
@@ -72,8 +79,13 @@ var appCmd = &cobra.Command{
 			fmt.Println("Error retrieving no-tidy flag:", err)
 			os.Exit(1)
 		}
+		moduleOverride, err := cmd.Flags().GetString("module")
+		if err != nil {
+			fmt.Println("Error retrieving module flag:", err)
+			os.Exit(1)
+		}
 
-		if err := createApp(appName, moduleOverride, !skipTidy); err != nil {
+		if err := createAppX(appName, moduleOverride, !skipTidy); err != nil {
 			fmt.Println("Error creating app:", err)
 			os.Exit(1)
 		}
@@ -83,13 +95,14 @@ var appCmd = &cobra.Command{
 func init() {
 	// project flags
 	projectCmd.Flags().StringP("module", "m", "", "Root module path, e.g. github.com/acme/backend (required)")
+	projectCmd.Flags().StringP("name", "p", "", "Project name (defaults to dir basename or module last segment)")
 	projectCmd.Flags().Bool("git", false, "Initialize a git repository after creation")
 	projectCmd.Flags().Bool("no-tidy", false, "Skip `go work sync` after creation (runs by default)")
 
 	// app flags
 	appCmd.Flags().StringP("name", "n", "", "New app name, e.g. userapp (required)")
 	appCmd.Flags().StringP("module", "m", "", "Override the new app module path (by default inferred from the monorepo)")
-	appCmd.Flags().Bool("no-tidy", false, "Skip `go mod tidy` for the new app (runs by default)")
+	appCmd.Flags().Bool("no-tidy", false, "Skip `go work sync` after creating the app (runs by default)")
 
 	Cmd.AddCommand(projectCmd, appCmd)
 }

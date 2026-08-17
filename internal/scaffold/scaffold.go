@@ -133,6 +133,34 @@ func CopyTreeFS(src fs.FS, prefix, dstDir string, onFile func(relPath string, co
 	})
 }
 
+// CopyDirTree 递归复制 src 绝对路径目录到 dst（dst 不应已存在）。
+// 用于复制磁盘上一个已生成的 app 目录；跳过 defaultIgnoreDirMap 目录与 ignore 文件。
+func CopyDirTree(src, dst string) error {
+	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		relPath, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+		if relPath == "." {
+			return os.MkdirAll(dst, 0o755)
+		}
+		target := filepath.Join(dst, relPath)
+		if info.IsDir() {
+			if ShouldIgnore(filepath.ToSlash(relPath)) {
+				return filepath.SkipDir
+			}
+			return os.MkdirAll(target, 0o755)
+		}
+		if ShouldIgnore(filepath.ToSlash(relPath)) {
+			return nil
+		}
+		return CopyFile(path, target)
+	})
+}
+
 // RemoveDirIfExists 删除目录（不存在时静默成功）。
 func RemoveDirIfExists(dir string) error {
 	if _, err := os.Stat(dir); err != nil {
@@ -145,7 +173,7 @@ func RemoveDirIfExists(dir string) error {
 }
 
 // RestoreTemplateFiles 将模板中模板化的文件恢复为标准文件名：
-//   - go.mod.tmpl -> go.mod、go.sum.tmpl -> go.sum、go.work.tmpl -> go.work
+//   - go.mod.tmpl -> go.mod、go.sum.tmpl -> go.sum、go.work.tmpl -> go.work、go.work.sum.tmpl -> go.work.sum
 //   - *.go.tmpl    -> *.go
 //
 // 模板使用 .tmpl 后缀存放这些文件，原因有二：
@@ -171,6 +199,8 @@ func RestoreTemplateFiles(rootDir string) error {
 			newBase = "go.sum"
 		case "go.work.tmpl":
 			newBase = "go.work"
+		case "go.work.sum.tmpl":
+			newBase = "go.work.sum"
 		default:
 			if strings.HasSuffix(base, ".go.tmpl") {
 				newBase = strings.TrimSuffix(base, ".tmpl")

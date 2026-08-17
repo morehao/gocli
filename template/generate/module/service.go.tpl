@@ -82,6 +82,8 @@ func (svc *{{.StructNameLowerCamel}}Svc) Delete(ctx *gin.Context, req *dto{{.Pac
 	userID := gincontext.GetUserID(ctx)
 	{{- if isStringID .PKFieldType}}
 	deletedBy := gutil.ToString(userID)
+	{{- else if isIntID .PKFieldType}}
+	deletedBy := {{.PKFieldType}}(gutil.VToInt64(userID))
 	{{- else}}
 	deletedBy := uint(gutil.VToUint64(userID))
 	{{- end}}
