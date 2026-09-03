@@ -12,7 +12,7 @@ func main() {
 	groups := ginserver.NewRouterGroups(
 		engine,
 		"demoapp",
-		ginserver.VersionGroup{Version: ginserver.ApiVersionV1},
+		[]ginserver.VersionGroup{{Version: ginserver.ApiVersionV1}},
 	)
 
 	router.RegisterRouter(groups)
