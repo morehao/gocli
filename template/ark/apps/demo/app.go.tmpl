@@ -21,10 +21,12 @@ import (
 const AppName = "demo"
 
 func Routers(engine *gin.Engine) {
-	routerGroups := ginserver.NewRouterGroups(engine, AppName, ginserver.VersionGroup{
-		Version: ginserver.ApiVersionV1,
-		Middlewares: []gin.HandlerFunc{
-			middleware.Example(),
+	routerGroups := ginserver.NewRouterGroups(engine, AppName, []ginserver.VersionGroup{
+		{
+			Version: ginserver.ApiVersionV1,
+			Middlewares: []gin.HandlerFunc{
+				middleware.Example(),
+			},
 		},
 	})
 

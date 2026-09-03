@@ -10,11 +10,11 @@ import (
 	"github.com/morehao/go-ark-template/pkg/dbclient"
 	"github.com/morehao/golib/glog"
 	_ "github.com/morehao/golib/glog/driver/zap"
-	"github.com/morehao/golib/gtrace"
-	"github.com/morehao/golib/gtrace/otlptracegrpc"
+	"github.com/morehao/golib/gtrace/otel"
+	"github.com/morehao/golib/gtrace/otel/otlptracegrpc"
 )
 
-var traceProvider *gtrace.Provider
+var traceProvider *otel.Provider
 
 func serverInit() error {
 	if err := preInit(); err != nil {
