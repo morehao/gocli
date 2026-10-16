@@ -7,6 +7,9 @@ import (
 
 	"github.com/morehao/golib/dbaccess/gormdao"
 	"gorm.io/gorm"
+	{{- if .NeedClauseImport}}
+	"gorm.io/gorm/clause"
+	{{- end}}
 	"{{.BaseModulePath}}/{{.AppModuleName}}/{{.ModelLayerName}}"
 	"{{.BaseModulePath}}/pkg/dbclient"
 )
@@ -29,15 +32,15 @@ func (c *{{.StructName}}Cond) BuildCondition(db *gorm.DB, tableName string) {
 {{- if isBasicType .FieldType}}
 	{{- if eq .FieldType "string"}}
 	if c.{{.FieldName}} != "" {
-		db.Where(tableName+".{{.ColumnName}} = ?", c.{{.FieldName}})
+		db.Where(clause.Eq{Column: clause.Column{Table: tableName, Name: "{{.ColumnName}}"}, Value: c.{{.FieldName}}})
 	}
 	{{- else if eq .FieldType "time.Time"}}
 	if !c.{{.FieldName}}.IsZero() {
-		db.Where(tableName+".{{.ColumnName}} = ?", c.{{.FieldName}})
+		db.Where(clause.Eq{Column: clause.Column{Table: tableName, Name: "{{.ColumnName}}"}, Value: c.{{.FieldName}}})
 	}
 	{{- else}}
 	if c.{{.FieldName}} != 0 {
-		db.Where(tableName+".{{.ColumnName}} = ?", c.{{.FieldName}})
+		db.Where(clause.Eq{Column: clause.Column{Table: tableName, Name: "{{.ColumnName}}"}, Value: c.{{.FieldName}}})
 	}
 	{{- end}}
 {{- else}}

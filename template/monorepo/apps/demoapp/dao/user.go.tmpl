@@ -5,6 +5,7 @@ import (
 	"github.com/example/pkg/dbclient"
 	"github.com/morehao/golib/dbaccess/gormdao"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type UserCond struct {
@@ -22,22 +23,22 @@ func (c *UserCond) BuildCondition(db *gorm.DB, tableName string) {
 		c.BaseCond.BuildCondition(db, tableName)
 	}
 	if c.CompanyID != 0 {
-		db.Where(tableName+".company_id = ?", c.CompanyID)
+		db.Where(clause.Eq{Column: clause.Column{Table: tableName, Name: "company_id"}, Value: c.CompanyID})
 	}
 	if c.CreatedBy != 0 {
-		db.Where(tableName+".created_by = ?", c.CreatedBy)
+		db.Where(clause.Eq{Column: clause.Column{Table: tableName, Name: "created_by"}, Value: c.CreatedBy})
 	}
 	if c.DeletedBy != 0 {
-		db.Where(tableName+".deleted_by = ?", c.DeletedBy)
+		db.Where(clause.Eq{Column: clause.Column{Table: tableName, Name: "deleted_by"}, Value: c.DeletedBy})
 	}
 	if c.DepartmentID != 0 {
-		db.Where(tableName+".department_id = ?", c.DepartmentID)
+		db.Where(clause.Eq{Column: clause.Column{Table: tableName, Name: "department_id"}, Value: c.DepartmentID})
 	}
 	if c.Name != "" {
-		db.Where(tableName+".name = ?", c.Name)
+		db.Where(clause.Eq{Column: clause.Column{Table: tableName, Name: "name"}, Value: c.Name})
 	}
 	if c.UpdatedBy != 0 {
-		db.Where(tableName+".updated_by = ?", c.UpdatedBy)
+		db.Where(clause.Eq{Column: clause.Column{Table: tableName, Name: "updated_by"}, Value: c.UpdatedBy})
 	}
 }
 

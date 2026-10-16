@@ -21,12 +21,12 @@ func renderTpl(t *testing.T, fsPath string, params map[string]any) string {
 		TplFuncHasTimeField:        HasTimeField,
 		TplFuncGetFieldImports:     GetFieldImports,
 		TplFuncIsBasicType:         IsBasicType,
-		TplFuncToKebabCase:        toKebabCase,
-		TplFuncPluralize:          pluralize,
-		TplFuncIsNumID:            IsNumID,
-		TplFuncIsStringID:         IsStringID,
-		TplFuncIsIntID:            IsIntID,
-		TplFuncHasTimeFieldAny:    HasTimeFieldAny,
+		TplFuncToKebabCase:         toKebabCase,
+		TplFuncPluralize:           pluralize,
+		TplFuncIsNumID:             IsNumID,
+		TplFuncIsStringID:          IsStringID,
+		TplFuncIsIntID:             IsIntID,
+		TplFuncHasTimeFieldAny:     HasTimeFieldAny,
 	}).ParseFS(TemplatesFS, fsPath)
 	if err != nil {
 		t.Fatalf("parse %s: %v", fsPath, err)
@@ -46,16 +46,17 @@ func TestDaoTplRenderGenericID(t *testing.T) {
 		{FieldName: "Name", FieldType: "string", ColumnName: "name", ColumnType: "varchar(255)"},
 	}
 	params := map[string]any{
-		"PKFieldType":    "uint",
-		"PackageName":    "user",
-		"DaoPackageName": "dao",
-		"ModelLayerName": "model",
-		"StructName":     "User",
-		"BaseModulePath": "github.com/example",
-		"AppModuleName":  "demoapp",
-		"DBName":         "DemoDB",
-		"ModelFields":    fields,
-		"FieldImports":   []string{"time"},
+		"PKFieldType":      "uint",
+		"PackageName":      "user",
+		"DaoPackageName":   "dao",
+		"ModelLayerName":   "model",
+		"StructName":       "User",
+		"BaseModulePath":   "github.com/example",
+		"AppModuleName":    "demoapp",
+		"DBName":           "DemoDB",
+		"ModelFields":      fields,
+		"FieldImports":     []string{"time"},
+		"NeedClauseImport": true,
 	}
 	for _, fsPath := range []string{"generate/module/dao.go.tpl", "generate/model/dao.go.tpl"} {
 		out := renderTpl(t, fsPath, params)
@@ -63,6 +64,7 @@ func TestDaoTplRenderGenericID(t *testing.T) {
 			"*gormdao.BaseCond",
 			"*gormdao.Dao[model.UserEntity, model.UserEntityList, uint]",
 			"gormdao.NewDao[model.UserEntity, model.UserEntityList, uint](",
+			`clause.Eq{Column: clause.Column{Table: tableName, Name: "name"}, Value: c.Name}`,
 		} {
 			if !strings.Contains(out, want) {
 				t.Errorf("%s missing %q\n---\n%s", fsPath, want, out)

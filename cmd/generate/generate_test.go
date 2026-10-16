@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -175,6 +176,50 @@ func assertGenerateSuccess(t *testing.T, output string) {
 	}
 }
 
+// assertGoBuild 编译生成物。
+//
+// 只断言“文件存在”会漏掉只在编译期暴露的问题——重复声明、import 未使用等都属此类，
+// 所以生成测试必须真正编译一次。`go test -short` 下跳过，避免无 module 缓存时拖慢/依赖网络。
+func assertGoBuild(t *testing.T, dir string) {
+	t.Helper()
+	if testing.Short() {
+		t.Skip("skipping compile check in short mode")
+	}
+	cmd := exec.Command("go", "build", "./...")
+	cmd.Dir = dir
+	// 去掉外层可能设置的 GOWORK（例如 GOWORK=off），让子进程按 cmd.Dir 自动发现
+	// 示例项目自己的 go.work；否则它会当成单模块构建而解析不到 workspace 内的兄弟模块。
+	env := make([]string, 0, len(os.Environ()))
+	for _, kv := range os.Environ() {
+		if strings.HasPrefix(kv, "GOWORK=") {
+			continue
+		}
+		env = append(env, kv)
+	}
+	cmd.Env = env
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("generated code failed to compile in %s: %v\n%s", dir, err, out)
+	}
+}
+
+// loadExampleConfig 预加载示例项目的生成配置并注入 appInfo，
+// 等价于 runGenerate 内部 cfg == nil 时的加载逻辑；供需要在生成前调整配置的测试使用。
+func loadExampleConfig(t *testing.T, appDir string) {
+	t.Helper()
+	configFilepath := filepath.Join(appDir, "config", "code_gen.yaml")
+	if _, err := os.Stat(configFilepath); err != nil {
+		t.Skipf("Skipping test: config file not found: %v", configFilepath)
+	}
+	var localCfg Config
+	gutil.LoadYamlConfig(configFilepath, &localCfg)
+	appInfo, err := GetAppInfo(appDir)
+	if err != nil {
+		t.Fatalf("GetAppInfo(%s): %v", appDir, err)
+	}
+	localCfg.appInfo = *appInfo
+	cfg = &localCfg
+}
+
 // 测试配置加载
 func TestConfigLoading(t *testing.T) {
 	resetGenerateState()
@@ -220,6 +265,8 @@ func TestGenerateModelCode(t *testing.T) {
 	if _, statErr := os.Stat(filepath.Join("apps", "demoapp", "model", "user_login_log.go")); statErr != nil {
 		t.Errorf("generated model file not found: %v", statErr)
 	}
+	// 生成物必须真正能编译：clause import 的有无、重复声明这类问题只有编译才暴露
+	assertGoBuild(t, filepath.Join("apps", "demoapp"))
 }
 
 // TestGenerateModuleCode 测试生成完整模块代码
@@ -231,6 +278,23 @@ func TestGenerateModuleCode(t *testing.T) {
 	restore := chdirToExample(t)
 	defer restore()
 
+	projectRoot, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	appDir := filepath.Join(projectRoot, "apps", "demoapp")
+	loadExampleConfig(t, appDir)
+	// 换一张示例里没有的表再生成。
+	//
+	// 模板自带静态的 user 样例（model/dao/object/service/controller，以及 dto、router、
+	// pkg/code 里的 user 条目），而 golib codegen.createFile 在目标文件已存在时是
+	// “去掉 package/import 后追加”，因此对同一张表重复生成会把类型与函数再追加一遍，
+	// 产出重复声明而编译不过——这是已知限制：要修得先定「已存在时跳过还是覆盖」的语义，
+	// 按包累积的 dto/router/code 又不能一起加防护，故本次不在生成器里改。
+	// 测试改用未随模板发布的 user_login_log，才能校验真实的首次生成路径。
+	// 详细排查记录（工作区笔记，未入库）：.dsh/docs/notes/2026-10-16-regenerate-existing-table-duplicates-notes.md
+	cfg.Module.TableName = "user_login_log"
+
 	output := captureStdout(t, func() {
 		if _, err := ExecuteCommand(Cmd, "module", "--app", "demoapp"); err != nil {
 			t.Errorf("Failed to execute module command: %v", err)
@@ -238,9 +302,10 @@ func TestGenerateModuleCode(t *testing.T) {
 	})
 	assertGenerateSuccess(t, output)
 	// 生成成功后应产出 controller 层文件
-	if _, statErr := os.Stat(filepath.Join("apps", "demoapp", "internal", "controller", "ctruser", "user.go")); statErr != nil {
+	if _, statErr := os.Stat(filepath.Join("apps", "demoapp", "internal", "controller", "ctruser", "user_login_log.go")); statErr != nil {
 		t.Errorf("generated controller file not found: %v", statErr)
 	}
+	assertGoBuild(t, appDir)
 }
 
 // TestApiTemplateRestfulPath 验证 api 模板生成的路径为 kebab-case 复数资源 + 动作子路径（与 module 模板的 restful 风格一致）

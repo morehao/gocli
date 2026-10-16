@@ -21,9 +21,9 @@ func capFirst(s string) string {
 // renameAppToken 计算 app 名替换映射（key 长度降序由 ReplaceTokensInTree 保证，demoapp 不会被 demo 误伤）。
 func renameAppToken(oldApp, newApp string) map[string]string {
 	return map[string]string{
-		oldApp + "app":  newApp + "app",
+		oldApp + "app":   newApp + "app",
 		capFirst(oldApp): capFirst(newApp),
-		oldApp:          newApp,
+		oldApp:           newApp,
 	}
 }
 

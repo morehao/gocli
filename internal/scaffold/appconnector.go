@@ -160,7 +160,7 @@ func appendDBClientEntry(path, cap, appName string) error {
 	if idx := strings.Index(string(content), dbDemo); idx >= 0 {
 		nl := strings.Index(string(content[idx:]), "\n")
 		insertAt := idx + nl + 1
-		content = []byte(string(content[:insertAt]) + "\tdbName"+cap+" = \""+appName+"\"\n" + string(content[insertAt:]))
+		content = []byte(string(content[:insertAt]) + "\tdbName" + cap + " = \"" + appName + "\"\n" + string(content[insertAt:]))
 	} else {
 		return fmt.Errorf("appendDBClientEntry: cannot find %s in %s", dbDemo, path)
 	}
