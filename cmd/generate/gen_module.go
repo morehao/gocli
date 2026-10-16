@@ -43,12 +43,12 @@ func genModule() error {
 				TplFuncHasTimeField:        HasTimeField,
 				TplFuncGetFieldImports:     GetFieldImports,
 				TplFuncIsBasicType:         IsBasicType,
-				TplFuncToKebabCase:        toKebabCase,
-				TplFuncPluralize:          pluralize,
-				TplFuncIsNumID:            IsNumID,
-				TplFuncIsStringID:         IsStringID,
-				TplFuncIsIntID:            IsIntID,
-				TplFuncHasTimeFieldAny:    HasTimeFieldAny,
+				TplFuncToKebabCase:         toKebabCase,
+				TplFuncPluralize:           pluralize,
+				TplFuncIsNumID:             IsNumID,
+				TplFuncIsStringID:          IsStringID,
+				TplFuncIsIntID:             IsIntID,
+				TplFuncHasTimeFieldAny:     HasTimeFieldAny,
 			},
 		},
 		TableName: moduleGenCfg.TableName,
@@ -160,36 +160,38 @@ func genModule() error {
 		}
 
 		fieldImports := calcFieldImports(modelFields)
-			if v.OriginLayerName == codegen.LayerNameObject {
-				fieldImports = calcFieldImports(modelFields, "time")
-			}
-			genParamsList = append(genParamsList, codegen.GenParamsItem{
-				TargetDir:      targetDir,
-				TargetFileName: targetFilename,
-				Template:       v.Template,
-				ExtraParams: ModuleExtraParams{
-					AppInfo: AppInfo{
-						ProjectName:     appInfo.ProjectName,
-						AppName:         appInfo.AppName,
-						ProjectRootPath: appInfo.ProjectRootPath,
-						BaseModulePath:  appInfo.BaseModulePath,
-						AppModuleName:   appInfo.AppModuleName,
-					},
-					PackageName:          analysisRes.PackageName,
-					TableName:            analysisRes.TableName,
-					PKFieldType:          pkFieldType,
-					ModelLayerName:       string(modelLayerName),
-					DaoLayerName:         string(daoLayerName),
-					DaoPackageName:       string(daoLayerName),
-					DBName:               fmt.Sprintf("%sDB", gutil.FirstLetterToUpper(cfg.ServiceName)),
-					Description:          moduleGenCfg.Description,
-					StructName:           analysisRes.StructName,
-					StructNameLowerCamel: gutil.FirstLetterToLower(analysisRes.StructName),
-					Template:             v.Template,
-					ModelFields:          modelFields,
-					FieldImports:         fieldImports,
+		if v.OriginLayerName == codegen.LayerNameObject {
+			fieldImports = calcFieldImports(modelFields, "time")
+		}
+		genParamsList = append(genParamsList, codegen.GenParamsItem{
+			TargetDir:      targetDir,
+			TargetFileName: targetFilename,
+			Template:       v.Template,
+			ExtraParams: ModuleExtraParams{
+				AppInfo: AppInfo{
+					ProjectName:     appInfo.ProjectName,
+					AppName:         appInfo.AppName,
+					ProjectRootPath: appInfo.ProjectRootPath,
+					BaseModulePath:  appInfo.BaseModulePath,
+					AppModuleName:   appInfo.AppModuleName,
 				},
-			})
+				PackageName:          analysisRes.PackageName,
+				TableName:            analysisRes.TableName,
+				PKFieldType:          pkFieldType,
+				ModelLayerName:       string(modelLayerName),
+				DaoLayerName:         string(daoLayerName),
+				DaoPackageName:       string(daoLayerName),
+				DBName:               fmt.Sprintf("%sDB", gutil.FirstLetterToUpper(cfg.ServiceName)),
+				Description:          moduleGenCfg.Description,
+				StructName:           analysisRes.StructName,
+				StructNameLowerCamel: gutil.FirstLetterToLower(analysisRes.StructName),
+				Template:             v.Template,
+				ModelFields:          modelFields,
+				FieldImports:         fieldImports,
+				NeedClauseImport: v.OriginLayerName == codegen.LayerNameDao &&
+					hasDaoCondBranch(modelFields),
+			},
+		})
 
 	}
 	genParams := &codegen.GenParams{
@@ -357,4 +359,6 @@ type ModuleExtraParams struct {
 	Template             *template.Template
 	ModelFields          []ModelField
 	FieldImports         []string
+	// NeedClauseImport 标记 dao 层是否要 import gorm.io/gorm/clause，见 hasDaoCondBranch。
+	NeedClauseImport bool
 }

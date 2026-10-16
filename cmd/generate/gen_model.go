@@ -180,6 +180,8 @@ func genModel() error {
 				Template:       v.Template,
 				ModelFields:    modelFields,
 				FieldImports:   fieldImports,
+				NeedClauseImport: v.OriginLayerName == codegen.LayerNameDao &&
+					hasDaoCondBranch(modelFields),
 			},
 		})
 
@@ -263,6 +265,10 @@ type ModelExtraParams struct {
 	Template       *template.Template
 	ModelFields    []ModelField
 	FieldImports   []string
+	// NeedClauseImport 标记 dao 层是否要 import gorm.io/gorm/clause。
+	// 它由条件分支的有无推出（见 hasDaoCondBranch），单独成字段是为了让模板把 clause
+	// 放进第三方 import 分组，而不是混进 FieldImports（那里放的是 time、encoding/json 等标准库）。
+	NeedClauseImport bool
 }
 
 func calcFieldImports(fields []ModelField, excludeImports ...string) []string {
@@ -284,4 +290,18 @@ func calcFieldImports(fields []ModelField, excludeImports ...string) []string {
 	}
 	sort.Strings(imports)
 	return imports
+}
+
+// hasDaoCondBranch 判断 dao 层模板是否会给某个字段生成条件分支。
+//
+// dao 层模板为每个基本类型字段生成一个 clause.Eq 条件分支；表里可能只有内建字段、
+// 或除内建字段外没有基本类型字段，这时不生成任何分支，模板就不该 import clause
+// （import 未使用会让生成物编译失败），所以 import 的有无跟着这个判据走。
+func hasDaoCondBranch(fields []ModelField) bool {
+	for _, field := range fields {
+		if !IsBuiltInField(field.FieldName) && IsBasicType(field.FieldType) {
+			return true
+		}
+	}
+	return false
 }

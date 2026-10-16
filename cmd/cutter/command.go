@@ -71,4 +71,3 @@ func init() {
 	// Add app subcommand to main command
 	Cmd.AddCommand(AppCmd)
 }
-
