@@ -156,7 +156,6 @@ func (m *myappInitializer) Initialize() error {
     m.Log = config.Conf.Log
     m.DBConfigs = config.Conf.DBConfigs
     m.RedisConfig = config.Conf.RedisConfig
-    m.ESConfigs = config.Conf.ESConfigs
 
     if err := m.initLog(); err != nil {
         return fmt.Errorf("init log: %w", err)
@@ -207,13 +206,9 @@ log:
     level: warn
 
 db_configs:
-  - url: "mysql://root:password@127.0.0.1:3306/mydb?charset=utf8mb4&parseTime=True&loc=Local"
+  - url: "postgres://postgres:password@127.0.0.1:5432/mydb?sslmode=disable&TimeZone=Asia/Shanghai"
 
 redis_config:
   service: myapp
   addr: 127.0.0.1:6379
-
-es_configs:
-  - service: myapp
-    addr: http://127.0.0.1:9200
 ```

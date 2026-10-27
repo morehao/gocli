@@ -52,7 +52,8 @@ func TestCreateProject(t *testing.T) {
 	assertFileContent(t, filepath.Join(backend, "apps", "demo", "model", "user.go"), "type:bigint;not null;default:0")
 	// 只校验 gorm tag 行本身：注释/守护用例里对 `type:bigint unsigned` 反例的说明是允许的。
 	assertNoGormUnsignedTag(t, filepath.Join(backend, "apps", "demo", "model"))
-	// 建表脚本是 PostgreSQL 语法
+	// health 只检查 postgres/redis；建表脚本是 PG 语法
+	assertFileContent(t, filepath.Join(backend, "apps", "demo", "internal", "dto", "dtohealth", "health.go"), `json:"postgres"`)
 	assertFileContent(t, filepath.Join(backend, "scripts", "sql", "table_init.sql"), "BIGSERIAL")
 	assertNoContent(t, filepath.Join(backend, "scripts", "sql"), "ENGINE=InnoDB")
 
@@ -123,6 +124,9 @@ func TestCreateAppFromArk(t *testing.T) {
 	assertFileContent(t, filepath.Join(root, "backend", "pkg", "dbclient", "gorm.go"), "func UserDB")
 	assertFileContent(t, filepath.Join(root, "backend", "pkg", "dbclient", "gorm.go"), "dbNameUser")
 	assertFileContent(t, filepath.Join(root, "backend", "pkg", "testsetup", "init.go"), "newUserappInitializer")
+	// 本项目不连接 Elasticsearch：新 app 不再需要 ES 连接件，pkg 里也不应有 es.go
+	assertNoFile(t, filepath.Join(root, "backend", "pkg", "dbclient"), "es.go")
+	assertNoContent(t, filepath.Join(root, "backend"), "elasticsearch")
 }
 
 func assertFileContent(t *testing.T, path, want string) {

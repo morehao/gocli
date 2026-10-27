@@ -44,17 +44,6 @@ log:
         dir: ../../../log
     extra_keys:
       - requestId
-  es:
-    logger_type: zap
-    service: demo
-    module: es
-    level: debug
-    writers:
-      - type: console
-      - type: file
-        dir: ../../../log
-    extra_keys:
-      - requestId
 
 db_configs:
   # 目标库为 PostgreSQL（model tag 与 backend/scripts/sql/table_init.sql 都按 PG 写）
@@ -70,6 +59,3 @@ redis_config:
   read_timeout: 3s
   write_timeout: 3s
 
-es_configs:
-  - service: demo
-    addr: http://127.0.0.1:9200

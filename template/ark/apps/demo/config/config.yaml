@@ -44,17 +44,6 @@ log:
         dir: ../../../log
     extra_keys:
       - requestId
-  es:
-    logger_type: zap
-    service: demo
-    module: es
-    level: debug
-    writers:
-      - type: console
-      - type: file
-        dir: ../../../log
-    extra_keys:
-      - requestId
 
 trace:
   enable: false
@@ -65,7 +54,6 @@ trace:
     endpoint: "127.0.0.1:4317"
     insecure: true
     timeout: 10s
-
 
 db_configs:
   # 目标库为 PostgreSQL（model tag 与 backend/scripts/sql/table_init.sql 都按 PG 写）
@@ -81,7 +69,6 @@ redis_config:
   read_timeout: 3s
   write_timeout: 3s
 
-
 file_storage:
   driver: local
   bucket: demo
@@ -90,6 +77,3 @@ file_storage:
     base_url: http://127.0.0.1:8099/v1/demo
     sign_secret: demo-sign-secret
 
-es_configs:
-  - service: demo
-    addr: http://127.0.0.1:9200

@@ -22,8 +22,9 @@ func capFirstS(s string) string {
 //   - Demo → User（大写）
 //   - demoapp → userapp（复合 token）
 //
-// 必须覆盖新 app 会引用到的全部 dbclient 连接件：gorm(DB)、es(ES)、以及 testsetup(常量+初始器)。
-// 原因：新 app 的 svchealth 同时引用 dbclient.<X>DB 和 dbclient.<X>ES，两者缺一即编译失败。
+// 必须覆盖新 app 会引用到的全部 dbclient 连接件：gorm(DB) 与 testsetup(常量+初始器)。
+// 原因：新 app 的 svchealth 引用 dbclient.<X>DB，testsetup 缺常量/初始器同样编译失败。
+// 本项目不连接 Elasticsearch，因此不追加 ES 连接件。
 //
 // 原子性约定：在改动 backend/pkg 之前，validateAppendAnchors 会先校验收到的全部 helper 锚点
 // 都存在（或新 entry 已存在可跳过）。只有全部通过才执行实际写入，因此任一 helper 都不可能、
@@ -44,11 +45,6 @@ func AppendAppConnector(pkgDir, oldApp, appName string) error {
 	// 2) dbclient/gorm.go 追加 dbNameUser 常量与 UserDB(ctx)
 	gormPath := filepath.Join(pkgDir, "dbclient", "gorm.go")
 	if err := appendDBClientEntry(gormPath, cap, appName); err != nil {
-		return err
-	}
-	// 2b) dbclient/es.go 追加 ESServiceUser 常量、var UserES、switch case；否则新 app svchealth 引用 UserES 编译失败
-	esPath := filepath.Join(pkgDir, "dbclient", "es.go")
-	if err := appendESClientEntry(esPath, cap, appName); err != nil {
 		return err
 	}
 	// 3) 从 initializer_demo.go 复制生成 initializer_user.go，并把 demo 的 token 全部替换
@@ -89,21 +85,6 @@ func validateAppendAnchors(pkgDir, oldApp, appName, cap, newCap string) error {
 		}
 	}
 
-	esPath := filepath.Join(pkgDir, "dbclient", "es.go")
-	if content, err := os.ReadFile(esPath); err != nil {
-		return err
-	} else if !strings.Contains(string(content), esMarker(cap)+" *elasticsearch.Client") {
-		for _, anchor := range []string{
-			"DemoES *elasticsearch.Client",
-			"ESServiceDemo = \"demo\"",
-			"case ESServiceDemo:",
-		} {
-			if idx := strings.Index(string(content), anchor); idx < 0 {
-				return fmt.Errorf("AppendAppConnector: cannot find anchor %q in %s", anchor, esPath)
-			}
-		}
-	}
-
 	src := filepath.Join(pkgDir, "testsetup", "initializer_"+oldApp+".go")
 	if _, err := os.Stat(src); err != nil {
 		return err
@@ -119,11 +100,6 @@ func validateAppendAnchors(pkgDir, oldApp, appName, cap, newCap string) error {
 		}
 	}
 	return nil
-}
-
-// esMarker 返回 <Cap>ES 形态（借 appendESClientEntry 的幂等标记）。
-func esMarker(cap string) string {
-	return cap + "ES"
 }
 
 func appendConstantEntry(path, cap, appName string) error {
@@ -168,56 +144,6 @@ func appendDBClientEntry(path, cap, appName string) error {
 	block := "\nfunc " + cap + "DB(ctx context.Context) *gorm.DB {\n" +
 		"\treturn GetDB(ctx, dbName" + cap + ")\n}\n"
 	return os.WriteFile(path, append(content, []byte(block)...), 0o644)
-}
-
-// appendESClientEntry 在 es.go 中追加 appName 的 ES 连接件：
-//   - `var <Cap>ES *elasticsearch.Client` 追加到 var 块（DemoES 行后）
-//   - `ESService<Cap> = "<appName>"` 追加到 const 块（ESServiceDemo 行后）
-//   - switch 中加 `case ESService<Cap>: <Cap>ES = client`
-//
-// 等三处，保证新 app 的 svchealth 引用的 dbclient.<Cap>ES 存在且被初始化。
-func appendESClientEntry(path, cap, appName string) error {
-	content, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-	text := string(content)
-	esMarker := cap + "ES"
-	if strings.Contains(text, esMarker+" *elasticsearch.Client") {
-		return nil
-	}
-	capService := "ESService" + cap
-	lineSEnd := "\n\t" + esMarker + " *elasticsearch.Client"
-	// var 块：DemoES 声明后追加
-	oldVar := "DemoES *elasticsearch.Client"
-	if idx := strings.Index(text, oldVar); idx >= 0 {
-		nl := strings.Index(text[idx:], "\n")
-		insertAt := idx + nl + 1
-		text = text[:insertAt] + lineSEnd + "\n" + text[insertAt:]
-	} else {
-		return fmt.Errorf("appendESClientEntry: cannot find var %q in %s", oldVar, path)
-	}
-	// const 块：ESServiceDemo 后追加 ESServiceUser = "user"
-	oldConst := "ESServiceDemo = \"demo\""
-	if idx := strings.Index(text, oldConst); idx >= 0 {
-		nl := strings.Index(text[idx:], "\n")
-		insertAt := idx + nl + 1
-		text = text[:insertAt] + "\t" + capService + " = \"" + appName + "\"\n" + text[insertAt:]
-	} else {
-		return fmt.Errorf("appendESClientEntry: cannot find const %q in %s", oldConst, path)
-	}
-	// switch：case ESServiceDemo 后追加 case ESServiceUser: UserES = client
-	oldCase := "case ESServiceDemo:"
-	if idx := strings.Index(text, oldCase); idx >= 0 {
-		// 用一个哨兵字符串实现等价多行插入（保持缩进一致）
-		replacement := "case ESServiceDemo:\n" +
-			"\t\tcase " + capService + ":\n" +
-			"\t\t\t" + cap + "ES = client"
-		text = strings.Replace(text, oldCase+"\n\t\t\tDemoES = client", replacement+"\n\t\t\tDemoES = client", 1)
-	} else {
-		return fmt.Errorf("appendESClientEntry: cannot find switch case %q in %s", oldCase, path)
-	}
-	return os.WriteFile(path, []byte(text), 0o644)
 }
 
 // copyInitializer 复制 initializer_<oldApp>.go 为 initializer_<appName>.go，
