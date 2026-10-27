@@ -2,16 +2,19 @@ package dto{{.PackageName}}
 
 import (
 	"{{.BaseModulePath}}/{{.AppModuleName}}/object/obj{{.PackageName}}"
+	"{{.BaseModulePath}}/pkg/operator"
 	"github.com/morehao/golib/biz/gobject"
 )
 
 type {{.StructName}}CreateReq struct {
 	obj{{.PackageName}}.{{.StructName}}BaseInfo
+	operator.Operator
 }
 
 type {{.StructName}}UpdateReq struct {
 	{{.StructName}}ID {{.PKFieldType}} `json:"-" uri:"{{.StructNameLowerCamel}}ID" binding:"required"` // 主键 ID
 	obj{{.PackageName}}.{{.StructName}}BaseInfo
+	operator.Operator
 }
 
 type {{.StructName}}DetailReq struct {
@@ -24,4 +27,5 @@ type {{.StructName}}PageListReq struct {
 
 type {{.StructName}}DeleteReq struct {
 	{{.StructName}}ID {{.PKFieldType}} `json:"-" uri:"{{.StructNameLowerCamel}}ID" binding:"required"` // 主键 ID
+	operator.Operator
 }

@@ -1,13 +1,14 @@
 package svc{{.PackageName}}
 
 import (
-	"github.com/gin-gonic/gin"
+	"context"
+
 	"{{.BaseModulePath}}/{{.AppModuleName}}/internal/dto/dto{{.PackageName}}"
 )
 
 {{if not .TargetFileExist}}
 type {{.StructName}}Svc interface {
-    {{.FunctionName}}(ctx *gin.Context, req *dto{{.PackageName}}.{{.StructName}}{{.FunctionName}}Req) (*dto{{.PackageName}}.{{.StructName}}{{.FunctionName}}Resp, error)
+    {{.FunctionName}}(ctx context.Context, req *dto{{.PackageName}}.{{.StructName}}{{.FunctionName}}Req) (*dto{{.PackageName}}.{{.StructName}}{{.FunctionName}}Resp, error)
 }
 
 type {{.StructNameLowerCamel}}Svc struct {
@@ -20,6 +21,6 @@ func New{{.StructName}}Svc() {{.StructName}}Svc {
     }
 }
 {{end}}
-func (svc *{{.StructNameLowerCamel}}Svc) {{.FunctionName}}(ctx *gin.Context, req *dto{{.PackageName}}.{{.StructName}}{{.FunctionName}}Req) (*dto{{.PackageName}}.{{.StructName}}{{.FunctionName}}Resp, error) {
+func (svc *{{.StructNameLowerCamel}}Svc) {{.FunctionName}}(ctx context.Context, req *dto{{.PackageName}}.{{.StructName}}{{.FunctionName}}Req) (*dto{{.PackageName}}.{{.StructName}}{{.FunctionName}}Resp, error) {
     return &dto{{.PackageName}}.{{.StructName}}{{.FunctionName}}Resp{}, nil
 }

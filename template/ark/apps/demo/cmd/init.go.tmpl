@@ -53,13 +53,6 @@ func resourceInit() error {
 	if err := dbclient.InitRedis(config.Conf.RedisConfig, redisLogConfig); err != nil {
 		return fmt.Errorf("init redis failed: %w", err)
 	}
-	var esLogConfig *glog.LogConfig
-	if cfg, ok := config.Conf.Log["es"]; ok {
-		esLogConfig = &cfg
-	}
-	if err := dbclient.InitMultiEs(config.Conf.ESConfigs, esLogConfig); err != nil {
-		return fmt.Errorf("init es failed: %w", err)
-	}
 	return nil
 }
 

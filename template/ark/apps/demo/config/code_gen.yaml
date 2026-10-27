@@ -1,7 +1,7 @@
-# mysql数据库连接字符串
-database_dsn: mysql://root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&loc=Local
-# 也可以使用postgresql，示例如下：
-# database_dsn: postgresql://postgres:123456@localhost:5432/demo?sslmode=disable&TimeZone=Asia/Shanghai
+# PostgreSQL 数据库连接字符串（本项目样板库）
+database_dsn: postgresql://postgres:123456@127.0.0.1:5432/demo?sslmode=disable&TimeZone=Asia/Shanghai
+# 也可以使用mysql，示例如下：
+# database_dsn: mysql://root:123456@tcp(127.0.0.1:3306)/demo?charset=utf8mb4&parseTime=True&Loc=Local
 service_name: demo
 module:
   package_name: company

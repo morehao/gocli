@@ -1,12 +1,11 @@
 package svc{{.PackageName}}
 
 import (
+	"context"
 	{{- range .FieldImports}}
 	"{{.}}"
 	{{- end}}
 
-	"github.com/gin-gonic/gin"
-	"github.com/morehao/golib/biz/gcontext/gincontext"
 	"github.com/morehao/golib/dbaccess/gormdao"
 	"github.com/morehao/golib/biz/gobject"
 	"github.com/morehao/golib/glog"
@@ -23,11 +22,11 @@ import (
 )
 
 type {{.StructName}}Svc interface {
-	Create(ctx *gin.Context, req *dto{{.PackageName}}.{{.StructName}}CreateReq) (*dto{{.PackageName}}.{{.StructName}}CreateResp, error)
-	Delete(ctx *gin.Context, req *dto{{.PackageName}}.{{.StructName}}DeleteReq) error
-	Update(ctx *gin.Context, req *dto{{.PackageName}}.{{.StructName}}UpdateReq) error
-	Detail(ctx *gin.Context, req *dto{{.PackageName}}.{{.StructName}}DetailReq) (*dto{{.PackageName}}.{{.StructName}}DetailResp, error)
-	PageList(ctx *gin.Context, req *dto{{.PackageName}}.{{.StructName}}PageListReq) (*dto{{.PackageName}}.{{.StructName}}PageListResp, error)
+	Create(ctx context.Context, req *dto{{.PackageName}}.{{.StructName}}CreateReq) (*dto{{.PackageName}}.{{.StructName}}CreateResp, error)
+	Delete(ctx context.Context, req *dto{{.PackageName}}.{{.StructName}}DeleteReq) error
+	Update(ctx context.Context, req *dto{{.PackageName}}.{{.StructName}}UpdateReq) error
+	Detail(ctx context.Context, req *dto{{.PackageName}}.{{.StructName}}DetailReq) (*dto{{.PackageName}}.{{.StructName}}DetailResp, error)
+	PageList(ctx context.Context, req *dto{{.PackageName}}.{{.StructName}}PageListReq) (*dto{{.PackageName}}.{{.StructName}}PageListResp, error)
 }
 
 type {{.StructNameLowerCamel}}Svc struct {
@@ -40,7 +39,7 @@ func New{{.StructName}}Svc() {{.StructName}}Svc {
 }
 
 // Create 创建{{.Description}}
-func (svc *{{.StructNameLowerCamel}}Svc) Create(ctx *gin.Context, req *dto{{.PackageName}}.{{.StructName}}CreateReq) (*dto{{.PackageName}}.{{.StructName}}CreateResp, error) {
+func (svc *{{.StructNameLowerCamel}}Svc) Create(ctx context.Context, req *dto{{.PackageName}}.{{.StructName}}CreateReq) (*dto{{.PackageName}}.{{.StructName}}CreateResp, error) {
 	insertEntity := &{{.ModelLayerName}}.{{.StructName}}Entity{
 {{- range .ModelFields}}
 	{{- if isSysField .FieldName}}
@@ -51,6 +50,12 @@ func (svc *{{.StructNameLowerCamel}}Svc) Create(ctx *gin.Context, req *dto{{.Pac
 	{{- else}}
 		{{.FieldName}}: req.{{.FieldName}},
 	{{- end}}
+{{- end}}
+{{- if hasSysField .ModelFields "CreatedBy"}}
+		CreatedBy: req.Operator.UserID,
+{{- end}}
+{{- if hasSysField .ModelFields "UpdatedBy"}}
+		UpdatedBy: req.Operator.UserID,
 {{- end}}
 	}
 
@@ -64,7 +69,7 @@ func (svc *{{.StructNameLowerCamel}}Svc) Create(ctx *gin.Context, req *dto{{.Pac
 }
 
 // Delete 删除{{.Description}}
-func (svc *{{.StructNameLowerCamel}}Svc) Delete(ctx *gin.Context, req *dto{{.PackageName}}.{{.StructName}}DeleteReq) error {
+func (svc *{{.StructNameLowerCamel}}Svc) Delete(ctx context.Context, req *dto{{.PackageName}}.{{.StructName}}DeleteReq) error {
 	{{.StructNameLowerCamel}}Entity, err := {{.DaoPackageName}}.New{{.StructName}}Dao().GetByID(ctx, req.{{.StructName}}ID)
 	if err != nil {
 		glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}Delete] {{.DaoPackageName}} GetByID fail, err:%v, req:%s", err, gutil.ToJsonString(req))
@@ -80,14 +85,11 @@ func (svc *{{.StructNameLowerCamel}}Svc) Delete(ctx *gin.Context, req *dto{{.Pac
 
 
 	{{- if isStringID .PKFieldType}}
-	deletedBy := gincontext.GetUserIDString(ctx)
+	deletedBy := gutil.VToStr(req.Operator.UserID)
+	{{- else if isIntID .PKFieldType}}
+	deletedBy := {{.PKFieldType}}(req.Operator.UserID)
 	{{- else}}
-	userID := gincontext.GetUserID(ctx)
-	{{- if isIntID .PKFieldType}}
-	deletedBy := {{.PKFieldType}}(userID)
-	{{- else}}
-	deletedBy := uint(userID)
-	{{- end}}
+	deletedBy := req.Operator.UserID
 	{{- end}}
 
 	if err := {{.DaoPackageName}}.New{{.StructName}}Dao().Delete(ctx, req.{{.StructName}}ID, deletedBy); err != nil {
@@ -98,7 +100,7 @@ func (svc *{{.StructNameLowerCamel}}Svc) Delete(ctx *gin.Context, req *dto{{.Pac
 }
 
 // Update 更新{{.Description}}
-func (svc *{{.StructNameLowerCamel}}Svc) Update(ctx *gin.Context, req *dto{{.PackageName}}.{{.StructName}}UpdateReq) error {
+func (svc *{{.StructNameLowerCamel}}Svc) Update(ctx context.Context, req *dto{{.PackageName}}.{{.StructName}}UpdateReq) error {
 	{{.StructNameLowerCamel}}Entity, err := {{.DaoPackageName}}.New{{.StructName}}Dao().GetByID(ctx, req.{{.StructName}}ID)
 	if err != nil {
 		glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}Update] {{.DaoPackageName}} GetByID fail, err:%v, req:%s", err, gutil.ToJsonString(req))
@@ -113,6 +115,9 @@ func (svc *{{.StructNameLowerCamel}}Svc) Update(ctx *gin.Context, req *dto{{.Pac
 	}
 
 	updateMap := map[string]any{}
+	{{- if hasSysField .ModelFields "UpdatedBy"}}
+	updateMap["updated_by"] = req.Operator.UserID
+	{{- end}}
 	if err := {{.DaoPackageName}}.New{{.StructName}}Dao().UpdateMap(ctx, req.{{.StructName}}ID, updateMap); err != nil {
 		glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}Update] {{.DaoPackageName}} UpdateMap fail, err:%v, req:%s", err, gutil.ToJsonString(req))
 		return code.GetError(code.{{.StructName}}UpdateError)
@@ -121,7 +126,7 @@ func (svc *{{.StructNameLowerCamel}}Svc) Update(ctx *gin.Context, req *dto{{.Pac
 }
 
 // Detail 根据id获取{{.Description}}
-func (svc *{{.StructNameLowerCamel}}Svc) Detail(ctx *gin.Context, req *dto{{.PackageName}}.{{.StructName}}DetailReq) (*dto{{.PackageName}}.{{.StructName}}DetailResp, error) {
+func (svc *{{.StructNameLowerCamel}}Svc) Detail(ctx context.Context, req *dto{{.PackageName}}.{{.StructName}}DetailReq) (*dto{{.PackageName}}.{{.StructName}}DetailResp, error) {
 	{{.StructNameLowerCamel}}Entity, err := {{.DaoPackageName}}.New{{.StructName}}Dao().GetByID(ctx, req.{{.StructName}}ID)
 	if err != nil {
 		glog.Errorf(ctx, "[svc{{.PackageName}}.{{.StructName}}Detail] {{.DaoPackageName}} GetByID fail, err:%v, req:%s", err, gutil.ToJsonString(req))
@@ -149,6 +154,12 @@ func (svc *{{.StructNameLowerCamel}}Svc) Detail(ctx *gin.Context, req *dto{{.Pac
 	{{- end}}
 		},
 		OperatorBaseInfo: gobject.OperatorBaseInfo{
+			{{- if hasSysField .ModelFields "CreatedBy"}}
+			CreatedBy: {{.StructNameLowerCamel}}Entity.CreatedBy,
+			{{- end}}
+			{{- if hasSysField .ModelFields "UpdatedBy"}}
+			UpdatedBy: {{.StructNameLowerCamel}}Entity.UpdatedBy,
+			{{- end}}
 			CreatedAt: {{.StructNameLowerCamel}}Entity.CreatedAt.Unix(),
 			UpdatedAt: {{.StructNameLowerCamel}}Entity.UpdatedAt.Unix(),
 		},
@@ -157,7 +168,7 @@ func (svc *{{.StructNameLowerCamel}}Svc) Detail(ctx *gin.Context, req *dto{{.Pac
 }
 
 // PageList 分页获取{{.Description}}列表
-func (svc *{{.StructNameLowerCamel}}Svc) PageList(ctx *gin.Context, req *dto{{.PackageName}}.{{.StructName}}PageListReq) (*dto{{.PackageName}}.{{.StructName}}PageListResp, error) {
+func (svc *{{.StructNameLowerCamel}}Svc) PageList(ctx context.Context, req *dto{{.PackageName}}.{{.StructName}}PageListReq) (*dto{{.PackageName}}.{{.StructName}}PageListResp, error) {
 	cond := &{{.DaoPackageName}}.{{.StructName}}Cond{
 		BaseCond: &gormdao.BaseCond{
 			Page:     req.Page,
@@ -186,6 +197,12 @@ func (svc *{{.StructNameLowerCamel}}Svc) PageList(ctx *gin.Context, req *dto{{.P
 		{{- end}}
 			},
 			OperatorBaseInfo: gobject.OperatorBaseInfo{
+				{{- if hasSysField .ModelFields "CreatedBy"}}
+				CreatedBy: v.CreatedBy,
+				{{- end}}
+				{{- if hasSysField .ModelFields "UpdatedBy"}}
+				UpdatedBy: v.UpdatedBy,
+				{{- end}}
 				UpdatedAt: v.UpdatedAt.Unix(),
 			},
 		})

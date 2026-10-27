@@ -277,13 +277,12 @@ const docTemplatedemo = `{
         "dtohealth.DbCheckResp": {
             "type": "object",
             "properties": {
-                "es": {
-                    "type": "string"
-                },
-                "mysql": {
+                "postgres": {
+                    "description": "PostgreSQL 连通性检查结果，连通为 ok，否则为错误信息",
                     "type": "string"
                 },
                 "redis": {
+                    "description": "Redis 连通性检查结果，连通为 ok，否则为错误信息",
                     "type": "string"
                 }
             }

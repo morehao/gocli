@@ -29,5 +29,5 @@ func NewHealthCtr() HealthCtr {
 // @Success 200 {object} gincontext.DtoRender{data=dtohealth.DbCheckResp} "{"code": 0,"data": "ok","msg": "success"}"
 // @Router /v1/demo/health [get]
 func (ctr *healthCtr) Check(ctx *gin.Context) {
-	gincontext.Success(ctx, ctr.healthSvc.Check(ctx))
+	gincontext.Success(ctx, ctr.healthSvc.Check(ctx.Request.Context()))
 }

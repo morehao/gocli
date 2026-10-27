@@ -27,6 +27,7 @@ func renderTpl(t *testing.T, fsPath string, params map[string]any) string {
 		TplFuncIsStringID:          IsStringID,
 		TplFuncIsIntID:             IsIntID,
 		TplFuncHasTimeFieldAny:     HasTimeFieldAny,
+		TplFuncHasSysField:         HasSysField,
 	}).ParseFS(TemplatesFS, fsPath)
 	if err != nil {
 		t.Fatalf("parse %s: %v", fsPath, err)
@@ -171,7 +172,8 @@ func TestStringPKServiceTpl(t *testing.T) {
 	strOut := renderTpl(t, "generate/module/service.go.tpl", strParams)
 	for _, want := range []string{
 		"coreConfigEntity.ID == \"\"",
-		"deletedBy := gincontext.GetUserIDString(ctx)",
+		"ctx context.Context",
+		"deletedBy := gutil.VToStr(req.Operator.UserID)",
 	} {
 		if !strings.Contains(strOut, want) {
 			t.Errorf("string-pk service missing %q\n---\n%s", want, strOut)
@@ -180,6 +182,16 @@ func TestStringPKServiceTpl(t *testing.T) {
 	if strings.Contains(strOut, "coreConfigEntity.ID == 0") || strings.Contains(strOut, "deletedBy := uint(") {
 		t.Errorf("string-pk service should not use numeric zero/uint cast:\n%s", strOut)
 	}
+	// service 不再依赖 gin：操作人由 controller 填进 DTO。
+	if strings.Contains(strOut, "gincontext") || strings.Contains(strOut, "gin-gonic") || strings.Contains(strOut, "gin.Context") {
+		t.Errorf("string-pk service should not reference gin:\n%s", strOut)
+	}
+	// DTO：Create/Update/Delete 都内嵌 operator.Operator（字段均 json:"-"，客户端不可伪造）。
+	strReqOut := renderTpl(t, "generate/module/request.go.tpl", strParams)
+	assertOperatorReqTpl(t, "string-pk", strReqOut)
+	// controller 仍是 *gin.Context，调用处转纯 ctx，写操作前统一 FillOperator。
+	strCtrOut := renderTpl(t, "generate/module/controller.go.tpl", strParams)
+	assertOperatorCtrTpl(t, "string-pk", strCtrOut)
 
 	// 数值主键（uint）保持原行为
 	uintParams := map[string]any{}
@@ -190,11 +202,178 @@ func TestStringPKServiceTpl(t *testing.T) {
 	uintOut := renderTpl(t, "generate/module/service.go.tpl", uintParams)
 	for _, want := range []string{
 		"coreConfigEntity.ID == 0",
-		"deletedBy := uint(userID)",
-		"userID := gincontext.GetUserID(ctx)",
+		"ctx context.Context",
+		"deletedBy := req.Operator.UserID",
 	} {
 		if !strings.Contains(uintOut, want) {
 			t.Errorf("uint-pk service missing %q\n---\n%s", want, uintOut)
+		}
+	}
+	if strings.Contains(uintOut, "gincontext") || strings.Contains(uintOut, "gin.Context") {
+		t.Errorf("uint-pk service should not reference gin:\n%s", uintOut)
+	}
+	uintReqOut := renderTpl(t, "generate/module/request.go.tpl", uintParams)
+	assertOperatorReqTpl(t, "uint-pk", uintReqOut)
+	uintCtrOut := renderTpl(t, "generate/module/controller.go.tpl", uintParams)
+	assertOperatorCtrTpl(t, "uint-pk", uintCtrOut)
+}
+
+// assertOperatorReqTpl 断言 DTO 模板把操作人做成内嵌 operator.Operator（而非按主键类型分叉的标量字段），
+// 且 Create / Update / Delete 三个写请求都带上它。
+func assertOperatorReqTpl(t *testing.T, label, out string) {
+	t.Helper()
+	if !strings.Contains(out, `"github.com/example/pkg/operator"`) {
+		t.Errorf("%s DTO should import pkg/operator:\n%s", label, out)
+	}
+	if got := strings.Count(out, "\toperator.Operator"); got != 3 {
+		t.Errorf("%s DTO should embed operator.Operator in Create/Update/Delete, got %d:\n%s", label, got, out)
+	}
+	// Detail / PageList 是只读请求，不该携带身份。
+	detail := out[strings.Index(out, "CoreConfigDetailReq"):strings.Index(out, "CoreConfigPageListReq")]
+	if strings.Contains(detail, "operator.Operator") {
+		t.Errorf("%s DetailReq should not embed operator.Operator:\n%s", label, detail)
+	}
+}
+
+// assertOperatorCtrTpl 断言 controller 在 Create / Update / Delete 三处都用 ginhelper.FillOperator
+// 填请求 DTO，并把纯 ctx 交给 service。
+func assertOperatorCtrTpl(t *testing.T, label, out string) {
+	t.Helper()
+	for _, want := range []string{
+		"Delete(ctx *gin.Context)",
+		"ginhelper.FillOperator(ctx, &req.Operator)",
+		"ctr.coreConfigSvc.Create(ctx.Request.Context(), &req)",
+		"ctr.coreConfigSvc.Delete(ctx.Request.Context(), &req)",
+		"ctr.coreConfigSvc.Update(ctx.Request.Context(), &req)",
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("%s controller missing %q\n---\n%s", label, want, out)
+		}
+	}
+	if got := strings.Count(out, "ginhelper.FillOperator(ctx, &req.Operator)"); got != 3 {
+		t.Errorf("%s controller should FillOperator in Create/Update/Delete, got %d", label, got)
+	}
+	// 身份读取收敛到 ginhelper：controller 不再自己调 getter。
+	if strings.Contains(out, "gincontext.GetUserID") {
+		t.Errorf("%s controller should not call gincontext.GetUserID directly:\n%s", label, out)
+	}
+}
+
+// TestIntPKServiceTpl 验证有符号整型主键下 deletedBy 仍按 PK 类型转换（dao.Delete 形参为主键类型），
+// 操作人同样取自 DTO。
+func TestIntPKServiceTpl(t *testing.T) {
+	params := map[string]any{
+		"PKFieldType":          "int64",
+		"PackageName":          "coreconfig",
+		"DaoPackageName":       "dao",
+		"ModelLayerName":       "model",
+		"StructName":           "CoreConfig",
+		"StructNameLowerCamel": "coreConfig",
+		"BaseModulePath":       "github.com/example",
+		"AppModuleName":        "demoapp",
+		"DBName":               "DemoDB",
+		"ModelFields": []ModelField{
+			{IsPrimaryKey: true, FieldName: "ID", FieldType: "int64", ColumnName: "id", ColumnType: "bigint"},
+		},
+		"FieldImports": []string{},
+	}
+	out := renderTpl(t, "generate/module/service.go.tpl", params)
+	for _, want := range []string{
+		"ctx context.Context",
+		"deletedBy := int64(req.Operator.UserID)",
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("int64-pk service missing %q\n---\n%s", want, out)
+		}
+	}
+	if strings.Contains(out, "gincontext") || strings.Contains(out, "gin.Context") {
+		t.Errorf("int64-pk service should not reference gin:\n%s", out)
+	}
+}
+
+// TestServiceTplAuditColumns 验证 service 模板按表里是否真的有审计列决定是否写 CreatedBy / UpdatedBy：
+// 表没有这些列时不能生成赋值，否则生成物编译失败。
+func TestServiceTplAuditColumns(t *testing.T) {
+	params := func(fields []ModelField) map[string]any {
+		return map[string]any{
+			"PKFieldType":          "uint",
+			"PackageName":          "user",
+			"DaoPackageName":       "dao",
+			"ModelLayerName":       "model",
+			"StructName":           "User",
+			"StructNameLowerCamel": "user",
+			"BaseModulePath":       "github.com/example",
+			"AppModuleName":        "demoapp",
+			"DBName":               "DemoDB",
+			"ModelFields":          fields,
+			"FieldImports":         []string{},
+		}
+	}
+	pk := ModelField{IsPrimaryKey: true, FieldName: "ID", FieldType: "uint", ColumnName: "id"}
+
+	// 有审计列：Create 写 created_by/updated_by，Update 写 updated_by，详情/列表回显。
+	withAudit := renderTpl(t, "generate/module/service.go.tpl", params([]ModelField{
+		pk,
+		{FieldName: "Name", FieldType: "string", ColumnName: "name"},
+		{FieldName: "CreatedBy", FieldType: "uint", ColumnName: "created_by"},
+		{FieldName: "UpdatedBy", FieldType: "uint", ColumnName: "updated_by"},
+	}))
+	for _, want := range []string{
+		"CreatedBy: req.Operator.UserID,",
+		"UpdatedBy: req.Operator.UserID,",
+		`updateMap["updated_by"] = req.Operator.UserID`,
+		"CreatedBy: userEntity.CreatedBy,",
+		"UpdatedBy: userEntity.UpdatedBy,",
+		"CreatedBy: v.CreatedBy,",
+		"UpdatedBy: v.UpdatedBy,",
+	} {
+		if !strings.Contains(withAudit, want) {
+			t.Errorf("service with audit columns missing %q\n---\n%s", want, withAudit)
+		}
+	}
+
+	// 无审计列：不得出现任何审计人赋值。
+	withoutAudit := renderTpl(t, "generate/module/service.go.tpl", params([]ModelField{
+		pk,
+		{FieldName: "Name", FieldType: "string", ColumnName: "name"},
+	}))
+	for _, forbidden := range []string{"CreatedBy:", "UpdatedBy:", `updateMap["updated_by"]`} {
+		if strings.Contains(withoutAudit, forbidden) {
+			t.Errorf("service without audit columns should not write %q:\n%s", forbidden, withoutAudit)
+		}
+	}
+}
+
+// TestApiTplServiceContext 验证 api 生成器的 service 收 context.Context，
+// controller 保持 *gin.Context 并在调用处转换。
+func TestApiTplServiceContext(t *testing.T) {
+	params := map[string]any{
+		"PackageName":            "user",
+		"StructName":             "User",
+		"StructNameLowerCamel":   "user",
+		"FunctionName":           "Login",
+		"FunctionNameLowerCamel": "login",
+		"HttpMethod":             "GET",
+		"BaseModulePath":         "github.com/example",
+		"AppModuleName":          "demoapp",
+		"AppName":                "demo",
+		"ApiDocTag":              "用户",
+		"TargetFileExist":        false,
+	}
+	svcOut := renderTpl(t, "generate/api/service.go.tpl", params)
+	if !strings.Contains(svcOut, "Login(ctx context.Context, req *dtouser.UserLoginReq)") {
+		t.Errorf("api service should take context.Context:\n%s", svcOut)
+	}
+	if strings.Contains(svcOut, "gin.Context") || strings.Contains(svcOut, "gin-gonic") {
+		t.Errorf("api service should not reference gin:\n%s", svcOut)
+	}
+	ctrOut := renderTpl(t, "generate/api/controller.go.tpl", params)
+	for _, want := range []string{
+		"Login(ctx *gin.Context)",
+		"ctr.userSvc.Login(ctx.Request.Context(), &req)",
+	} {
+		if !strings.Contains(ctrOut, want) {
+			t.Errorf("api controller missing %q\n---\n%s", want, ctrOut)
 		}
 	}
 }

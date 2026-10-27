@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/morehao/golib/dbaccess/dbes"
 	"github.com/morehao/golib/dbaccess/dbgorm"
 	"github.com/morehao/golib/dbaccess/dbredis"
 	"github.com/morehao/golib/glog"
@@ -23,7 +22,6 @@ type Config struct {
 	Trace       gtrace.TraceConfig        `yaml:"trace"`
 	DBConfigs   []dbgorm.Config           `yaml:"db_configs"`
 	RedisConfig dbredis.RedisConfig       `yaml:"redis_config"`
-	ESConfigs   []dbes.ESConfig           `yaml:"es_configs"`
 	Client      Client                    `yaml:"client"`
 	FileStorage FileStorage               `yaml:"file_storage"`
 }

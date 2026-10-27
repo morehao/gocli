@@ -1,0 +1,62 @@
+package ginhelper_test
+
+import (
+	"net/http/httptest"
+	"testing"
+
+	"github.com/gin-gonic/gin"
+	"github.com/morehao/go-ark-template/pkg/ginhelper"
+	"github.com/morehao/go-ark-template/pkg/operator"
+	"github.com/morehao/golib/biz/gcontext"
+	"github.com/stretchr/testify/assert"
+)
+
+// newCtxWithIdentity 构造一个已写入身份 gin Keys 的上下文。
+func newCtxWithIdentity(keys map[string]string) *gin.Context {
+	ctx, _ := gin.CreateTestContext(httptest.NewRecorder())
+	ctx.Request = httptest.NewRequest("GET", "/", nil)
+	for k, v := range keys {
+		ctx.Set(k, v)
+	}
+	return ctx
+}
+
+// TestFillOperatorCopiesIdentity 验证登录态的每个字段都被完整搬进请求 DTO。
+//
+// 漏字段不会有编译错误，只会让审计列/归属判断静默拿到零值，因此逐个断言。
+func TestFillOperatorCopiesIdentity(t *testing.T) {
+	ctx := newCtxWithIdentity(map[string]string{
+		gcontext.KeyUserID:   "8001",
+		gcontext.KeyPersonID: "7201",
+		gcontext.KeyTenantID: "7001",
+		gcontext.KeyOrgID:    "7301",
+		gcontext.KeyDeptID:   "7101",
+		gcontext.KeyUserType: "auth",
+	})
+
+	var got operator.Operator
+	ginhelper.FillOperator(ctx, &got)
+
+	assert.EqualValues(t, 8001, got.UserID, "UserID")
+	assert.EqualValues(t, 7201, got.PersonID, "PersonID")
+	assert.EqualValues(t, 7001, got.TenantID, "TenantID")
+	assert.EqualValues(t, 7301, got.OrgID, "OrgID")
+	assert.EqualValues(t, 7101, got.DeptID, "DeptID")
+	assert.Equal(t, "auth", got.UserType, "UserType")
+}
+
+// TestFillOperatorMissingKeys 无身份时保持零值，不 panic。
+func TestFillOperatorMissingKeys(t *testing.T) {
+	ctx := newCtxWithIdentity(nil)
+
+	var got operator.Operator
+	assert.NotPanics(t, func() { ginhelper.FillOperator(ctx, &got) })
+	assert.Equal(t, operator.Operator{}, got)
+}
+
+// TestFillOperatorNilSafe nil 上下文与 nil 目标都不应 panic。
+func TestFillOperatorNilSafe(t *testing.T) {
+	var got operator.Operator
+	assert.NotPanics(t, func() { ginhelper.FillOperator(nil, &got) })
+	assert.NotPanics(t, func() { ginhelper.FillOperator(newCtxWithIdentity(nil), nil) })
+}

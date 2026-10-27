@@ -1,12 +1,13 @@
 package svcexample
 
 import (
-	"github.com/gin-gonic/gin"
+	"context"
+
 	"github.com/morehao/go-ark-template/demo/internal/dto/dtoexample"
 )
 
 type FormatSvc interface {
-	FormatResponse(ctx *gin.Context) *dtoexample.FormatResponseResp
+	FormatResponse(ctx context.Context) *dtoexample.FormatResponseResp
 }
 
 var _ FormatSvc = (*formatSvc)(nil)
@@ -18,7 +19,7 @@ func NewFormatSvc() FormatSvc {
 	return &formatSvc{}
 }
 
-func (svc *formatSvc) FormatResponse(ctx *gin.Context) *dtoexample.FormatResponseResp {
+func (svc *formatSvc) FormatResponse(ctx context.Context) *dtoexample.FormatResponseResp {
 	pricePtr := 1.22245
 	return &dtoexample.FormatResponseResp{
 		Items: []dtoexample.FormatDataItem{

@@ -1,0 +1,36 @@
+package ginhelper
+
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/morehao/go-ark-template/pkg/operator"
+	"github.com/morehao/golib/biz/gcontext/gincontext"
+)
+
+// FillOperator 从 gin 上下文读出当前登录态，写入请求 DTO 的操作人字段。
+//
+// 用法（controller 层，唯一允许接触 gin 身份的地方）：
+//
+//	var req dtoxxx.XxxCreateReq
+//	// ... 绑定请求 ...
+//	ginhelper.FillOperator(ctx, &req.Operator)
+//	res, err := svc.Create(ctx.Request.Context(), &req)
+//
+// 约定：
+//   - service / dao 只读 DTO，不感知 gin；写操作务必调用本函数，
+//     否则审计列 created_by / updated_by / deleted_by 会静默记成 0；
+//   - Operator 字段均为 json:"-"，客户端无法通过请求体伪造身份；
+//   - TenantID 等归属信息进 DTO 只用于业务判断与落库，**不承担数据隔离**：
+//     隔离由 DAO 侧的租户作用域（gcontext.TenantScope）强制。
+func FillOperator(ctx *gin.Context, op *operator.Operator) {
+	if ctx == nil || op == nil {
+		return
+	}
+	*op = operator.Operator{
+		UserID:   gincontext.GetUserID(ctx),
+		PersonID: gincontext.GetPersonID(ctx),
+		TenantID: gincontext.GetTenantID(ctx),
+		OrgID:    gincontext.GetOrgID(ctx),
+		DeptID:   gincontext.GetDeptID(ctx),
+		UserType: gincontext.GetUserType(ctx),
+	}
+}
