@@ -46,6 +46,10 @@ type UserDao struct {
 	*gormdao.Dao[model.UserEntity, model.UserEntityList, uint]
 }
 
+// NewUserDao 构造 UserDao。
+//
+// 表名传**逻辑表名** model.TableNameUser 即可：gormdao（v1.32.26 起）会把表名与列名
+// 交给 GORM 按当前方言引用，user 这一 PostgreSQL 保留字无需调用方额外处理。
 func NewUserDao() *UserDao {
 	return &UserDao{
 		Dao: gormdao.NewDao[model.UserEntity, model.UserEntityList, uint](

@@ -23,7 +23,7 @@ const (
 
 func InitMultiDB(configs []dbgorm.Config, logConfig *glog.LogConfig) error {
 	if len(configs) == 0 {
-		return fmt.Errorf("mysql config is empty")
+		return fmt.Errorf("db config is empty")
 	}
 
 	var opts []dbgorm.Option
@@ -35,7 +35,7 @@ func InitMultiDB(configs []dbgorm.Config, logConfig *glog.LogConfig) error {
 	for _, cfg := range configs {
 		client, err := dbgorm.New(&cfg, opts...)
 		if err != nil {
-			return fmt.Errorf("init mysql failed: %v", err)
+			return fmt.Errorf("init db failed: %v", err)
 		}
 		dbMutex.Lock()
 		dbMap[cfg.Service] = client
