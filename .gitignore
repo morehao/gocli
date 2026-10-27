@@ -29,6 +29,9 @@ go.work.sum
 .env
 g
 
+# local agent scratch (docs/notes/plans, temp caches)
+.dsh/
+
 # local go build/module caches (sandbox workaround)
 .gocache
 .gomodcache
