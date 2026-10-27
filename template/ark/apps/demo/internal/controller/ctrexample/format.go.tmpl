@@ -23,7 +23,7 @@ func NewFormatCtr() FormatCtr {
 }
 
 func (ctr *formatCtr) FormatResponse(ctx *gin.Context) {
-	res := ctr.exampleSvc.FormatResponse(ctx)
+	res := ctr.exampleSvc.FormatResponse(ctx.Request.Context())
 
 	gincontext.SuccessWithFormat(ctx, res)
 }

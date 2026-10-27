@@ -49,6 +49,7 @@ func genModule() error {
 				TplFuncIsStringID:          IsStringID,
 				TplFuncIsIntID:             IsIntID,
 				TplFuncHasTimeFieldAny:     HasTimeFieldAny,
+				TplFuncHasSysField:         HasSysField,
 			},
 		},
 		TableName: moduleGenCfg.TableName,

@@ -25,6 +25,24 @@ func TestCreateProject(t *testing.T) {
 
 	// 不应残留占位符或模板后缀文件
 	assertNoContent(t, root, "github.com/morehao/go-ark-template")
+
+	// 生成物的 service 层不依赖 gin：service 收 context.Context，操作人由 controller 填进 DTO。
+	backend := filepath.Join(root, "backend")
+	assertNoServiceGin(t, filepath.Join(backend, "apps", "demo", "internal", "service"))
+	assertFileContent(t, filepath.Join(backend, "apps", "demo", "internal", "service", "svcuser", "user.go"),
+		"func (svc *userSvc) PageList(ctx context.Context, req *dtouser.UserPageListReq)")
+	assertFileContent(t, filepath.Join(backend, "apps", "demo", "internal", "controller", "ctruser", "user.go"),
+		"ctr.userSvc.Delete(ctx.Request.Context(), &req)")
+	assertFileContent(t, filepath.Join(backend, "apps", "demo", "internal", "controller", "ctruser", "user.go"),
+		"ginhelper.FillOperator(ctx, &req.Operator)")
+	assertFileContent(t, filepath.Join(backend, "apps", "demo", "internal", "dto", "dtouser", "request.go"),
+		"operator.Operator")
+	// 操作人定义在 pkg/operator（不依赖 gin），由 pkg/ginhelper 从登录态填充。
+	assertFileContent(t, filepath.Join(backend, "pkg", "operator", "operator.go"), "package operator")
+	assertFileContent(t, filepath.Join(backend, "pkg", "operator", "operator.go"), "UserID   uint")
+	assertFileContent(t, filepath.Join(backend, "pkg", "operator", "operator.go"), "`json:\"-\" form:\"-\"`")
+	assertFileContent(t, filepath.Join(backend, "pkg", "ginhelper", "operator.go"), "func FillOperator(ctx *gin.Context, op *operator.Operator)")
+	assertNoFile(t, filepath.Join(backend, "pkg", "operator"), "operator.go.tmpl")
 	assertNoFile(t, root, "go.work.tmpl")
 	assertNoFile(t, root, "go.mod.tmpl")
 	assertNoFile(t, root, "go.work.sum.tmpl")
@@ -122,6 +140,32 @@ func assertNoContent(t *testing.T, root, forbidden string) {
 	})
 	if err != nil {
 		t.Fatalf("walk %s: %v", root, err)
+	}
+}
+
+// assertNoServiceGin 断言 service 目录下没有任何 gin 依赖（import、*gin.Context 或 gincontext 调用）。
+func assertNoServiceGin(t *testing.T, dir string) {
+	t.Helper()
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		content, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		for _, forbidden := range []string{"gin-gonic", "gin.Context", "gincontext"} {
+			if strings.Contains(string(content), forbidden) {
+				t.Errorf("%s contains forbidden %q; service must take context.Context and read operator from DTO", path, forbidden)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("walk %s: %v", dir, err)
 	}
 }
 

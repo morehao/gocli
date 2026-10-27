@@ -28,6 +28,7 @@ const (
 	TplFuncIsStringID          = "isStringID"
 	TplFuncIsIntID             = "isIntID"
 	TplFuncHasTimeFieldAny     = "hasTimeFieldAny"
+	TplFuncHasSysField         = "hasSysField"
 
 	DBTypeMySQL    = "mysql"
 	DBTypePostgres = "postgresql"
@@ -149,6 +150,18 @@ func IsIntID(pkFieldType string) bool {
 	switch pkFieldType {
 	case "int", "int8", "int16", "int32", "int64":
 		return true
+	}
+	return false
+}
+
+// HasSysField 判断字段列表中是否含指定的系统字段（如 CreatedBy / UpdatedBy）。
+//
+// 表里没有该审计列时，生成的 service 不应写它——否则生成物编译失败。
+func HasSysField(fields []ModelField, name string) bool {
+	for _, field := range fields {
+		if field.FieldName == name {
+			return true
+		}
 	}
 	return false
 }

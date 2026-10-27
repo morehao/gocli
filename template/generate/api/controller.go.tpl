@@ -38,7 +38,7 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) {{.FunctionName}}(ctx *gin.Context) {
 		gincontext.Fail(ctx, err)
 		return
 	}
-	res, err := ctr.{{.StructNameLowerCamel}}Svc.{{.FunctionName}}(ctx, &req)
+	res, err := ctr.{{.StructNameLowerCamel}}Svc.{{.FunctionName}}(ctx.Request.Context(), &req)
 	if err != nil {
 		gincontext.Fail(ctx, err)
 		return
@@ -60,7 +60,7 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) {{.FunctionName}}(ctx *gin.Context) {
 		gincontext.Fail(ctx, err)
 		return
 	}
-	res, err := ctr.{{.StructNameLowerCamel}}Svc.{{.FunctionName}}(ctx, &req)
+	res, err := ctr.{{.StructNameLowerCamel}}Svc.{{.FunctionName}}(ctx.Request.Context(), &req)
 	if err != nil {
 		gincontext.Fail(ctx, err)
 		return

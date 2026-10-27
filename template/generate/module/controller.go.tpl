@@ -4,6 +4,7 @@ import (
     "github.com/gin-gonic/gin"
     "{{.BaseModulePath}}/{{.AppModuleName}}/internal/dto/dto{{.PackageName}}"
     "{{.BaseModulePath}}/{{.AppModuleName}}/internal/service/svc{{.PackageName}}"
+    "{{.BaseModulePath}}/pkg/ginhelper"
     "github.com/morehao/golib/biz/gcontext/gincontext"
 )
 
@@ -41,7 +42,9 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Create(ctx *gin.Context) {
 		gincontext.Fail(ctx, err)
 		return
 	}
-	res, err := ctr.{{.StructNameLowerCamel}}Svc.Create(ctx, &req)
+	ginhelper.FillOperator(ctx, &req.Operator)
+
+	res, err := ctr.{{.StructNameLowerCamel}}Svc.Create(ctx.Request.Context(), &req)
 	if err != nil {
 		gincontext.Fail(ctx, err)
 		return
@@ -63,8 +66,9 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Delete(ctx *gin.Context) {
 		gincontext.Fail(ctx, err)
 		return
 	}
+	ginhelper.FillOperator(ctx, &req.Operator)
 
-	if err := ctr.{{.StructNameLowerCamel}}Svc.Delete(ctx, &req); err != nil {
+	if err := ctr.{{.StructNameLowerCamel}}Svc.Delete(ctx.Request.Context(), &req); err != nil {
 		gincontext.Fail(ctx, err)
 		return
 	}
@@ -90,7 +94,9 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Update(ctx *gin.Context) {
 		gincontext.Fail(ctx, err)
 		return
 	}
-	if err := ctr.{{.StructNameLowerCamel}}Svc.Update(ctx, &req); err != nil {
+	ginhelper.FillOperator(ctx, &req.Operator)
+
+	if err := ctr.{{.StructNameLowerCamel}}Svc.Update(ctx.Request.Context(), &req); err != nil {
 		gincontext.Fail(ctx, err)
 		return
 	}
@@ -111,7 +117,7 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) Detail(ctx *gin.Context) {
 		gincontext.Fail(ctx, err)
 		return
 	}
-	res, err := ctr.{{.StructNameLowerCamel}}Svc.Detail(ctx, &req)
+	res, err := ctr.{{.StructNameLowerCamel}}Svc.Detail(ctx.Request.Context(), &req)
 	if err != nil {
 		gincontext.Fail(ctx, err)
 		return
@@ -133,7 +139,7 @@ func (ctr *{{.StructNameLowerCamel}}Ctr) PageList(ctx *gin.Context) {
 		gincontext.Fail(ctx, err)
 		return
 	}
-	res, err := ctr.{{.StructNameLowerCamel}}Svc.PageList(ctx, &req)
+	res, err := ctr.{{.StructNameLowerCamel}}Svc.PageList(ctx.Request.Context(), &req)
 	if err != nil {
 		gincontext.Fail(ctx, err)
 		return

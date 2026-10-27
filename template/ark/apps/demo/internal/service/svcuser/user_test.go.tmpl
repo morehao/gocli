@@ -13,7 +13,7 @@ func TestUserList(t *testing.T) {
 	testsetup.Initialize(testsetup.AppNameDemo)
 	defer testsetup.Close(testsetup.AppNameDemo)
 
-	ctx := testsetup.NewContext()
+	ctx := testsetup.NewContext().Request.Context()
 	svc := NewUserSvc()
 	res, err := svc.PageList(ctx, &dtouser.UserPageListReq{})
 	assert.Nil(t, err)

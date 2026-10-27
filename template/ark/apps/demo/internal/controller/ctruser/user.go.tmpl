@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/morehao/go-ark-template/demo/internal/dto/dtouser"
 	"github.com/morehao/go-ark-template/demo/internal/service/svcuser"
+	"github.com/morehao/go-ark-template/pkg/ginhelper"
 	"github.com/morehao/golib/biz/gcontext/gincontext"
 )
 
@@ -41,7 +42,9 @@ func (ctr *userCtr) Create(ctx *gin.Context) {
 		gincontext.Fail(ctx, err)
 		return
 	}
-	res, err := ctr.userSvc.Create(ctx, &req)
+	ginhelper.FillOperator(ctx, &req.Operator)
+
+	res, err := ctr.userSvc.Create(ctx.Request.Context(), &req)
 	if err != nil {
 		gincontext.Fail(ctx, err)
 		return
@@ -64,7 +67,9 @@ func (ctr *userCtr) Delete(ctx *gin.Context) {
 		return
 	}
 
-	if err := ctr.userSvc.Delete(ctx, &req); err != nil {
+	ginhelper.FillOperator(ctx, &req.Operator)
+
+	if err := ctr.userSvc.Delete(ctx.Request.Context(), &req); err != nil {
 		gincontext.Fail(ctx, err)
 		return
 	}
@@ -90,7 +95,9 @@ func (ctr *userCtr) Update(ctx *gin.Context) {
 		gincontext.Fail(ctx, err)
 		return
 	}
-	if err := ctr.userSvc.Update(ctx, &req); err != nil {
+	ginhelper.FillOperator(ctx, &req.Operator)
+
+	if err := ctr.userSvc.Update(ctx.Request.Context(), &req); err != nil {
 		gincontext.Fail(ctx, err)
 		return
 	}
@@ -111,7 +118,7 @@ func (ctr *userCtr) Detail(ctx *gin.Context) {
 		gincontext.Fail(ctx, err)
 		return
 	}
-	res, err := ctr.userSvc.Detail(ctx, &req)
+	res, err := ctr.userSvc.Detail(ctx.Request.Context(), &req)
 	if err != nil {
 		gincontext.Fail(ctx, err)
 		return
@@ -133,7 +140,7 @@ func (ctr *userCtr) PageList(ctx *gin.Context) {
 		gincontext.Fail(ctx, err)
 		return
 	}
-	res, err := ctr.userSvc.PageList(ctx, &req)
+	res, err := ctr.userSvc.PageList(ctx.Request.Context(), &req)
 	if err != nil {
 		gincontext.Fail(ctx, err)
 		return
