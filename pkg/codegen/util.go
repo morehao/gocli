@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	golibcodegen "github.com/morehao/golib/codegen"
 	"github.com/morehao/golib/gutil"
 )
 
@@ -411,6 +412,11 @@ func getModuleInfo(appRootPath string) (string, string, error) {
 			if len(parts) < 2 {
 				return "", "", fmt.Errorf("invalid module path: %s", modulePath)
 			}
+			// monorepo 布局：模块路径形如 <base>/apps/<app>，此时 base = <base>、appModuleName = apps/<app>，
+			// 这样模板里 {{.BaseModulePath}}/pkg 才能正确解析到仓库根的共享 pkg（而非 apps/pkg）。
+			if idx := strings.LastIndex(modulePath, "/apps/"); idx > 0 {
+				return modulePath[:idx], modulePath[idx+1:], nil
+			}
 			baseModulePath := strings.Join(parts[:len(parts)-1], "/")
 			appModuleName := parts[len(parts)-1]
 			return baseModulePath, appModuleName, nil
@@ -478,4 +484,31 @@ func isVowel(c byte) bool {
 		return true
 	}
 	return false
+}
+
+// normalizeAuditFieldTypes 把审计字段（created_by/updated_by/deleted_by）的 Go 类型规范为 uint，
+// 以匹配 gobject.OperatorBaseInfo.CreatedBy / operator.Operator.UserID 的 uint 类型。
+//
+// 背景：PostgreSQL 的 bigint 经 postgresqlDefaultColumnTypeMap 映射为 int64，但审计字段在
+// service 层要直接赋给 uint 型（req.Operator.UserID、OperatorBaseInfo），int64 会导致编译失败。
+// 这是一个不修改 golib 的本地修正：仅在 gocli 侧于分析后改写 ModelFields 的 FieldType。
+func normalizeAuditFieldTypes(res *golibcodegen.ModuleTplAnalysisRes) {
+	if res == nil {
+		return
+	}
+	audit := map[string]struct{}{
+		"CreatedBy": {}, "UpdatedBy": {}, "DeletedBy": {},
+	}
+	for i := range res.TplAnalysisList {
+		fields := res.TplAnalysisList[i].ModelFields
+		for j := range fields {
+			if _, ok := audit[fields[j].FieldName]; !ok {
+				continue
+			}
+			switch fields[j].FieldType {
+			case "int64", "int32", "int16", "int8", "int":
+				fields[j].FieldType = "uint"
+			}
+		}
+	}
 }

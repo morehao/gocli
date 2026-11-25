@@ -13,6 +13,9 @@ import (
 
 // GenerateFrontendPage 生成前端页面（types + api 函数 + 页面组件 + 可选菜单注册）。
 func (g *Generator) GenerateFrontendPage() (*Result, error) {
+	if !g.opts.Web.Enabled {
+		return &Result{Warnings: []string{"web.enabled=false，跳过前端生成"}}, nil
+	}
 	tm, analysisRes, err := g.buildTableMeta()
 	if err != nil {
 		return nil, err

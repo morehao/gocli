@@ -78,6 +78,9 @@ func (g *Generator) Generate() (*Result, error) {
 
 // GenerateBackendModule 生成完整后端模块。
 func (g *Generator) GenerateBackendModule() (*Result, error) {
+	if g.opts.DryRun {
+		return &Result{Warnings: []string{"[dry-run] 将执行后端完整模块生成，已跳过写盘"}}, nil
+	}
 	if err := g.genModule(); err != nil {
 		return nil, err
 	}
@@ -86,6 +89,9 @@ func (g *Generator) GenerateBackendModule() (*Result, error) {
 
 // GenerateBackendModel 生成后端 model/dao/object 层。
 func (g *Generator) GenerateBackendModel() (*Result, error) {
+	if g.opts.DryRun {
+		return &Result{Warnings: []string{"[dry-run] 将执行后端数据层生成，已跳过写盘"}}, nil
+	}
 	if err := g.genModel(); err != nil {
 		return nil, err
 	}
@@ -94,14 +100,36 @@ func (g *Generator) GenerateBackendModel() (*Result, error) {
 
 // GenerateBackendEndpoint 生成后端单个 API 接口。
 func (g *Generator) GenerateBackendEndpoint() (*Result, error) {
+	if g.opts.DryRun {
+		return &Result{Warnings: []string{"[dry-run] 将执行后端单接口生成，已跳过写盘"}}, nil
+	}
 	if err := g.genApi(); err != nil {
 		return nil, err
 	}
 	return &Result{}, nil
 }
 
-// GenerateFullstack 前后端全栈生成。本期未实现，返回 ErrNotImplemented。
-// TODO: 由后续前端 webgen 任务实现。
+// GenerateFullstack 前后端全栈生成：先跑后端模块，再跑前端页面（共用同一 DB / 配置）。
+// DryRun 时后端部分只打印将执行的步骤、不落盘，前端部分按 dry-run 收集文件清单。
 func (g *Generator) GenerateFullstack() (*Result, error) {
-	return nil, ErrNotImplemented
+	res := &Result{}
+
+	// 后端模块（DryRun 时跳过实际写盘）
+	if g.opts.DryRun {
+		res.Warnings = append(res.Warnings, "[dry-run] 将执行后端模块生成（model/dao/object/service/controller/dto/router/code），已跳过写盘")
+	} else {
+		if err := g.genModule(); err != nil {
+			return nil, err
+		}
+		res.WrittenFiles = append(res.WrittenFiles, "(backend module written)")
+	}
+
+	// 前端页面
+	fres, err := g.GenerateFrontendPage()
+	if err != nil {
+		return nil, err
+	}
+	res.WrittenFiles = append(res.WrittenFiles, fres.WrittenFiles...)
+	res.Warnings = append(res.Warnings, fres.Warnings...)
+	return res, nil
 }

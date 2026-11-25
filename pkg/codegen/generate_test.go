@@ -740,6 +740,24 @@ func TestGetModuleInfo(t *testing.T) {
 		}
 	})
 
+	t.Run("monorepo apps layout", func(t *testing.T) {
+		dir := t.TempDir()
+		if err := os.WriteFile(filepath.Join(dir, "go.mod"),
+			[]byte("module github.com/example/mono/apps/api\n\ngo 1.27.4\n"), 0o644); err != nil {
+			t.Fatalf("write go.mod: %v", err)
+		}
+		base, name, err := getModuleInfo(dir)
+		if err != nil {
+			t.Fatalf("getModuleInfo error: %v", err)
+		}
+		if base != "github.com/example/mono" {
+			t.Errorf("base = %q, want github.com/example/mono", base)
+		}
+		if name != "apps/api" {
+			t.Errorf("name = %q, want apps/api", name)
+		}
+	})
+
 	t.Run("single segment module path errors", func(t *testing.T) {
 		dir := t.TempDir()
 		if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module demo\n"), 0o644); err != nil {

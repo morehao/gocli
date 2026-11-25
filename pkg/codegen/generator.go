@@ -69,6 +69,9 @@ func New(db *gorm.DB, opts Options) (*Generator, error) {
 		cfg.Model.TableName = opts.Table
 	}
 
+	// 合并 code_gen.yaml 的 web 段（opts 显式值优先、缺省时取 yaml）
+	opts.Web = mergeWebConfig(opts.Web, cfg.Web)
+
 	return &Generator{
 		db:      db,
 		opts:    opts,
@@ -76,4 +79,28 @@ func New(db *gorm.DB, opts Options) (*Generator, error) {
 		cfg:     cfg,
 		appInfo: appInfo,
 	}, nil
+}
+
+// mergeWebConfig 用 yaml 的 web 段补全 opts.Web 中未显式设置的值。
+func mergeWebConfig(w WebConfig, y WebSection) WebConfig {
+	// 默认启用前端；仅当 yaml 显式 enabled:false 时关闭
+	if !w.Enabled {
+		w.Enabled = true
+	}
+	if y.Enabled != nil {
+		w.Enabled = *y.Enabled
+	}
+	if w.PageDir == "" {
+		w.PageDir = y.PageDir
+	}
+	if w.MenuGroup == "" {
+		w.MenuGroup = y.MenuGroup
+	}
+	if w.MenuLabel == "" {
+		w.MenuLabel = y.MenuLabel
+	}
+	if y.RegisterMenu != nil && !w.RegisterMenu {
+		w.RegisterMenu = *y.RegisterMenu
+	}
+	return w
 }

@@ -295,13 +295,22 @@ func buildPageCtx(tm *TableMeta) *pageCtx {
 			c.NeedDatePicker = true
 			c.NeedFmtTime = true
 		case "select":
-			c.NeedSelect = true
+			if !f.IsPK {
+				c.NeedSelect = true
+			}
 		case "switch":
-			c.NeedSwitch = true
+			if !f.IsPK {
+				c.NeedSwitch = true
+			}
 		case "number":
-			c.NeedInputNumber = true
+			// InputNumber 只在表单里用；主键不进表单
+			if !f.IsPK {
+				c.NeedInputNumber = true
+			}
 		case "textarea":
-			c.NeedTextArea = true
+			if !f.IsPK {
+				c.NeedTextArea = true
+			}
 		}
 	}
 	// 列表列渲染里 date 列才会用到 fmtTime（同上，date→NeedFmtTime）

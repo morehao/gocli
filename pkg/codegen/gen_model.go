@@ -62,6 +62,7 @@ func (g *Generator) genModel() error {
 	if analysisErr != nil {
 		return fmt.Errorf("analysis model tpl error: %v", analysisErr)
 	}
+	normalizeAuditFieldTypes(analysisRes)
 
 	// 如果配置了表名前缀，则从结构体名中去除前缀
 	if modelGenCfg.TablePrefix != "" {

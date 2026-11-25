@@ -51,9 +51,11 @@ func TestSDKImportable(t *testing.T) {
 	} else {
 		t.Logf("GenerateFrontendPage(nil db) error (expected): %v", err)
 	}
-	// 全栈本期仍未实现。
-	if _, err := g.GenerateFullstack(); err != ErrNotImplemented {
-		t.Fatalf("GenerateFullstack = %v, want ErrNotImplemented", err)
+	// 全栈已实现：nil db 时也应返回明确错误。
+	if _, err := g.GenerateFullstack(); err == nil {
+		t.Fatal("GenerateFullstack with nil db should return error, got nil")
+	} else {
+		t.Logf("GenerateFullstack(nil db) error (expected): %v", err)
 	}
 }
 
