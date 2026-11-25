@@ -173,8 +173,15 @@ func runMulti(cmd *cobra.Command, mode codegen.Mode) error {
 			return fmt.Errorf("list tables: %w", err)
 		}
 	}
-	if len(tables) == 0 && mode != codegen.ModeFullstack && mode != codegen.ModeFrontendPage {
-		return fmt.Errorf("请用 --table 指定表，或用 --all 生成全部表")
+	// 未显式给 --table 时，回退到 code_gen.yaml 中配置的表（保持 `make codegen APP=x COMMAND=module`
+	// 这类「只靠 yaml」的旧用法可用）。
+	if len(tables) == 0 {
+		if t := yamlTable(baseOpts.ProjectRoot, baseOpts.AppName, mode); t != "" {
+			tables = []string{t}
+		}
+	}
+	if len(tables) == 0 {
+		return fmt.Errorf("请用 --table 指定表、在 code_gen.yaml 配置 table_name，或用 --all 生成全部表")
 	}
 
 	var firstErr error
@@ -214,6 +221,31 @@ func splitCSV(s string) []string {
 		}
 	}
 	return out
+}
+
+// yamlTable 读取 code_gen.yaml 里与 mode 对应的表名，作为未指定 --table 时的回退。
+func yamlTable(projectRoot, appName string, mode codegen.Mode) string {
+	cfgPath := filepath.Join(projectRoot, "apps", appName, "config", "code_gen.yaml")
+	if _, err := os.Stat(cfgPath); err != nil {
+		return ""
+	}
+	var cfg codegen.Config
+	gutil.LoadYamlConfig(cfgPath, &cfg)
+	switch mode {
+	case codegen.ModeBackendModel:
+		if cfg.Model.TableName != "" {
+			return cfg.Model.TableName
+		}
+	case codegen.ModeBackendEndpoint:
+		// endpoint 用 module 表（api 段按 target_filename 命名，无独立表名）
+		if cfg.Module.TableName != "" {
+			return cfg.Module.TableName
+		}
+	}
+	if cfg.Module.TableName != "" {
+		return cfg.Module.TableName
+	}
+	return cfg.Model.TableName
 }
 
 // listTables 枚举当前库全部用户表（postgres: public；mysql: 当前 database）。
