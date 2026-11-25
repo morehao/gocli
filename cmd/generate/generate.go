@@ -150,14 +150,18 @@ func runBackend(mode codegen.Mode) func(cmd *cobra.Command, args []string) error
 	}
 }
 
-// runFrontend 返回用于前端/全栈叶子命令的 RunE（本期返回 ErrNotImplemented）。
+// runFrontend 返回用于前端/全栈叶子命令的 RunE（需要 DB 分析表结构）。
 func runFrontend(mode codegen.Mode) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		opts, err := buildOptions(cmd, mode)
 		if err != nil {
 			return err
 		}
-		gen, err := codegen.New(nil, opts)
+		db, err := openDB(opts.ProjectRoot, opts.AppName)
+		if err != nil {
+			return fmt.Errorf("open database connection: %w", err)
+		}
+		gen, err := codegen.New(db, opts)
 		if err != nil {
 			return err
 		}

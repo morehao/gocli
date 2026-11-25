@@ -62,7 +62,7 @@ func (g *Generator) buildTableMeta() (*webgen.TableMeta, *golibcodegen.ModuleTpl
 			LayerParentDirMap: defaultLayerParentDirMap,
 			LayerNameMap:      buildLayerNameMap(g.cfg.ServiceName),
 			LayerPrefixMap:    defaultLayerPrefixMap,
-			TplFuncMap:        template.FuncMap{},
+			TplFuncMap:        moduleTplFuncMap(),
 		},
 		TableName: tbl,
 	}
@@ -115,3 +115,23 @@ func (a fieldAdapter) IsNullable() bool   { return a.f.IsNullable }
 func (a fieldAdapter) IsPrimaryKey() bool { return a.f.IsPrimaryKey }
 
 var _ = filepath.Join
+
+// moduleTplFuncMap 返回 module 模板所需的全部模板函数（前端分析复用同一套，避免解析报错）。
+func moduleTplFuncMap() template.FuncMap {
+	return template.FuncMap{
+		TplFuncIsBuiltInField:      IsBuiltInField,
+		TplFuncIsSysField:          IsSysField,
+		TplFuncIsDefaultModelLayer: IsDefaultModelLayer,
+		TplFuncIsDefaultDaoLayer:   IsDefaultDaoLayer,
+		TplFuncHasTimeField:        HasTimeField,
+		TplFuncGetFieldImports:     GetFieldImports,
+		TplFuncIsBasicType:         IsBasicType,
+		TplFuncToKebabCase:         toKebabCase,
+		TplFuncPluralize:           pluralize,
+		TplFuncIsNumID:             IsNumID,
+		TplFuncIsStringID:          IsStringID,
+		TplFuncIsIntID:             IsIntID,
+		TplFuncHasTimeFieldAny:     HasTimeFieldAny,
+		TplFuncHasSysField:         HasSysField,
+	}
+}

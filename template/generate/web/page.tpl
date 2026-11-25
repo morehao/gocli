@@ -2,21 +2,29 @@ import { useCallback, useEffect, useState } from 'react'
 import {
   App,
   Button,
+{{- if .NeedDatePicker}}
   DatePicker,
+{{- end}}
   Form,
   Input,
+{{- if .NeedInputNumber}}
   InputNumber,
+{{- end}}
   Modal,
+{{- if .NeedSelect}}
   Select,
+{{- end}}
   Space,
+{{- if .NeedSwitch}}
   Switch,
+{{- end}}
   Table,
   Tooltip,
   type TableProps,
 } from 'antd'
 import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { actionColumn, tableScrollX } from '@morehao/ark-iam-react'
-import { PageContainer, tokens } from '@ark-go-starter/ui'
+import { PageContainer } from '@ark-go-starter/ui'
 import {
   create{{.StructName}},
   delete{{.StructName}},
@@ -24,12 +32,14 @@ import {
   update{{.StructName}},
 } from '@ark-go-starter/api'
 import type { {{.StructName}}CreateReq, {{.StructName}}PageListItem } from '@ark-go-starter/types'
+{{- if .NeedFmtTime}}
 
 /** unix 秒转本地时间字符串，空值显示 '-' */
 function fmtTime(v?: number | null): string {
   if (v === undefined || v === null) return '-'
   return new Date(v * 1000).toLocaleString()
 }
+{{- end}}
 
 export default function {{.StructName}}Page() {
   const { message } = App.useApp()

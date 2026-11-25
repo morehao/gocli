@@ -1,5 +1,11 @@
 // ==== {{.Comment}} {{.StructName}} ====
 // 由 gocli 生成（generate frontend page / fullstack），区块内可安全重生成；请勿手改区块内容。
+import type {
+  {{.StructName}}PageListItem,
+  {{.StructName}}Detail,
+  {{.StructName}}CreateReq,
+  {{.StructName}}UpdateReq,
+} from '@ark-go-starter/types'
 
 /** {{.Comment}}列表筛选参数：分页 + 可选筛选字段 */
 export interface {{.StructName}}ListQuery extends PageQuery {

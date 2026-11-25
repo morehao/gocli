@@ -64,7 +64,7 @@ func (r *Renderer) Render(tm *TableMeta) (*Result, error) {
 	res := &Result{}
 
 	// 1) types 追加
-	typesBlock, err := r.renderTpl("types.tpl", tm, nil)
+	typesBlock, err := r.renderTpl("types.tpl", tm)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (r *Renderer) Render(tm *TableMeta) (*Result, error) {
 	}
 
 	// 2) api 追加
-	apiBlock, err := r.renderTpl("api.tpl", tm, nil)
+	apiBlock, err := r.renderTpl("api.tpl", tm)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (r *Renderer) Render(tm *TableMeta) (*Result, error) {
 	}
 
 	// 3) page 整文件
-	pageBody, err := r.renderTpl("page.tpl", tm, nil)
+	pageBody, err := r.renderTpl("page.tpl", buildPageCtx(tm))
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +153,7 @@ func (r *Renderer) RegisterMenu(tm *TableMeta, menuKey, menuLabel string, res *R
 
 // ---- 内部实现 ----
 
-func (r *Renderer) renderTpl(name string, tm *TableMeta, extra map[string]string) (string, error) {
+func (r *Renderer) renderTpl(name string, data any) (string, error) {
 	raw, err := r.fs.ReadFile("generate/web/" + name)
 	if err != nil {
 		return "", fmt.Errorf("读取模板 %s 失败: %w", name, err)
@@ -165,7 +165,7 @@ func (r *Renderer) renderTpl(name string, tm *TableMeta, extra map[string]string
 		return "", fmt.Errorf("解析模板 %s 失败: %w", name, err)
 	}
 	var buf bytes.Buffer
-	if err := tpl.Execute(&buf, tm); err != nil {
+	if err := tpl.Execute(&buf, data); err != nil {
 		return "", fmt.Errorf("渲染模板 %s 失败: %w", name, err)
 	}
 	return buf.String(), nil
@@ -273,4 +273,37 @@ func insertAfterLine(src, anchor, content string) string {
 		}
 	}
 	return src
+}
+
+// pageCtx 是渲染 page.tpl 的上下文：TableMeta + 依字段推导出的「需要哪些 antd 组件」标记，
+// 用于条件裁剪 import，避免未使用 import 触发 TS 报错。
+type pageCtx struct {
+	*TableMeta
+	NeedDatePicker  bool
+	NeedSelect      bool
+	NeedSwitch      bool
+	NeedInputNumber bool
+	NeedTextArea    bool
+	NeedFmtTime     bool
+}
+
+func buildPageCtx(tm *TableMeta) *pageCtx {
+	c := &pageCtx{TableMeta: tm}
+	for _, f := range tm.Fields {
+		switch f.Widget {
+		case "date":
+			c.NeedDatePicker = true
+			c.NeedFmtTime = true
+		case "select":
+			c.NeedSelect = true
+		case "switch":
+			c.NeedSwitch = true
+		case "number":
+			c.NeedInputNumber = true
+		case "textarea":
+			c.NeedTextArea = true
+		}
+	}
+	// 列表列渲染里 date 列才会用到 fmtTime（同上，date→NeedFmtTime）
+	return c
 }
