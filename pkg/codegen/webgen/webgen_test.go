@@ -159,3 +159,37 @@ func grepLine(s, sub string) string {
 	}
 	return "<not found: " + sub + ">"
 }
+
+func TestPluralizeNoDoublePlural(t *testing.T) {
+	cases := map[string]string{
+		"Product":   "Products",
+		"ShopGoods": "ShopGoods", // 已复数，不再加 es
+		"Category":  "Categories",
+		"Box":       "Boxes",
+	}
+	for in, want := range cases {
+		if got := pluralize(in); got != want {
+			t.Errorf("pluralize(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+func TestListDetailFnNoCollision(t *testing.T) {
+	// 已复数表名：ListFn 与 DetailFn 不能同名
+	tm := FromModelFields("shop_goods", "ShopGoods", "shopgoods", "商品", []ModelFieldLike{
+		fakeField{"ID", "id", "uint", "bigserial", "ID", false, true},
+	}, Overrides{})
+	if tm.ListFn == tm.DetailFn {
+		t.Fatalf("ListFn == DetailFn == %q (collision)", tm.ListFn)
+	}
+	if tm.ListFn != "getShopGoods" || tm.DetailFn != "getShopGoodsByID" {
+		t.Fatalf("unexpected names: list=%q detail=%q", tm.ListFn, tm.DetailFn)
+	}
+	// 未复数表名：getProducts / getProduct
+	tm2 := FromModelFields("product", "Product", "product", "商品", []ModelFieldLike{
+		fakeField{"ID", "id", "uint", "bigserial", "ID", false, true},
+	}, Overrides{})
+	if tm2.ListFn != "getProducts" || tm2.DetailFn != "getProduct" {
+		t.Fatalf("unexpected names: list=%q detail=%q", tm2.ListFn, tm2.DetailFn)
+	}
+}

@@ -18,7 +18,7 @@ export interface {{.StructName}}ListQuery extends PageQuery {
 }
 
 /** {{.Comment}}分页列表 GET /{{.PackageName}}/{{.ResourceKebab}} */
-export function get{{.StructName}}s(params: {{.StructName}}ListQuery = {}) {
+export function {{.ListFn}}(params: {{.StructName}}ListQuery = {}) {
   return request<PageResult<{{.StructName}}PageListItem>>({
     url: '/{{.PackageName}}/{{.ResourceKebab}}',
     method: 'get',
@@ -27,7 +27,7 @@ export function get{{.StructName}}s(params: {{.StructName}}ListQuery = {}) {
 }
 
 /** {{.Comment}}详情 GET /{{.PackageName}}/{{.ResourceKebab}}/{id} */
-export function get{{.StructName}}(id: {{.PKTSType}}) {
+export function {{.DetailFn}}(id: {{.PKTSType}}) {
   return request<{{.StructName}}Detail>({
     url: `/{{.PackageName}}/{{.ResourceKebab}}/${id}`,
     method: 'get',

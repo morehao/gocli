@@ -49,10 +49,14 @@ func (g *Generator) GenerateFrontendPage() (*Result, error) {
 
 // buildTableMeta 连库分析表结构，构造 webgen.TableMeta。
 func (g *Generator) buildTableMeta() (*webgen.TableMeta, *golibcodegen.ModuleTplAnalysisRes, error) {
+	return g.buildTableMetaFor(g.cfg.Module.TableName, g.cfg.Module.PackageName)
+}
+
+// buildTableMetaFor 针对指定表/包分析结构（供前端渲染与后端增量指纹共用）。
+func (g *Generator) buildTableMetaFor(tbl, pkgName string) (*webgen.TableMeta, *golibcodegen.ModuleTplAnalysisRes, error) {
 	if g.db == nil {
 		return nil, nil, fmt.Errorf("db is nil")
 	}
-	tbl := g.cfg.Module.TableName
 	if tbl == "" {
 		return nil, nil, fmt.Errorf("table name is required (set --table or code_gen.yaml module.table_name)")
 	}
@@ -63,7 +67,7 @@ func (g *Generator) buildTableMeta() (*webgen.TableMeta, *golibcodegen.ModuleTpl
 	// 注意：tplDir 仅用于分析元数据，渲染前端不依赖它，函数返回后可留待进程回收。
 	analysisCfg := &golibcodegen.ModuleCfg{
 		CommonConfig: golibcodegen.CommonConfig{
-			PackageName:       g.cfg.Module.PackageName,
+			PackageName:       pkgName,
 			TplDir:            tplDir,
 			RootDir:           g.workDir,
 			LayerParentDirMap: defaultLayerParentDirMap,
@@ -104,7 +108,7 @@ func (g *Generator) buildTableMeta() (*webgen.TableMeta, *golibcodegen.ModuleTpl
 	tm := webgen.FromModelFields(
 		analysisRes.TableName,
 		analysisRes.StructName,
-		gutil.CamelToSnakeCase(g.cfg.Module.PackageName),
+		gutil.CamelToSnakeCase(pkgName),
 		comment,
 		adapters,
 		ov,

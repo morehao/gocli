@@ -178,7 +178,7 @@ func (r *Renderer) appendTypes(block string, tm *TableMeta, res *Result) error {
 
 func (r *Renderer) appendApi(block string, tm *TableMeta, res *Result) error {
 	path := filepath.Join(r.opts.ProjectRoot, r.opts.ApiFile)
-	return r.appendBlock(path, "function get"+tm.StructName+"s", block, res)
+	return r.appendBlock(path, "function "+tm.ListFn, block, res)
 }
 
 // appendBlock 幂等追加：若 marker 已存在则跳过，否则在文件末尾追加 block。

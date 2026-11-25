@@ -27,6 +27,9 @@ type TableMeta struct {
 	Fields           []Field // 业务字段（去掉 sys 字段、转换好 TS 类型与控件）
 	ResourceKebab    string  // 资源路径，kebab 复数，如 products
 	StructLowerCamel string  // 小驼峰，如 product
+	PluralStruct     string  // 复数模块名（用于列表函数 get<Plural>；已复数则不重复加）
+	ListFn           string  // 列表函数名，如 getProducts / getShopGoods
+	DetailFn         string  // 详情函数名，如 getProduct / getShopGoodsByID（与列表重名时加 ByID）
 }
 
 // Field 是单个前端字段的渲染信息。
@@ -78,6 +81,15 @@ func FromModelFields(tableName, structName, packageName, comment string, fields 
 		Comment:          comment,
 		StructLowerCamel: structLowerCamel,
 		ResourceKebab:    resourceKebab,
+		PluralStruct:     pluralize(structName),
+	}
+	// 列表/详情函数名：列表用复数；详情用单数。若复数列名与单数相同（如表名本身已复数），
+	// 详情加 ByID，避免与列表函数重名。
+	tm.ListFn = "get" + tm.PluralStruct
+	if tm.PluralStruct == structName {
+		tm.DetailFn = "get" + structName + "ByID"
+	} else {
+		tm.DetailFn = "get" + structName
 	}
 
 	for _, f := range fields {
@@ -210,10 +222,15 @@ func pluralize(s string) string {
 	if s == "" {
 		return s
 	}
+	// 已经以 s 结尾（大概率已是复数，如表名 shop_goods → ShopGoods）则不再加复数后缀，
+	// 避免 ShopGoods -> ShopGoodses / getShopGoodss 这类双重复数。
+	if strings.HasSuffix(s, "s") {
+		return s
+	}
 	switch {
 	case strings.HasSuffix(s, "y") && len(s) > 2 && !isVowel(s[len(s)-2]):
 		return s[:len(s)-1] + "ies"
-	case strings.HasSuffix(s, "s"), strings.HasSuffix(s, "x"), strings.HasSuffix(s, "z"), strings.HasSuffix(s, "ch"), strings.HasSuffix(s, "sh"):
+	case strings.HasSuffix(s, "x"), strings.HasSuffix(s, "z"), strings.HasSuffix(s, "ch"), strings.HasSuffix(s, "sh"):
 		return s + "es"
 	default:
 		return s + "s"

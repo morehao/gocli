@@ -85,6 +85,16 @@ func (g *Generator) GenerateBackendModule() (*Result, error) {
 	if g.opts.DryRun {
 		return &Result{Warnings: []string{"[dry-run] 将执行后端完整模块生成，已跳过写盘"}}, nil
 	}
+	if _, res, err := g.buildTableMetaFor(g.cfg.Module.TableName, g.cfg.Module.PackageName); err == nil && res != nil {
+		if skip, why := g.skipIfUnchanged(res, ModeBackendModule); skip {
+			return &Result{Warnings: []string{why}}, nil
+		}
+		if err := g.genModule(); err != nil {
+			return nil, err
+		}
+		g.recordManifest(res, ModeBackendModule)
+		return &Result{}, nil
+	}
 	if err := g.genModule(); err != nil {
 		return nil, err
 	}
@@ -95,6 +105,16 @@ func (g *Generator) GenerateBackendModule() (*Result, error) {
 func (g *Generator) GenerateBackendModel() (*Result, error) {
 	if g.opts.DryRun {
 		return &Result{Warnings: []string{"[dry-run] 将执行后端数据层生成，已跳过写盘"}}, nil
+	}
+	if _, res, err := g.buildTableMetaFor(g.cfg.Model.TableName, g.cfg.Model.PackageName); err == nil && res != nil {
+		if skip, why := g.skipIfUnchanged(res, ModeBackendModel); skip {
+			return &Result{Warnings: []string{why}}, nil
+		}
+		if err := g.genModel(); err != nil {
+			return nil, err
+		}
+		g.recordManifest(res, ModeBackendModel)
+		return &Result{}, nil
 	}
 	if err := g.genModel(); err != nil {
 		return nil, err

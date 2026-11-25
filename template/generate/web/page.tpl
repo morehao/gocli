@@ -31,7 +31,7 @@ import { PageContainer } from '@ark-go-starter/ui'
 import {
   create{{.StructName}},
   delete{{.StructName}},
-  get{{.StructName}}s,
+  {{.ListFn}},
   update{{.StructName}},
   type {{.StructName}}ListQuery,
 } from '@ark-go-starter/api'
@@ -71,7 +71,7 @@ export default function {{.StructName}}Page() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await get{{.StructName}}s({ page, pageSize, ...filters })
+      const res = await {{.ListFn}}({ page, pageSize, ...filters })
       setData(res.list ?? [])
       setTotal(res.total ?? 0)
     } catch (e) {

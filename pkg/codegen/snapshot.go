@@ -60,6 +60,8 @@ func (g *Generator) Undo() ([]string, error) {
 		}
 		restored = append(restored, dst)
 	}
+	// 还原后清掉 manifest，避免下次生成因「指纹未变」被误跳过（文件已被还原、需重新生成）。
+	_ = os.Remove(manifestPath(g.opts.ProjectRoot))
 	return restored, nil
 }
 

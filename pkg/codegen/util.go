@@ -468,10 +468,15 @@ func pluralize(s string) string {
 	if s == "" {
 		return s
 	}
+	// 已经以 s 结尾（大概率已是复数，如表名 shop_goods → ShopGoods）则不再加复数后缀，
+	// 避免 ShopGoods -> ShopGoodses / getShopGoodss 这类双重复数。
+	if strings.HasSuffix(s, "s") {
+		return s
+	}
 	switch {
 	case strings.HasSuffix(s, "y") && len(s) > 2 && !isVowel(s[len(s)-2]):
 		return s[:len(s)-1] + "ies"
-	case strings.HasSuffix(s, "s"), strings.HasSuffix(s, "x"), strings.HasSuffix(s, "z"), strings.HasSuffix(s, "ch"), strings.HasSuffix(s, "sh"):
+	case strings.HasSuffix(s, "x"), strings.HasSuffix(s, "z"), strings.HasSuffix(s, "ch"), strings.HasSuffix(s, "sh"):
 		return s + "es"
 	default:
 		return s + "s"
