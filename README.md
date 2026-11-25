@@ -42,7 +42,7 @@ Generates a complete CRUD module including all layers:
 **Use Case**: Creating a new feature module from scratch
 
 ```bash
-gocli generate module -a demoapp
+gocli generate backend module -a demoapp
 ```
 
 #### 2. **model** - Data Layer Generation
@@ -55,7 +55,7 @@ Generates only the data layer code:
 **Use Case**: Adding a new database table without full CRUD operations
 
 ```bash
-gocli generate model -a demoapp
+gocli generate backend model -a demoapp
 ```
 
 #### 3. **api** - Single API Endpoint
@@ -69,7 +69,7 @@ Adds a new API endpoint to an existing module:
 **Use Case**: Adding a new endpoint to an existing feature
 
 ```bash
-gocli generate api -a demoapp
+gocli generate backend endpoint -a demoapp
 ```
 
 **Route style**: Endpoint paths follow the RESTful convention `/{kebab-case plural resource}/{action}`, consistent with the `module` mode. For example, deleting a login log (`target_filename: user_login_log.go`, `function_name: Delete`, `http_method: POST`) generates:
@@ -167,28 +167,72 @@ database_dsn: postgresql://postgres:password@localhost:5432/demo?sslmode=disable
 ```bash
 # Run commands in the project root directory (e.g., go-gin-web)
 
+# ── Backend ───────────────────────────────────────────
 # Generate a complete module (model + dao + service + controller + dto + router + code)
-gocli generate module -a demoapp
+gocli generate backend module   -a demoapp
 
 # Generate only data layer (model + dao + object)
-gocli generate model -a demoapp
+gocli generate backend model    -a demoapp
 
 # Generate a single API endpoint (controller + service + dto + router)
-gocli generate api -a demoapp
+gocli generate backend endpoint -a demoapp
+
+# ── Frontend ──────────────────────────────────────────
+# Generate a frontend page (TS types + api functions + Ant Design page + menu registration)
+gocli generate frontend page    -a demoapp --table product
+
+# ── Full-stack ────────────────────────────────────────
+# One DB connection, generate backend module and frontend page together
+gocli generate fullstack        -a demoapp --table product
+```
+
+**Command tree** (`gocli generate --help`):
+```
+generate
+├── backend  { module | model | endpoint }   backend artifacts
+├── frontend { page }                        frontend artifacts
+└── fullstack                                backend + frontend
 ```
 
 **Parameters:**
 - `-a, --app`: Application name, e.g., `demoapp` (required)
+- `--table`: Table name (overrides `code_gen.yaml`; required for frontend/fullstack)
+- `--package`: Package name (overrides `code_gen.yaml`)
+- `--dry-run`: Print files that would be generated/appended without writing
+- `--force`: Overwrite existing whole files (e.g., page files)
 
 **Quick Tips:**
-- 💡 Use `module` when starting a new feature from scratch
-- 💡 Use `model` when you only need database models
-- 💡 Use `api` to add new endpoints to existing modules
+- 💡 Use `backend module` when starting a new feature from scratch
+- 💡 Use `backend model` when you only need database models
+- 💡 Use `backend endpoint` to add new endpoints to existing modules
+- 💡 Use `frontend page` to add a page for an existing table; or `fullstack` for both in one step
 - 💡 Check the [goark](https://github.com/morehao/goark) `Makefile` for practical examples
+
+**Using as an SDK**: the generation logic is exposed as an importable library `github.com/morehao/gocli/pkg/codegen` (the CLI is just a thin shell over it):
+
+```go
+import (
+    "gorm.io/driver/postgres"
+    "gorm.io/gorm"
+    "github.com/morehao/gocli/pkg/codegen"
+)
+
+db, _ := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+g, err := codegen.New(db, codegen.Options{
+    AppName:     "demo",
+    ProjectRoot: "/path/to/ark-go-starter",
+    Table:       "product",
+    Mode:        codegen.ModeFullstack, // or ModeBackendModule / ModeBackendModel / ModeBackendEndpoint / ModeFrontendPage
+})
+res, err := g.Generate()
+_ = res
+```
+
+> Note: `ModeFrontendPage` / `ModeFullstack` are under development (return `codegen.ErrNotImplemented`).
 
 ### Generated File Structure
 
-When you run `gocli generate module -a demoapp`, the tool generates:
+When you run `gocli generate backend module -a demoapp`, the tool generates:
 
 ```
 apps/demoapp/
@@ -285,7 +329,7 @@ gocli create app -n userapp
 The new app works seamlessly with `generate`:
 
 ```bash
-gocli generate module -a userapp   # generate code from DB schema
+gocli generate backend module -a userapp   # generate code from DB schema
 ```
 
 ---

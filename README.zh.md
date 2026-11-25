@@ -27,7 +27,7 @@ go install github.com/morehao/gocli@latest
 
 ### 生成模式
 
-#### 1. **module** - 完整模块生成
+#### 1. **backend module** - 完整模块生成
 
 生成包含所有层级的完整 CRUD 模块：
 - **model**：数据库模型
@@ -42,10 +42,10 @@ go install github.com/morehao/gocli@latest
 **使用场景**：从零开始创建新功能模块
 
 ```bash
-gocli generate module -a demoapp
+gocli generate backend module -a demoapp
 ```
 
-#### 2. **model** - 数据层生成
+#### 2. **backend model** - 数据层生成
 
 仅生成数据层代码：
 - **model**：带 GORM 标签的数据库模型
@@ -55,10 +55,10 @@ gocli generate module -a demoapp
 **使用场景**：只需添加数据库表，无需完整 CRUD 操作
 
 ```bash
-gocli generate model -a demoapp
+gocli generate backend model -a demoapp
 ```
 
-#### 3. **api** - 单个接口生成
+#### 3. **backend endpoint** - 单个接口生成
 
 为现有模块添加新的 API 接口：
 - **controller**：新的控制器方法
@@ -69,7 +69,7 @@ gocli generate model -a demoapp
 **使用场景**：为已有功能添加新的接口
 
 ```bash
-gocli generate api -a demoapp
+gocli generate backend endpoint -a demoapp
 ```
 
 **路由风格**：接口路径统一为 restful 风格 —— `/{资源复数 kebab-case}/{动作}`，例如删除登录记录（`target_filename: user_login_log.go`、`function_name: Delete`、`http_method: POST`）生成：
@@ -167,28 +167,72 @@ database_dsn: postgresql://postgres:password@localhost:5432/demo?sslmode=disable
 ```bash
 # 在项目根目录（如 go-gin-web）下执行以下命令
 
+# ── 后端 ──────────────────────────────────────────────
 # 生成完整模块（model + dao + service + controller + dto + router + code）
-gocli generate module -a demoapp
+gocli generate backend module   -a demoapp
 
 # 仅生成数据层（model + dao + object）
-gocli generate model -a demoapp
+gocli generate backend model    -a demoapp
 
 # 生成单个 API 接口（controller + service + dto + router）
-gocli generate api -a demoapp
+gocli generate backend endpoint -a demoapp
+
+# ── 前端 ──────────────────────────────────────────────
+# 生成前端页面（TS 类型 + api 函数 + Ant Design 页面 + 菜单注册）
+gocli generate frontend page    -a demoapp --table product
+
+# ── 前后端一体 ────────────────────────────────────────
+# 连库一次，同时生成后端模块与前端页面
+gocli generate fullstack        -a demoapp --table product
+```
+
+**命令结构**（`gocli generate --help`）：
+```
+generate
+├── backend  { module | model | endpoint }   后端产物
+├── frontend { page }                        前端产物
+└── fullstack                                前后端一体
 ```
 
 **参数说明：**
 - `-a, --app`：应用名称，例如：`demoapp`（必填）
+- `--table`：表名（覆盖 `code_gen.yaml`，前端/全栈必填）
+- `--package`：包名（覆盖 `code_gen.yaml`）
+- `--dry-run`：只打印将生成/追加的文件，不落盘
+- `--force`：覆盖已存在的整文件（如页面文件）
 
 **使用技巧：**
-- 💡 从零开始新功能时使用 `module`
-- 💡 只需数据库模型时使用 `model`
-- 💡 为现有模块添加新接口时使用 `api`
+- 💡 从零开始新功能时使用 `backend module`
+- 💡 只需数据库模型时使用 `backend model`
+- 💡 为现有模块添加新接口时使用 `backend endpoint`
+- 💡 已有表想补前端页面用 `frontend page`；一步到位用 `fullstack`
 - 💡 查看 [goark](https://github.com/morehao/goark) 项目的 `Makefile` 了解实际使用示例
+
+**作为 SDK 使用**：生成能力已抽为可 import 的库 `github.com/morehao/gocli/pkg/codegen`，可被其他 Go 程序直接调用（CLI 只是它的薄壳）：
+
+```go
+import (
+    "gorm.io/driver/postgres"
+    "gorm.io/gorm"
+    "github.com/morehao/gocli/pkg/codegen"
+)
+
+db, _ := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+g, err := codegen.New(db, codegen.Options{
+    AppName:     "demo",
+    ProjectRoot: "/path/to/ark-go-starter",
+    Table:       "product",
+    Mode:        codegen.ModeFullstack, // 或 ModeBackendModule / ModeBackendModel / ModeBackendEndpoint / ModeFrontendPage
+})
+res, err := g.Generate()
+_ = res
+```
+
+> 注意：`ModeFrontendPage` / `ModeFullstack` 当前处于开发中（返回 `codegen.ErrNotImplemented`）。
 
 ### 生成的文件结构
 
-当你执行 `gocli generate module -a demoapp` 时，工具会生成：
+当你执行 `gocli generate backend module -a demoapp` 时，工具会生成：
 
 ```
 apps/demoapp/
@@ -284,7 +328,7 @@ gocli create app -n userapp
 新应用可与 `generate` 无缝衔接：
 
 ```bash
-gocli generate module -a userapp   # 基于数据库表结构生成代码
+gocli generate backend module -a userapp   # 基于数据库表结构生成代码
 ```
 
 ---
