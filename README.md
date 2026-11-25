@@ -196,16 +196,38 @@ generate
 
 **Parameters:**
 - `-a, --app`: Application name, e.g., `demoapp` (required)
-- `--table`: Table name (overrides `code_gen.yaml`; required for frontend/fullstack)
+- `--table`: Table name (overrides `code_gen.yaml`); supports **comma-separated multiple tables** `--table a,b,c`
+- `--all`: Generate for **all tables** in the database (ignores `--table`)
 - `--package`: Package name (overrides `code_gen.yaml`)
 - `--dry-run`: Print files that would be generated/appended without writing
-- `--force`: Overwrite existing whole files (e.g., page files)
+- `--force`: Overwrite existing whole files (e.g., page files) and **bypass incremental skip**
+
+**Frontend enhancements (`web` section of `code_gen.yaml`):**
+```yaml
+web:
+  enabled: true
+  register_menu: true          # auto register menu in App.tsx
+  menu_group: Data
+  menu_label: Products
+  field_widgets:               # column (JSON) -> widget override
+    remark: textarea
+  field_options:               # column -> enum options (renders Select + list Tag + search dropdown)
+    status:
+      - { value: 1, label: Enabled }
+      - { value: 0, label: Disabled }
+```
+- Enum columns become `Select` (form/search) and `Tag` (list); short string fields get an `Input.Search` toolbar.
+
+**Incremental & undo:**
+- Writes `codegen.manifest.json` at project root with per-table schema fingerprints; unchanged schemas are **skipped** (`--force` to override).
+- Snapshots `types/api/App.tsx/router/table/code` before each generation (`.codegen/backup`); `gocli generate undo -a demoapp` restores them.
 
 **Quick Tips:**
 - 💡 Use `backend module` when starting a new feature from scratch
 - 💡 Use `backend model` when you only need database models
 - 💡 Use `backend endpoint` to add new endpoints to existing modules
 - 💡 Use `frontend page` to add a page for an existing table; or `fullstack` for both in one step
+- 💡 Batch: `fullstack --all` or `--table a,b,c`
 - 💡 Check the [goark](https://github.com/morehao/goark) `Makefile` for practical examples
 
 **Using as an SDK**: the generation logic is exposed as an importable library `github.com/morehao/gocli/pkg/codegen` (the CLI is just a thin shell over it):

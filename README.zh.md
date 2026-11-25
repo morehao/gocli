@@ -196,16 +196,38 @@ generate
 
 **参数说明：**
 - `-a, --app`：应用名称，例如：`demoapp`（必填）
-- `--table`：表名（覆盖 `code_gen.yaml`，前端/全栈必填）
+- `--table`：表名（覆盖 `code_gen.yaml`）；支持**逗号分隔多表** `--table a,b,c`
+- `--all`：生成库内**全部表**（忽略 `--table`）
 - `--package`：包名（覆盖 `code_gen.yaml`）
 - `--dry-run`：只打印将生成/追加的文件，不落盘
-- `--force`：覆盖已存在的整文件（如页面文件）
+- `--force`：覆盖已存在整文件（如页面文件）、并**绕过增量跳过**强制重生成
+
+**前端增强（`code_gen.yaml` 的 `web` 段）：**
+```yaml
+web:
+  enabled: true
+  register_menu: true          # 自动改 App.tsx 菜单
+  menu_group: 数据管理
+  menu_label: 商品管理
+  field_widgets:               # 列名(JSON)→控件覆盖
+    remark: textarea
+  field_options:               # 列名→枚举选项（自动渲染成 Select + 列表 Tag + 搜索下拉）
+    status:
+      - { value: 1, label: 启用 }
+      - { value: 0, label: 停用 }
+```
+- 枚举列自动用 `Select`（表单/搜索条）与 `Tag`（列表）；短字符串字段自动生成 `Input.Search` 搜索条。
+
+**增量与还原：**
+- 生成后在工程根写 `codegen.manifest.json` 记录每表结构指纹；结构未变则**自动跳过**（`--force` 强制）。
+- 每次生成前对 `types/api/App.tsx/router/table/code` 做快照（`.codegen/backup`），`gocli generate undo -a demoapp` 一键还原。
 
 **使用技巧：**
 - 💡 从零开始新功能时使用 `backend module`
 - 💡 只需数据库模型时使用 `backend model`
 - 💡 为现有模块添加新接口时使用 `backend endpoint`
 - 💡 已有表想补前端页面用 `frontend page`；一步到位用 `fullstack`
+- 💡 批量：`fullstack --all` 或 `--table a,b,c`
 - 💡 查看 [goark](https://github.com/morehao/goark) 项目的 `Makefile` 了解实际使用示例
 
 **作为 SDK 使用**：生成能力已抽为可 import 的库 `github.com/morehao/gocli/pkg/codegen`，可被其他 Go 程序直接调用（CLI 只是它的薄壳）：
