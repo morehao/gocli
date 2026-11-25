@@ -44,7 +44,7 @@ func sampleMeta() *TableMeta {
 		fakeField{"Price", "price", "string", "numeric(10,2)", "价格", false, false},
 		fakeField{"Status", "status", "int32", "integer", "状态", false, false},
 		fakeField{"CreatedAt", "createdAt", "time.Time", "timestamptz", "创建时间", false, false},
-	})
+	}, Overrides{})
 }
 
 func TestRenderProducesFiles(t *testing.T) {
@@ -111,4 +111,51 @@ func TestIdempotent(t *testing.T) {
 	if strings.Count(string(app), "import ProductPage") != 1 || strings.Count(string(app), "key: 'products'") != 1 {
 		t.Fatalf("app duplicated:\n%s", app)
 	}
+}
+
+func TestSelectOptionsAndSearch(t *testing.T) {
+	root := setupProject(t)
+	fields := []ModelFieldLike{
+		fakeField{"ProductID", "productID", "uint", "bigserial", "自增ID", false, true},
+		fakeField{"Name", "name", "string", "varchar(255)", "商品名称", false, false},
+		fakeField{"Status", "status", "int32", "integer", "状态", false, false},
+	}
+	ov := Overrides{Options: map[string][]Option{
+		"status": {{Value: "1", Label: "启用", Style: "number"}, {Value: "0", Label: "停用", Style: "number"}},
+	}}
+	tm := FromModelFields("product", "Product", "product", "商品", fields, ov)
+	// status 应因 options 变为 select
+	var statusWidget string
+	for _, f := range tm.Fields {
+		if f.JsonName == "status" {
+			statusWidget = f.Widget
+		}
+	}
+	if statusWidget != "select" {
+		t.Fatalf("status widget = %q, want select", statusWidget)
+	}
+	r := New(tpl.GenerateFS, Options{ProjectRoot: root})
+	if _, err := r.Render(tm); err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+	pb, _ := os.ReadFile(filepath.Join(root, "apps/web/src/pages/Product/index.tsx"))
+	pg := string(pb)
+	if !strings.Contains(pg, "SELECT_OPTIONS_Product_status") {
+		t.Fatalf("missing select options const")
+	}
+	if !strings.Contains(pg, "label: '启用', value: 1") {
+		t.Fatalf("missing option literal: %s", grepLine(pg, "启用"))
+	}
+	if !strings.Contains(pg, "toolbar={") || !strings.Contains(pg, "Input.Search") {
+		t.Fatalf("missing search toolbar")
+	}
+}
+
+func grepLine(s, sub string) string {
+	for _, l := range strings.Split(s, "\n") {
+		if strings.Contains(l, sub) {
+			return l
+		}
+	}
+	return "<not found: " + sub + ">"
 }

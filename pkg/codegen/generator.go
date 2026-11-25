@@ -102,5 +102,27 @@ func mergeWebConfig(w WebConfig, y WebSection) WebConfig {
 	if y.RegisterMenu != nil && !w.RegisterMenu {
 		w.RegisterMenu = *y.RegisterMenu
 	}
+	if len(w.FieldWidgets) == 0 && len(y.FieldWidgets) > 0 {
+		w.FieldWidgets = y.FieldWidgets
+	}
+	if len(w.FieldOptions) == 0 && len(y.FieldOptions) > 0 {
+		w.FieldOptions = convertWebSectionOptions(y.FieldOptions)
+	}
 	return w
+}
+
+// convertWebSectionOptions 把 yaml web.field_options 转成 WebConfig.FieldOptions（[]KV）。
+func convertWebSectionOptions(in map[string][]FieldOptionYAML) map[string][]KV {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make(map[string][]KV, len(in))
+	for k, list := range in {
+		kvs := make([]KV, 0, len(list))
+		for _, o := range list {
+			kvs = append(kvs, KV{Value: o.Value, Label: o.Label})
+		}
+		out[k] = kvs
+	}
+	return out
 }

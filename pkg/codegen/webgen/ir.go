@@ -42,16 +42,32 @@ type Field struct {
 	Options      []Option
 }
 
-// Option 是 Select 选项。
+// Option 是 Select 选项。Value/Label 为原始字符串，TSValue() 依据 Style 生成 TS 字面量。
 type Option struct {
 	Value string
 	Label string
-	Style string // TS 值字面量风格：number / string / boolean
+	Style string // TS 值字面量风格：number / string / boolean（缺省 string）
+}
+
+// TSValue 返回该选项在 TSX 中的字面量表示（数字/布尔裸值，字符串加引号）。
+func (o Option) TSValue() string {
+	switch o.Style {
+	case "number", "boolean":
+		return o.Value
+	default:
+		return "'" + strings.ReplaceAll(o.Value, "'", "\\'") + "'"
+	}
+}
+
+// Overrides 是字段级覆盖（来自 code_gen.yaml 的 web 段）。
+type Overrides struct {
+	Widgets map[string]string   // 列 JSON 名 → 控件（input/textarea/number/switch/date/select）
+	Options map[string][]Option // 列 JSON 名 → Select 选项
 }
 
 // FromModelFields 把后端 []ModelFieldLike 组装成 TableMeta。
-// 为不直接依赖 golib 的 ModelField 具体字段，用本地轻量接口收窄依赖。
-func FromModelFields(tableName, structName, packageName, comment string, fields []ModelFieldLike) *TableMeta {
+// ov 提供字段级覆盖（web.field_widgets / web.field_options）；可为零值。
+func FromModelFields(tableName, structName, packageName, comment string, fields []ModelFieldLike, ov Overrides) *TableMeta {
 	structLowerCamel := gutil.FirstLetterToLower(structName)
 	resourceKebab := toKebabCase(pluralize(structLowerCamel))
 
@@ -71,6 +87,20 @@ func FromModelFields(tableName, structName, packageName, comment string, fields 
 		jsonName := f.JsonName()
 		tsType := TSForField(f.ColumnType(), f.FieldType())
 		widget := WidgetForField(f.ColumnType(), f.FieldType(), jsonName)
+		// 覆盖：web.field_options 提供选项时强制 select
+		var opts []Option
+		if ov.Options != nil {
+			if o, ok := ov.Options[jsonName]; ok && len(o) > 0 {
+				opts = o
+				widget = "select"
+			}
+		}
+		// 覆盖：web.field_widgets 显式指定控件
+		if ov.Widgets != nil {
+			if w, ok := ov.Widgets[jsonName]; ok && w != "" {
+				widget = w
+			}
+		}
 		label := f.Comment()
 		if label == "" {
 			label = f.FieldName()
@@ -83,7 +113,8 @@ func FromModelFields(tableName, structName, packageName, comment string, fields 
 			Widget:       widget,
 			IsPK:         f.IsPrimaryKey(),
 			IsRequired:   !f.IsNullable() && !f.IsPrimaryKey(),
-			IsSelectable: widget == "input" || widget == "select",
+			IsSelectable: (widget == "input" || widget == "select") && !f.IsPrimaryKey(),
+			Options:      opts,
 		}
 		tm.Fields = append(tm.Fields, fld)
 		if f.IsPrimaryKey() {

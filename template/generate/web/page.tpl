@@ -19,6 +19,9 @@ import {
   Switch,
 {{- end}}
   Table,
+{{- if .NeedTag}}
+  Tag,
+{{- end}}
   Tooltip,
   type TableProps,
 } from 'antd'
@@ -30,6 +33,7 @@ import {
   delete{{.StructName}},
   get{{.StructName}}s,
   update{{.StructName}},
+  type {{.StructName}}ListQuery,
 } from '@ark-go-starter/api'
 import type { {{.StructName}}CreateReq, {{.StructName}}PageListItem } from '@ark-go-starter/types'
 {{- if .NeedFmtTime}}
@@ -39,6 +43,15 @@ function fmtTime(v?: number | null): string {
   if (v === undefined || v === null) return '-'
   return new Date(v * 1000).toLocaleString()
 }
+{{- end}}
+{{- if .NeedTag}}
+
+// 枚举列展示映射（由 web.field_options 生成）
+{{- range .Fields}}
+{{- if eq .Widget "select"}}
+const SELECT_OPTIONS_{{$.StructName}}_{{.JsonName}} = [{{- range $i, $o := .Options}}{{if $i}}, {{end}}{ label: '{{$o.Label}}', value: {{$o.TSValue}} }{{- end}}]
+{{- end}}
+{{- end}}
 {{- end}}
 
 export default function {{.StructName}}Page() {
@@ -53,11 +66,12 @@ export default function {{.StructName}}Page() {
   const [editing, setEditing] = useState<{{.StructName}}PageListItem | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [form] = Form.useForm<{{.StructName}}CreateReq>()
+  const [filters, setFilters] = useState<Partial<{{.StructName}}ListQuery>>({})
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await get{{.StructName}}s({ page, pageSize })
+      const res = await get{{.StructName}}s({ page, pageSize, ...filters })
       setData(res.list ?? [])
       setTotal(res.total ?? 0)
     } catch (e) {
@@ -65,7 +79,7 @@ export default function {{.StructName}}Page() {
     } finally {
       setLoading(false)
     }
-  }, [page, pageSize, message])
+  }, [page, pageSize, filters, message])
 
   useEffect(() => {
     load()
@@ -123,6 +137,17 @@ export default function {{.StructName}}Page() {
     { title: '{{.Label}}', dataIndex: '{{.JsonName}}', key: '{{.JsonName}}', width: 140 },
 {{- else if .IsPK}}
     { title: '{{.Label}}', dataIndex: '{{.JsonName}}', key: '{{.JsonName}}', width: 100 },
+{{- else if eq .Widget "select"}}
+    {
+      title: '{{.Label}}',
+      dataIndex: '{{.JsonName}}',
+      key: '{{.JsonName}}',
+      width: 140,
+      render: (v: {{.TSType}} | undefined) => {
+        const hit = SELECT_OPTIONS_{{$.StructName}}_{{.JsonName}}.find((o) => o.value === v)
+        return hit ? <Tag color="default">{hit.label}</Tag> : (v ?? '-')
+      },
+    },
 {{- else}}
     { title: '{{.Label}}', dataIndex: '{{.JsonName}}', key: '{{.JsonName}}', width: 200, ellipsis: true },
 {{- end}}
@@ -157,6 +182,34 @@ export default function {{.StructName}}Page() {
           </Button>
         </Space>
       }
+{{- if .NeedSearch}}
+      toolbar={
+        <Space wrap size="middle">
+{{- range .Fields}}
+{{- if and .IsSelectable (not .IsPK)}}
+{{- if eq .Widget "select"}}
+          <Select
+            allowClear
+            placeholder="{{.Label}}"
+            style={ { width: 160 } }
+            value={filters.{{.JsonName}}}
+            options={SELECT_OPTIONS_{{$.StructName}}_{{.JsonName}}}
+            onChange={(v) => { setFilters((f) => ({ ...f, {{.JsonName}}: v })); setPage(1) }}
+          />
+{{- else}}
+          <Input.Search
+            allowClear
+            placeholder="按{{.Label}}精确搜索"
+            style={ { width: 240 } }
+            onSearch={(v) => { setFilters((f) => ({ ...f, {{.JsonName}}: v.trim() || undefined })); setPage(1) }}
+          />
+{{- end}}
+{{- end}}
+{{- end}}
+          <Button onClick={() => { setFilters({}); setPage(1) }}>重置</Button>
+        </Space>
+      }
+{{- end}}
     >
       <Table<{{.StructName}}PageListItem>
         rowKey="{{.PKJsonName}}"
@@ -205,7 +258,11 @@ export default function {{.StructName}}Page() {
 {{- else if eq .Widget "date"}}
             <DatePicker style={ { width: '100%' } } showTime />
 {{- else if eq .Widget "select"}}
-            <Select placeholder="请选择{{.Label}}" allowClear options={[]} />
+            <Select
+              placeholder="请选择{{.Label}}"
+              allowClear
+              options={[{{- range $i, $o := .Options}}{{if $i}}, {{end}}{ label: '{{$o.Label}}', value: {{$o.TSValue}} }{{- end}}]}
+            />
 {{- else}}
             <Input placeholder="请输入{{.Label}}" />
 {{- end}}

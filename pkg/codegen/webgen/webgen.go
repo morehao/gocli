@@ -285,6 +285,8 @@ type pageCtx struct {
 	NeedInputNumber bool
 	NeedTextArea    bool
 	NeedFmtTime     bool
+	NeedTag         bool
+	NeedSearch      bool
 }
 
 func buildPageCtx(tm *TableMeta) *pageCtx {
@@ -295,6 +297,7 @@ func buildPageCtx(tm *TableMeta) *pageCtx {
 			c.NeedDatePicker = true
 			c.NeedFmtTime = true
 		case "select":
+			c.NeedTag = true
 			if !f.IsPK {
 				c.NeedSelect = true
 			}
@@ -311,6 +314,12 @@ func buildPageCtx(tm *TableMeta) *pageCtx {
 			if !f.IsPK {
 				c.NeedTextArea = true
 			}
+		}
+	}
+	for _, f := range tm.Fields {
+		if f.IsSelectable && !f.IsPK {
+			c.NeedSearch = true
+			break
 		}
 	}
 	// 列表列渲染里 date 列才会用到 fmtTime（同上，date→NeedFmtTime）

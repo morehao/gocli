@@ -93,15 +93,55 @@ func (g *Generator) buildTableMeta() (*webgen.TableMeta, *golibcodegen.ModuleTpl
 	if comment == "" {
 		comment = analysisRes.StructName
 	}
+	ov := webgen.Overrides{
+		Widgets: g.opts.Web.FieldWidgets,
+		Options: convertFieldOptions(g.opts.Web.FieldOptions),
+	}
 	tm := webgen.FromModelFields(
 		analysisRes.TableName,
 		analysisRes.StructName,
 		gutil.CamelToSnakeCase(g.cfg.Module.PackageName),
 		comment,
 		adapters,
+		ov,
 	)
-	// 应用 web.field_options 覆盖（enum 选项）——简单起见，本期先留空实现。
+	// 选项的 TS 字面量风格按对应字段的 TS 类型推断
+	inferOptionStyles(tm)
 	return tm, analysisRes, nil
+}
+
+// convertFieldOptions 把 WebConfig.FieldOptions（[]KV）转成 webgen.Option。
+func convertFieldOptions(in map[string][]KV) map[string][]webgen.Option {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make(map[string][]webgen.Option, len(in))
+	for k, list := range in {
+		opts := make([]webgen.Option, 0, len(list))
+		for _, kv := range list {
+			opts = append(opts, webgen.Option{Value: fmt.Sprintf("%v", kv.Value), Label: kv.Label})
+		}
+		out[k] = opts
+	}
+	return out
+}
+
+// inferOptionStyles 依据字段 TSType 给其 Option 设置 TS 字面量风格（number/boolean/string）。
+func inferOptionStyles(tm *webgen.TableMeta) {
+	for i := range tm.Fields {
+		style := "string"
+		switch tm.Fields[i].TSType {
+		case "number":
+			style = "number"
+		case "boolean":
+			style = "boolean"
+		}
+		for j := range tm.Fields[i].Options {
+			if tm.Fields[i].Options[j].Style == "" {
+				tm.Fields[i].Options[j].Style = style
+			}
+		}
+	}
 }
 
 // fieldAdapter 把 golib ModelField 适配为 webgen.ModelFieldLike。
