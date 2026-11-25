@@ -52,8 +52,10 @@ type Options struct {
 
 // Result 生成结果。
 type Result struct {
-	// WrittenFiles 本次写入的文件列表；本期暂不精确收集，后续任务补充。
+	// WrittenFiles 本次写入/追加的文件路径列表。
 	WrittenFiles []string
+	// Warnings 非致命提示（如页面已存在跳过、App.tsx 缺锚点等）。
+	Warnings []string
 }
 
 // Generate 统一入口：按 g.opts.Mode 分发到对应的 GenerateXxx 方法。
@@ -96,12 +98,6 @@ func (g *Generator) GenerateBackendEndpoint() (*Result, error) {
 		return nil, err
 	}
 	return &Result{}, nil
-}
-
-// GenerateFrontendPage 生成前端页面。本期未实现，返回 ErrNotImplemented。
-// TODO: 由后续前端 webgen 任务实现。
-func (g *Generator) GenerateFrontendPage() (*Result, error) {
-	return nil, ErrNotImplemented
 }
 
 // GenerateFullstack 前后端全栈生成。本期未实现，返回 ErrNotImplemented。

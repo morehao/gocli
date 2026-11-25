@@ -45,10 +45,13 @@ func TestSDKImportable(t *testing.T) {
 	}
 	t.Logf("GenerateBackendModule(nil db) error (expected): %v", err)
 
-	// 前端/全栈本期返回 ErrNotImplemented。
-	if _, err := g.GenerateFrontendPage(); err != ErrNotImplemented {
-		t.Fatalf("GenerateFrontendPage = %v, want ErrNotImplemented", err)
+	// 前端页面已实现：nil db 时应返回明确错误（而非 panic）。
+	if _, err := g.GenerateFrontendPage(); err == nil {
+		t.Fatal("GenerateFrontendPage with nil db should return error, got nil")
+	} else {
+		t.Logf("GenerateFrontendPage(nil db) error (expected): %v", err)
 	}
+	// 全栈本期仍未实现。
 	if _, err := g.GenerateFullstack(); err != ErrNotImplemented {
 		t.Fatalf("GenerateFullstack = %v, want ErrNotImplemented", err)
 	}
