@@ -190,6 +190,7 @@ func (g *Generator) genModel() error {
 	genParams := &codegen.GenParams{
 		ParamsList: genParamsList,
 	}
+	removeExclusiveTargets(genParamsList)
 	if err := gen.Gen(genParams); err != nil {
 		return err
 	}

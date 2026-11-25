@@ -199,6 +199,7 @@ func (g *Generator) genModule() error {
 	genParams := &codegen.GenParams{
 		ParamsList: genParamsList,
 	}
+	removeExclusiveTargets(genParamsList)
 	if err := gen.Gen(genParams); err != nil {
 		return err
 	}
@@ -243,7 +244,7 @@ func (g *Generator) genModule() error {
 	// 注册路由
 	routerContent := fmt.Sprintf("%sRouter(groups)", gutil.FirstLetterToLower(analysisRes.StructName))
 	routerEnterFilepath := filepath.Join(g.workDir, "/internal/router/router.go")
-	if err := gast.AddContentToFunc(routerEnterFilepath, "RegisterRouter", routerContent); err != nil {
+	if err := addContentToFuncIdempotent(routerEnterFilepath, "RegisterRouter", routerContent); err != nil {
 		return fmt.Errorf("router appendContentToFunc error: %v", err)
 	}
 	fmt.Printf("[Module] Registered router: %sRouter\n", gutil.FirstLetterToLower(analysisRes.StructName))
@@ -329,6 +330,8 @@ func (g *Generator) genModule() error {
 				},
 			},
 		}
+		// 删除本模块独占的错误码文件，避免重复追加导致重复声明
+		removeExclusiveTargets(codeGenParams.ParamsList)
 		if err := gen.Gen(codeGenParams); err != nil {
 			return fmt.Errorf("failed to generate code file: %v", err)
 		}
@@ -336,7 +339,7 @@ func (g *Generator) genModule() error {
 		// 注册错误码到项目根目录的pkg/code/code.go
 		codeContent := fmt.Sprintf("registerError(%sErrorMsgMap)", gutil.FirstLetterToLower(analysisRes.StructName))
 		codeEnterFilepath := filepath.Join(g.appInfo.ProjectRootPath, "pkg/code/code.go")
-		if err := gast.AddContentToFunc(codeEnterFilepath, "init", codeContent); err != nil {
+		if err := addContentToFuncIdempotent(codeEnterFilepath, "init", codeContent); err != nil {
 			return fmt.Errorf("code appendContentToFunc error: %v", err)
 		}
 		fmt.Printf("[Module] Registered error code: %sErrorMsgMap\n", gutil.FirstLetterToLower(analysisRes.StructName))

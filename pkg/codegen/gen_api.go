@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
 
 	"github.com/morehao/golib/codegen"
@@ -103,6 +104,17 @@ func (g *Generator) genApi() error {
 		})
 
 	}
+	// 幂等：若该 controller 方法已存在（同名），说明该 endpoint 已生成过，跳过整段生成，
+	// 避免 --force 重复追加导致 dto/方法 重复声明。
+	if controllerFilepath != "" {
+		if data, rerr := os.ReadFile(controllerFilepath); rerr == nil {
+			if strings.Contains(string(data), "func (ctr *"+structNameLowerCamel+"Ctr) "+functionName+"(") {
+				fmt.Printf("[API] endpoint %s.%s already exists, skip\n", structNameLowerCamel, functionName)
+				return nil
+			}
+		}
+	}
+
 	genParams := &codegen.GenParams{
 		ParamsList: genParamsList,
 	}
@@ -126,7 +138,7 @@ func (g *Generator) genApi() error {
 	if isNewRouter {
 		routerCallContent := fmt.Sprintf("%sRouter(%s)", structNameLowerCamel, "groups")
 		routerEnterFilepath := filepath.Join(g.workDir, "/internal/router/router.go")
-		if err := gast.AddContentToFunc(routerEnterFilepath, "RegisterRouter", routerCallContent); err != nil {
+		if err := addContentToFuncIdempotent(routerEnterFilepath, "RegisterRouter", routerCallContent); err != nil {
 			return fmt.Errorf("new router appendContentToFunc error: %v", err)
 		}
 		fmt.Printf("[API] Registered new router: %sRouter\n", structNameLowerCamel)
@@ -134,7 +146,9 @@ func (g *Generator) genApi() error {
 		routerCallContent := fmt.Sprintf(`v1RouterGroup.%s("/%s/%s", %sCtr.%s)`, apiGenCfg.HttpMethod, resourcePath, functionNameLowerCamel, structNameLowerCamel, functionName)
 		routerEnterFilepath := filepath.Join(g.workDir, fmt.Sprintf("/internal/router/%s.go", gutil.TrimFileExtension(apiGenCfg.PackageName)))
 		// 使用 AddContentToFunc 添加到函数末尾，避免注释丢失
-		if err := gast.AddContentToFuncWithLineNumber(routerEnterFilepath, fmt.Sprintf("%sRouter", structNameLowerCamel), routerCallContent, -1); err != nil {
+		if data, rerr := os.ReadFile(routerEnterFilepath); rerr == nil && strings.Contains(string(data), routerCallContent) {
+			// 已存在该路由行，跳过
+		} else if err := gast.AddContentToFuncWithLineNumber(routerEnterFilepath, fmt.Sprintf("%sRouter", structNameLowerCamel), routerCallContent, -1); err != nil {
 			return fmt.Errorf("appendContentToFunc error: %v", err)
 		}
 		fmt.Printf("[API] Added route to existing router: %s %s\n", apiGenCfg.HttpMethod, fmt.Sprintf("/%s/%s", resourcePath, functionNameLowerCamel))

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	golibcodegen "github.com/morehao/golib/codegen"
+	"github.com/morehao/golib/gast"
 	"github.com/morehao/golib/gutil"
 )
 
@@ -516,4 +517,39 @@ func normalizeAuditFieldTypes(res *golibcodegen.ModuleTplAnalysisRes) {
 			}
 		}
 	}
+}
+
+// sharedAggregateFiles 是「多表共享、靠 gast 去重」的聚合文件，重生成时不能删除（否则会丢掉其它表的内容）。
+var sharedAggregateFiles = map[string]struct{}{
+	"router.go": {},
+	"code.go":   {},
+	"table.go":  {},
+}
+
+// removeExclusiveTargets 在整文件重生成前，删除本模块「独占」的目标文件，
+// 使 golib codegen 的 createFile 走「文件不存在→整文件写入」分支，而不是追加（追加会导致
+// object/code/controller 等重复声明、编译失败）。共享聚合文件（router.go/code.go/table.go）跳过。
+//
+// 用于 `--force` 重生成与幂等的后端生成路径，确保重复执行不产生重复声明。
+func removeExclusiveTargets(items []golibcodegen.GenParamsItem) {
+	for _, it := range items {
+		if _, shared := sharedAggregateFiles[it.TargetFileName]; shared {
+			continue
+		}
+		p := filepath.Join(it.TargetDir, it.TargetFileName)
+		if gutil.FileExists(p) {
+			_ = os.Remove(p)
+		}
+	}
+}
+
+// addContentToFuncIdempotent 幂等地把 content 追加到 funcName 函数体：若文件已包含该 content 则跳过。
+// 规避 golib gast.AddContentToFunc 重复追加（会导致 router 注册/错误码注册重复执行）。
+func addContentToFuncIdempotent(filepath, funcName, content string) error {
+	if data, err := os.ReadFile(filepath); err == nil {
+		if strings.Contains(string(data), content) {
+			return nil
+		}
+	}
+	return gast.AddContentToFunc(filepath, funcName, content)
 }
