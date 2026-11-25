@@ -1,8 +1,7 @@
-package generate
+package codegen
 
 import (
 	"bufio"
-	"bytes"
 	"embed"
 	"fmt"
 	"io/fs"
@@ -11,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/morehao/golib/gutil"
-	"github.com/spf13/cobra"
 )
 
 const (
@@ -452,16 +450,6 @@ func SnakeToLowerCamelWithID(s string) string {
 
 	// 其他情况使用标准的小驼峰转换
 	return gutil.SnakeToLowerCamel(s)
-}
-
-// ExecuteCommand 执行命令并捕获输出
-func ExecuteCommand(root *cobra.Command, args ...string) (output string, err error) {
-	buf := new(bytes.Buffer)
-	root.SetOut(buf)
-	root.SetErr(buf)
-	root.SetArgs(args)
-	err = root.Execute()
-	return buf.String(), err
 }
 
 // toKebabCase 将驼峰/帕斯卡命名转为 kebab-case（UserInfo → user-info）

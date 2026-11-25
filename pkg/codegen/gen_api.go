@@ -1,4 +1,4 @@
-package generate
+package codegen
 
 import (
 	"fmt"
@@ -11,8 +11,8 @@ import (
 	"github.com/morehao/golib/gutil"
 )
 
-func genApi() error {
-	apiGenCfg := cfg.Api
+func (g *Generator) genApi() error {
+	apiGenCfg := g.cfg.Api
 
 	// 使用工具函数复制嵌入的模板文件到临时目录
 	tplDir, getTplErr := CopyEmbeddedTemplatesToTempDir(TemplatesFS, "generate/api")
@@ -26,7 +26,7 @@ func genApi() error {
 		CommonConfig: codegen.CommonConfig{
 			PackageName:       apiGenCfg.PackageName,
 			TplDir:            tplDir,
-			RootDir:           workDir,
+			RootDir:           g.workDir,
 			LayerParentDirMap: defaultLayerParentDirMap,
 			LayerNameMap:      defaultLayerNameMap,
 			LayerPrefixMap:    defaultLayerPrefixMap,
@@ -82,11 +82,11 @@ func genApi() error {
 			Template:       v.Template,
 			ExtraParams: ApiExtraParams{
 				AppInfo: AppInfo{
-					ProjectName:     cfg.appInfo.ProjectName,
-					AppName:         cfg.appInfo.AppName,
-					ProjectRootPath: cfg.appInfo.ProjectRootPath,
-					BaseModulePath:  cfg.appInfo.BaseModulePath,
-					AppModuleName:   cfg.appInfo.AppModuleName,
+					ProjectName:     g.appInfo.ProjectName,
+					AppName:         g.appInfo.AppName,
+					ProjectRootPath: g.appInfo.ProjectRootPath,
+					BaseModulePath:  g.appInfo.BaseModulePath,
+					AppModuleName:   g.appInfo.AppModuleName,
 				},
 				PackageName:            analysisRes.PackageName,
 				TargetFileExist:        v.TargetFileExist,
@@ -125,14 +125,14 @@ func genApi() error {
 	// 	注册路由
 	if isNewRouter {
 		routerCallContent := fmt.Sprintf("%sRouter(%s)", structNameLowerCamel, "groups")
-		routerEnterFilepath := filepath.Join(workDir, "/internal/router/router.go")
+		routerEnterFilepath := filepath.Join(g.workDir, "/internal/router/router.go")
 		if err := gast.AddContentToFunc(routerEnterFilepath, "RegisterRouter", routerCallContent); err != nil {
 			return fmt.Errorf("new router appendContentToFunc error: %v", err)
 		}
 		fmt.Printf("[API] Registered new router: %sRouter\n", structNameLowerCamel)
 	} else {
 		routerCallContent := fmt.Sprintf(`v1RouterGroup.%s("/%s/%s", %sCtr.%s)`, apiGenCfg.HttpMethod, resourcePath, functionNameLowerCamel, structNameLowerCamel, functionName)
-		routerEnterFilepath := filepath.Join(workDir, fmt.Sprintf("/internal/router/%s.go", gutil.TrimFileExtension(apiGenCfg.PackageName)))
+		routerEnterFilepath := filepath.Join(g.workDir, fmt.Sprintf("/internal/router/%s.go", gutil.TrimFileExtension(apiGenCfg.PackageName)))
 		// 使用 AddContentToFunc 添加到函数末尾，避免注释丢失
 		if err := gast.AddContentToFuncWithLineNumber(routerEnterFilepath, fmt.Sprintf("%sRouter", structNameLowerCamel), routerCallContent, -1); err != nil {
 			return fmt.Errorf("appendContentToFunc error: %v", err)

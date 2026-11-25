@@ -1,4 +1,4 @@
-package generate
+package codegen
 
 import (
 	"fmt"
@@ -19,8 +19,8 @@ const (
 	fieldCommentKeyword = "comment"
 )
 
-func genModel() error {
-	modelGenCfg := cfg.Model
+func (g *Generator) genModel() error {
+	modelGenCfg := g.cfg.Model
 
 	fmt.Printf("[Model] Generating model based on table: %s\n", modelGenCfg.TableName)
 
@@ -32,13 +32,13 @@ func genModel() error {
 	// 清理临时目录
 	defer os.RemoveAll(tplDir)
 
-	layerNameMap := buildLayerNameMap(cfg.ServiceName)
+	layerNameMap := buildLayerNameMap(g.cfg.ServiceName)
 
 	analysisCfg := &codegen.ModuleCfg{
 		CommonConfig: codegen.CommonConfig{
 			PackageName:       modelGenCfg.PackageName,
 			TplDir:            tplDir,
-			RootDir:           workDir,
+			RootDir:           g.workDir,
 			LayerParentDirMap: defaultLayerParentDirMap,
 			LayerNameMap:      layerNameMap,
 			LayerPrefixMap:    defaultLayerPrefixMap,
@@ -58,7 +58,7 @@ func genModel() error {
 	}
 
 	gen := codegen.NewGenerator()
-	analysisRes, analysisErr := gen.AnalysisModuleTpl(DBClient, analysisCfg)
+	analysisRes, analysisErr := gen.AnalysisModuleTpl(g.db, analysisCfg)
 	if analysisErr != nil {
 		return fmt.Errorf("analysis model tpl error: %v", analysisErr)
 	}
@@ -162,11 +162,11 @@ func genModel() error {
 			Template:       v.Template,
 			ExtraParams: ModelExtraParams{
 				AppInfo: AppInfo{
-					ProjectName:     cfg.appInfo.ProjectName,
-					AppName:         cfg.appInfo.AppName,
-					ProjectRootPath: cfg.appInfo.ProjectRootPath,
-					BaseModulePath:  cfg.appInfo.BaseModulePath,
-					AppModuleName:   cfg.appInfo.AppModuleName,
+					ProjectName:     g.appInfo.ProjectName,
+					AppName:         g.appInfo.AppName,
+					ProjectRootPath: g.appInfo.ProjectRootPath,
+					BaseModulePath:  g.appInfo.BaseModulePath,
+					AppModuleName:   g.appInfo.AppModuleName,
 				},
 				PackageName:    analysisRes.PackageName,
 				TableName:      analysisRes.TableName,
@@ -174,7 +174,7 @@ func genModel() error {
 				ModelLayerName: string(modelLayerName),
 				DaoLayerName:   string(daoLayerName),
 				DaoPackageName: string(daoLayerName),
-				DBName:         fmt.Sprintf("%sDB", gutil.FirstLetterToUpper(cfg.ServiceName)),
+				DBName:         fmt.Sprintf("%sDB", gutil.FirstLetterToUpper(g.cfg.ServiceName)),
 				Description:    modelGenCfg.Description,
 				StructName:     analysisRes.StructName,
 				Template:       v.Template,
@@ -203,11 +203,11 @@ func genModel() error {
 		} else {
 			tableExtraParams := ModelExtraParams{
 				AppInfo: AppInfo{
-					ProjectName:     cfg.appInfo.ProjectName,
-					AppName:         cfg.appInfo.AppName,
-					ProjectRootPath: cfg.appInfo.ProjectRootPath,
-					BaseModulePath:  cfg.appInfo.BaseModulePath,
-					AppModuleName:   cfg.appInfo.AppModuleName,
+					ProjectName:     g.appInfo.ProjectName,
+					AppName:         g.appInfo.AppName,
+					ProjectRootPath: g.appInfo.ProjectRootPath,
+					BaseModulePath:  g.appInfo.BaseModulePath,
+					AppModuleName:   g.appInfo.AppModuleName,
 				},
 				PackageName:    analysisRes.PackageName,
 				TableName:      analysisRes.TableName,

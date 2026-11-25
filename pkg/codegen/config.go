@@ -1,4 +1,4 @@
-package generate
+package codegen
 
 import "github.com/morehao/golib/codegen"
 
