@@ -1,6 +1,9 @@
 package codegen
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 // Mode 生成模式，决定统一入口 Generate 的分发目标。
 type Mode string
@@ -47,6 +50,7 @@ type Options struct {
 	Mode        Mode
 	Force       bool
 	DryRun      bool
+	NoSnapshot  bool // 由批量调用方置位：批量前统一快照一次后，各表不再各自快照
 	Web         WebConfig
 }
 
@@ -114,6 +118,20 @@ func (g *Generator) GenerateBackendEndpoint() (*Result, error) {
 func (g *Generator) GenerateFullstack() (*Result, error) {
 	res := &Result{}
 
+	// 一次性分析表结构（后端 + 前端 + 指纹共用）
+	if g.db == nil {
+		return nil, fmt.Errorf("db is nil")
+	}
+	_, analysisRes, err := g.buildTableMeta()
+	if err != nil {
+		return nil, err
+	}
+	// 增量：结构未变更则整体跳过
+	if skip, why := g.skipIfUnchanged(analysisRes, ModeFullstack); skip {
+		return &Result{Warnings: []string{why}}, nil
+	}
+	g.snapshot()
+
 	// 后端模块（DryRun 时跳过实际写盘）
 	if g.opts.DryRun {
 		res.Warnings = append(res.Warnings, "[dry-run] 将执行后端模块生成（model/dao/object/service/controller/dto/router/code），已跳过写盘")
@@ -131,5 +149,7 @@ func (g *Generator) GenerateFullstack() (*Result, error) {
 	}
 	res.WrittenFiles = append(res.WrittenFiles, fres.WrittenFiles...)
 	res.Warnings = append(res.Warnings, fres.Warnings...)
+
+	g.recordManifest(analysisRes, ModeFullstack)
 	return res, nil
 }

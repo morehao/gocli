@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/morehao/gocli/pkg/codegen"
 	"github.com/morehao/golib/gutil"
@@ -62,16 +63,23 @@ var fullstackCmd = &cobra.Command{
 	RunE:  runFrontend(codegen.ModeFullstack),
 }
 
+var undoCmd = &cobra.Command{
+	Use:   "undo",
+	Short: "Restore aggregate files (types/api/App.tsx/go) from the pre-generation snapshot",
+	RunE:  runUndo,
+}
+
 func init() {
 	backendCmd.AddCommand(backendModuleCmd, backendModelCmd, backendEndpointCmd)
 	frontendCmd.AddCommand(frontendPageCmd)
-	Cmd.AddCommand(backendCmd, frontendCmd, fullstackCmd)
+	Cmd.AddCommand(backendCmd, frontendCmd, fullstackCmd, undoCmd)
 
 	for _, subCmd := range []*cobra.Command{backendModuleCmd, backendModelCmd, backendEndpointCmd} {
 		addCommonFlags(subCmd)
 	}
 	addCommonFlags(frontendPageCmd)
 	addCommonFlags(fullstackCmd)
+	undoCmd.Flags().StringP("app", "a", "", "App name (for locating the project root)")
 }
 
 func addCommonFlags(cmd *cobra.Command) {
@@ -80,6 +88,7 @@ func addCommonFlags(cmd *cobra.Command) {
 	cmd.Flags().String("package", "", "Package name to generate code for (overrides code_gen.yaml)")
 	cmd.Flags().Bool("dry-run", false, "Print what would be generated without writing files")
 	cmd.Flags().Bool("force", false, "Overwrite existing files")
+	cmd.Flags().Bool("all", false, "Generate for all tables in the database (ignores --table)")
 }
 
 // buildOptions 从命令行 flag 构造 codegen.Options。
@@ -134,39 +143,122 @@ func openDB(projectRoot, appName string) (*gorm.DB, error) {
 // runBackend 返回用于后端叶子命令的 RunE，按 mode 构造 Generator（需要 DB）并调用 Generate。
 func runBackend(mode codegen.Mode) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		opts, err := buildOptions(cmd, mode)
-		if err != nil {
-			return err
-		}
-		db, err := openDB(opts.ProjectRoot, opts.AppName)
-		if err != nil {
-			return fmt.Errorf("open database connection: %w", err)
-		}
-		gen, err := codegen.New(db, opts)
-		if err != nil {
-			return err
-		}
-		return execute(gen)
+		return runMulti(cmd, mode)
 	}
 }
 
 // runFrontend 返回用于前端/全栈叶子命令的 RunE（需要 DB 分析表结构）。
 func runFrontend(mode codegen.Mode) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		opts, err := buildOptions(cmd, mode)
+		return runMulti(cmd, mode)
+	}
+}
+
+// runMulti 支持 --table 逗号分隔多表 与 --all（枚举库内全部表），逐表生成。
+func runMulti(cmd *cobra.Command, mode codegen.Mode) error {
+	baseOpts, err := buildOptions(cmd, mode)
+	if err != nil {
+		return err
+	}
+	db, err := openDB(baseOpts.ProjectRoot, baseOpts.AppName)
+	if err != nil {
+		return fmt.Errorf("open database connection: %w", err)
+	}
+
+	all, _ := cmd.Flags().GetBool("all")
+	tables := splitCSV(baseOpts.Table)
+	if all {
+		tables, err = listTables(db)
 		if err != nil {
-			return err
+			return fmt.Errorf("list tables: %w", err)
 		}
-		db, err := openDB(opts.ProjectRoot, opts.AppName)
-		if err != nil {
-			return fmt.Errorf("open database connection: %w", err)
+	}
+	if len(tables) == 0 && mode != codegen.ModeFullstack && mode != codegen.ModeFrontendPage {
+		return fmt.Errorf("请用 --table 指定表，或用 --all 生成全部表")
+	}
+
+	var firstErr error
+	for _, tbl := range tables {
+		opts := baseOpts
+		opts.Table = tbl
+		if opts.PackageName == "" {
+			opts.PackageName = tbl
 		}
 		gen, err := codegen.New(db, opts)
 		if err != nil {
-			return err
+			fmt.Printf("[%s] 跳过：%v\n", tbl, err)
+			if firstErr == nil {
+				firstErr = err
+			}
+			continue
 		}
-		return execute(gen)
+		if err := execute(gen); err != nil {
+			fmt.Printf("[%s] 失败：%v\n", tbl, err)
+			if firstErr == nil {
+				firstErr = err
+			}
+		}
 	}
+	return firstErr
+}
+
+func splitCSV(s string) []string {
+	if s == "" {
+		return nil
+	}
+	parts := strings.Split(s, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if v := strings.TrimSpace(p); v != "" {
+			out = append(out, v)
+		}
+	}
+	return out
+}
+
+// listTables 枚举当前库全部用户表（postgres: public；mysql: 当前 database）。
+func listTables(db *gorm.DB) ([]string, error) {
+	var names []string
+	dialect := db.Dialector.Name()
+	var sqlStr string
+	if dialect == "postgres" {
+		sqlStr = "SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' ORDER BY table_name"
+	} else {
+		sqlStr = "SELECT table_name FROM information_schema.tables WHERE table_schema=DATABASE() AND table_type='BASE TABLE' ORDER BY table_name"
+	}
+	if err := db.Raw(sqlStr).Scan(&names).Error; err != nil {
+		return nil, err
+	}
+	return names, nil
+}
+
+// runUndo 从快照还原聚合文件（types/api/App.tsx + router/table/code）。
+func runUndo(cmd *cobra.Command, args []string) error {
+	projectRoot, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	appName, _ := cmd.Flags().GetString("app")
+	if appName == "" {
+		return fmt.Errorf("please provide an app name using --app flag")
+	}
+	gen, err := codegen.New(nil, codegen.Options{AppName: appName, ProjectRoot: projectRoot})
+	if err != nil {
+		return err
+	}
+	restored, err := gen.Undo()
+	if err != nil {
+		return fmt.Errorf("undo failed: %w", err)
+	}
+	if len(restored) == 0 {
+		fmt.Println("没有可还原的快照（未找到 .codegen/backup）")
+		return nil
+	}
+	fmt.Println("已还原：")
+	for _, f := range restored {
+		fmt.Printf("  %s\n", f)
+	}
+	return nil
 }
 
 // execute 统一调用 Generator.Generate 并打印结果或错误。
@@ -175,9 +267,19 @@ func execute(gen *codegen.Generator) error {
 	if err != nil {
 		return fmt.Errorf("generate failed: %w", err)
 	}
+	if len(res.WrittenFiles) == 0 {
+		// 增量跳过等场景：无写入
+		for _, w := range res.Warnings {
+			fmt.Printf("  %s\n", w)
+		}
+		return nil
+	}
 	fmt.Println("Generated successfully")
 	for _, f := range res.WrittenFiles {
 		fmt.Printf("  wrote %s\n", f)
+	}
+	for _, w := range res.Warnings {
+		fmt.Printf("  %s\n", w)
 	}
 	return nil
 }

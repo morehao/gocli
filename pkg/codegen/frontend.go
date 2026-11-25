@@ -20,8 +20,11 @@ func (g *Generator) GenerateFrontendPage() (*Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	// 用真实字段（golib ModelField）再组装一次 webgen.TableMeta（结构名/包名以 analysisRes 为准）
-	_ = analysisRes
+	// 增量：结构未变更则跳过
+	if skip, why := g.skipIfUnchanged(analysisRes, ModeFrontendPage); skip {
+		return &Result{Warnings: []string{why}}, nil
+	}
+	g.snapshot()
 
 	wopts := webgen.Options{
 		ProjectRoot:  g.opts.ProjectRoot,
@@ -40,6 +43,7 @@ func (g *Generator) GenerateFrontendPage() (*Result, error) {
 	if err := r.RegisterMenu(tm, "", "", res); err != nil {
 		return nil, err
 	}
+	g.recordManifest(analysisRes, ModeFrontendPage)
 	return &Result{WrittenFiles: res.WrittenFiles, Warnings: res.Warnings}, nil
 }
 
