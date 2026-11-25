@@ -1,4 +1,4 @@
-package generate
+package codegen
 
 import (
 	"bytes"
@@ -100,11 +100,53 @@ func chdirToExample(t *testing.T) func() {
 	}
 }
 
-// resetGenerateState 清空包级状态，避免不同测试的临时目录之间相互污染
-func resetGenerateState() {
-	cfg = nil
-	workDir = ""
-	DBClient = nil
+// openExampleDB 按示例配置建立数据库连接；不可达时返回 nil（调用方自行 skip）。
+func openExampleDB(t *testing.T, appDir string) *gorm.DB {
+	t.Helper()
+	configFilepath := filepath.Join(appDir, "config", "code_gen.yaml")
+	var localCfg Config
+	gutil.LoadYamlConfig(configFilepath, &localCfg)
+	dbCfg, err := ParseDatabaseDSN(localCfg.DatabaseDSN)
+	if err != nil {
+		t.Skipf("invalid database dsn: %v", err)
+	}
+	var db *gorm.DB
+	switch dbCfg.Type {
+	case DBTypeMySQL:
+		db, err = gorm.Open(mysql.Open(dbCfg.ConnStr), &gorm.Config{})
+	case DBTypePostgres:
+		db, err = gorm.Open(postgres.Open(dbCfg.ConnStr), &gorm.Config{})
+	default:
+		t.Skipf("unsupported database type: %s", dbCfg.Type)
+	}
+	if err != nil {
+		t.Skipf("Skipping test: database unavailable: %v", err)
+	}
+	return db
+}
+
+// newTestGenerator 在临时示例工程上构造一个 Generator。
+// 全局状态已删除，测试改为显式构造 Generator 实例；db 为 nil 时由 newTestGenerator
+// 尝试按示例配置建立连接（不可达则返回 nil，交由调用方 skip）。
+func newTestGenerator(t *testing.T, appDir string, db *gorm.DB) *Generator {
+	t.Helper()
+	configFilepath := filepath.Join(appDir, "config", "code_gen.yaml")
+	if _, err := os.Stat(configFilepath); err != nil {
+		t.Skipf("Skipping test: config file not found: %v", configFilepath)
+	}
+	var localCfg Config
+	gutil.LoadYamlConfig(configFilepath, &localCfg)
+	appInfo, err := GetAppInfo(appDir)
+	if err != nil {
+		t.Fatalf("GetAppInfo(%s): %v", appDir, err)
+	}
+	localCfg.appInfo = *appInfo
+	return &Generator{
+		db:      db,
+		workDir: appDir,
+		cfg:     &localCfg,
+		appInfo: appInfo,
+	}
 }
 
 // skipIfDBUnavailable 数据库不可达时跳过测试
@@ -165,17 +207,6 @@ func captureStdout(t *testing.T, fn func()) string {
 	return string(out)
 }
 
-// assertGenerateSuccess 断言生成命令成功：输出包含 "Generated successfully" 且不含 "Error generating"
-func assertGenerateSuccess(t *testing.T, output string) {
-	t.Helper()
-	if strings.Contains(output, "Error generating") {
-		t.Fatalf("generation failed:\n%s", output)
-	}
-	if !strings.Contains(output, "Generated successfully") {
-		t.Fatalf("generation did not complete successfully:\n%s", output)
-	}
-}
-
 // assertGoBuild 编译生成物。
 //
 // 只断言“文件存在”会漏掉只在编译期暴露的问题——重复声明、import 未使用等都属此类，
@@ -202,65 +233,58 @@ func assertGoBuild(t *testing.T, dir string) {
 	}
 }
 
-// loadExampleConfig 预加载示例项目的生成配置并注入 appInfo，
-// 等价于 runGenerate 内部 cfg == nil 时的加载逻辑；供需要在生成前调整配置的测试使用。
-func loadExampleConfig(t *testing.T, appDir string) {
-	t.Helper()
-	configFilepath := filepath.Join(appDir, "config", "code_gen.yaml")
-	if _, err := os.Stat(configFilepath); err != nil {
-		t.Skipf("Skipping test: config file not found: %v", configFilepath)
-	}
-	var localCfg Config
-	gutil.LoadYamlConfig(configFilepath, &localCfg)
-	appInfo, err := GetAppInfo(appDir)
-	if err != nil {
-		t.Fatalf("GetAppInfo(%s): %v", appDir, err)
-	}
-	localCfg.appInfo = *appInfo
-	cfg = &localCfg
-}
-
-// 测试配置加载
+// 测试配置加载：New 从 code_gen.yaml 读取并合并配置
 func TestConfigLoading(t *testing.T) {
-	resetGenerateState()
 	restore := chdirToExample(t)
 	defer restore()
 
-	// 执行命令，需要指定 app 名称
-	_, err := ExecuteCommand(Cmd, "model", "--app", "demoapp")
+	projectRoot, err := os.Getwd()
 	if err != nil {
-		t.Errorf("Failed to execute command with config: %v", err)
+		t.Fatalf("getwd: %v", err)
 	}
-	if cfg == nil {
+	gen, err := New(nil, Options{AppName: "demoapp", ProjectRoot: projectRoot})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	if gen.cfg == nil {
 		t.Fatal("config was not loaded")
 	}
-	if cfg.ServiceName != "mysql" {
-		t.Errorf("ServiceName = %q, want %q", cfg.ServiceName, "mysql")
+	if gen.cfg.ServiceName != "mysql" {
+		t.Errorf("ServiceName = %q, want %q", gen.cfg.ServiceName, "mysql")
 	}
-	if cfg.Module.TableName != "user" {
-		t.Errorf("Module.TableName = %q, want %q", cfg.Module.TableName, "user")
+	if gen.cfg.Module.TableName != "user" {
+		t.Errorf("Module.TableName = %q, want %q", gen.cfg.Module.TableName, "user")
 	}
-	if cfg.Model.TableName != "user_login_log" {
-		t.Errorf("Model.TableName = %q, want %q", cfg.Model.TableName, "user_login_log")
+	if gen.cfg.Model.TableName != "user_login_log" {
+		t.Errorf("Model.TableName = %q, want %q", gen.cfg.Model.TableName, "user_login_log")
 	}
-	t.Log(gutil.ToJsonString(cfg))
+	t.Log(gutil.ToJsonString(gen.cfg))
 }
 
 // TestGenerateModelCode 测试生成 model 层代码
 // 依赖数据库（example/apps/demoapp/config/code_gen.yaml 中的 DSN），数据库不可达时自动跳过。
 func TestGenerateModelCode(t *testing.T) {
-	resetGenerateState()
 	skipIfDBUnavailable(t)
 
 	restore := chdirToExample(t)
 	defer restore()
 
+	projectRoot, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	appDir := filepath.Join(projectRoot, "apps", "demoapp")
+	db := openExampleDB(t, appDir)
+	g := newTestGenerator(t, appDir, db)
+
 	output := captureStdout(t, func() {
-		if _, err := ExecuteCommand(Cmd, "model", "--app", "demoapp"); err != nil {
-			t.Errorf("Failed to execute model command: %v", err)
+		if genErr := g.genModel(); genErr != nil {
+			t.Errorf("genModel: %v", genErr)
 		}
 	})
-	assertGenerateSuccess(t, output)
+	if !strings.Contains(output, "Generating model") {
+		t.Fatalf("model generation produced no output:\n%s", output)
+	}
 	// 生成成功后应产出 model 层文件
 	if _, statErr := os.Stat(filepath.Join("apps", "demoapp", "model", "user_login_log.go")); statErr != nil {
 		t.Errorf("generated model file not found: %v", statErr)
@@ -272,7 +296,6 @@ func TestGenerateModelCode(t *testing.T) {
 // TestGenerateModuleCode 测试生成完整模块代码
 // 依赖数据库（example/apps/demoapp/config/code_gen.yaml 中的 DSN），数据库不可达时自动跳过。
 func TestGenerateModuleCode(t *testing.T) {
-	resetGenerateState()
 	skipIfDBUnavailable(t)
 
 	restore := chdirToExample(t)
@@ -283,7 +306,8 @@ func TestGenerateModuleCode(t *testing.T) {
 		t.Fatalf("getwd: %v", err)
 	}
 	appDir := filepath.Join(projectRoot, "apps", "demoapp")
-	loadExampleConfig(t, appDir)
+	db := openExampleDB(t, appDir)
+	g := newTestGenerator(t, appDir, db)
 	// 换一张示例里没有的表再生成。
 	//
 	// 模板自带静态的 user 样例（model/dao/object/service/controller，以及 dto、router、
@@ -293,14 +317,16 @@ func TestGenerateModuleCode(t *testing.T) {
 	// 按包累积的 dto/router/code 又不能一起加防护，故本次不在生成器里改。
 	// 测试改用未随模板发布的 user_login_log，才能校验真实的首次生成路径。
 	// 详细排查记录（工作区笔记，未入库）：.dsh/docs/notes/2026-10-16-regenerate-existing-table-duplicates-notes.md
-	cfg.Module.TableName = "user_login_log"
+	g.cfg.Module.TableName = "user_login_log"
 
 	output := captureStdout(t, func() {
-		if _, err := ExecuteCommand(Cmd, "module", "--app", "demoapp"); err != nil {
-			t.Errorf("Failed to execute module command: %v", err)
+		if genErr := g.genModule(); genErr != nil {
+			t.Errorf("genModule: %v", genErr)
 		}
 	})
-	assertGenerateSuccess(t, output)
+	if !strings.Contains(output, "Generating module") {
+		t.Fatalf("module generation produced no output:\n%s", output)
+	}
 	// 生成成功后应产出 controller 层文件
 	if _, statErr := os.Stat(filepath.Join("apps", "demoapp", "internal", "controller", "ctruser", "user_login_log.go")); statErr != nil {
 		t.Errorf("generated controller file not found: %v", statErr)
@@ -373,18 +399,27 @@ func TestApiTemplateRestfulPath(t *testing.T) {
 // TestGenerateApiCode 测试生成 API 代码
 // 依赖数据库（example/apps/demoapp/config/code_gen.yaml 中的 DSN），数据库不可达时自动跳过。
 func TestGenerateApiCode(t *testing.T) {
-	resetGenerateState()
 	skipIfDBUnavailable(t)
 
 	restore := chdirToExample(t)
 	defer restore()
 
+	projectRoot, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	appDir := filepath.Join(projectRoot, "apps", "demoapp")
+	db := openExampleDB(t, appDir)
+	g := newTestGenerator(t, appDir, db)
+
 	output := captureStdout(t, func() {
-		if _, err := ExecuteCommand(Cmd, "api", "--app", "demoapp"); err != nil {
-			t.Errorf("Failed to execute api command: %v", err)
+		if genErr := g.genApi(); genErr != nil {
+			t.Errorf("genApi: %v", genErr)
 		}
 	})
-	assertGenerateSuccess(t, output)
+	if !strings.Contains(output, "[API] Generating API") {
+		t.Fatalf("api generation produced no output:\n%s", output)
+	}
 	// 生成成功后应在包名对应的 router 文件中追加新路由函数，并在 router.go 中注册
 	userRouterContent, err := os.ReadFile(filepath.Join("apps", "demoapp", "internal", "router", "user.go"))
 	if err != nil {
@@ -705,6 +740,24 @@ func TestGetModuleInfo(t *testing.T) {
 		}
 	})
 
+	t.Run("monorepo apps layout", func(t *testing.T) {
+		dir := t.TempDir()
+		if err := os.WriteFile(filepath.Join(dir, "go.mod"),
+			[]byte("module github.com/example/mono/apps/api\n\ngo 1.27.4\n"), 0o644); err != nil {
+			t.Fatalf("write go.mod: %v", err)
+		}
+		base, name, err := getModuleInfo(dir)
+		if err != nil {
+			t.Fatalf("getModuleInfo error: %v", err)
+		}
+		if base != "github.com/example/mono" {
+			t.Errorf("base = %q, want github.com/example/mono", base)
+		}
+		if name != "apps/api" {
+			t.Errorf("name = %q, want apps/api", name)
+		}
+	})
+
 	t.Run("single segment module path errors", func(t *testing.T) {
 		dir := t.TempDir()
 		if err := os.WriteFile(filepath.Join(dir, "go.mod"), []byte("module demo\n"), 0o644); err != nil {
@@ -728,22 +781,5 @@ func TestCopyEmbeddedTemplatesToTempDir(t *testing.T) {
 		if _, statErr := os.Stat(filepath.Join(tempDir, name)); statErr != nil {
 			t.Errorf("missing copied template %s: %v", name, statErr)
 		}
-	}
-}
-
-// 测试命令执行辅助函数
-func TestExecuteCommand(t *testing.T) {
-	output, err := ExecuteCommand(Cmd)
-	if err != nil {
-		t.Fatalf("ExecuteCommand error: %v", err)
-	}
-	for _, sub := range []string{"module", "model", "api"} {
-		if !strings.Contains(output, sub) {
-			t.Errorf("help output missing subcommand %q", sub)
-		}
-	}
-
-	if _, err := ExecuteCommand(Cmd, "--not-exist"); err == nil {
-		t.Error("ExecuteCommand with unknown flag should return error")
 	}
 }

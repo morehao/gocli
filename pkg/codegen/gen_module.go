@@ -1,4 +1,4 @@
-package generate
+package codegen
 
 import (
 	"fmt"
@@ -12,8 +12,8 @@ import (
 	"github.com/morehao/golib/gutil"
 )
 
-func genModule() error {
-	moduleGenCfg := cfg.Module
+func (g *Generator) genModule() error {
+	moduleGenCfg := g.cfg.Module
 
 	fmt.Printf("[Module] Generating module based on table: %s\n", moduleGenCfg.TableName)
 
@@ -25,13 +25,13 @@ func genModule() error {
 	// 清理临时目录
 	defer os.RemoveAll(tplDir)
 
-	layerNameMap := buildLayerNameMap(cfg.ServiceName)
+	layerNameMap := buildLayerNameMap(g.cfg.ServiceName)
 
 	analysisCfg := &codegen.ModuleCfg{
 		CommonConfig: codegen.CommonConfig{
 			PackageName:       moduleGenCfg.PackageName,
 			TplDir:            tplDir,
-			RootDir:           workDir,
+			RootDir:           g.workDir,
 			LayerParentDirMap: defaultLayerParentDirMap,
 			LayerNameMap:      layerNameMap,
 			LayerPrefixMap:    defaultLayerPrefixMap,
@@ -55,10 +55,11 @@ func genModule() error {
 		TableName: moduleGenCfg.TableName,
 	}
 	gen := codegen.NewGenerator()
-	analysisRes, analysisErr := gen.AnalysisModuleTpl(DBClient, analysisCfg)
+	analysisRes, analysisErr := gen.AnalysisModuleTpl(g.db, analysisCfg)
 	if analysisErr != nil {
 		return fmt.Errorf("analysis module tpl error: %v", analysisErr)
 	}
+	normalizeAuditFieldTypes(analysisRes)
 
 	// 如果配置了表名前缀，则从结构体名中去除前缀
 	if moduleGenCfg.TablePrefix != "" {
@@ -85,7 +86,7 @@ func genModule() error {
 			daoLayerName = v.LayerName
 		}
 	}
-	appInfo := cfg.appInfo
+	appInfo := g.appInfo
 
 	var genParamsList []codegen.GenParamsItem
 	var codeLayerItem *codegen.ModuleTplAnalysisItem
@@ -143,7 +144,7 @@ func genModule() error {
 		// router 文件统一使用带下划线的 snake_case 文件名（如 core_task.go），
 		// 与 api 模式生成的 router 文件名保持一致，避免同名 router 函数落入不同文件导致重复声明。
 		if v.OriginLayerName == codegen.LayerNameRouter {
-			targetFilename = fmt.Sprintf("%s%s", cfg.Module.PackageName, ".go")
+			targetFilename = fmt.Sprintf("%s%s", g.cfg.Module.PackageName, ".go")
 		} else if moduleGenCfg.TablePrefix != "" {
 			targetFilename = RemoveTablePrefixFromFilename(
 				v.TargetFilename,
@@ -182,7 +183,7 @@ func genModule() error {
 				ModelLayerName:       string(modelLayerName),
 				DaoLayerName:         string(daoLayerName),
 				DaoPackageName:       string(daoLayerName),
-				DBName:               fmt.Sprintf("%sDB", gutil.FirstLetterToUpper(cfg.ServiceName)),
+				DBName:               fmt.Sprintf("%sDB", gutil.FirstLetterToUpper(g.cfg.ServiceName)),
 				Description:          moduleGenCfg.Description,
 				StructName:           analysisRes.StructName,
 				StructNameLowerCamel: gutil.FirstLetterToLower(analysisRes.StructName),
@@ -198,6 +199,7 @@ func genModule() error {
 	genParams := &codegen.GenParams{
 		ParamsList: genParamsList,
 	}
+	removeExclusiveTargets(genParamsList)
 	if err := gen.Gen(genParams); err != nil {
 		return err
 	}
@@ -241,8 +243,8 @@ func genModule() error {
 
 	// 注册路由
 	routerContent := fmt.Sprintf("%sRouter(groups)", gutil.FirstLetterToLower(analysisRes.StructName))
-	routerEnterFilepath := filepath.Join(workDir, "/internal/router/router.go")
-	if err := gast.AddContentToFunc(routerEnterFilepath, "RegisterRouter", routerContent); err != nil {
+	routerEnterFilepath := filepath.Join(g.workDir, "/internal/router/router.go")
+	if err := addContentToFuncIdempotent(routerEnterFilepath, "RegisterRouter", routerContent); err != nil {
 		return fmt.Errorf("router appendContentToFunc error: %v", err)
 	}
 	fmt.Printf("[Module] Registered router: %sRouter\n", gutil.FirstLetterToLower(analysisRes.StructName))
@@ -309,7 +311,7 @@ func genModule() error {
 		}
 
 		// 生成错误码文件到项目根目录的pkg/code目录
-		codeTargetDir := filepath.Join(cfg.appInfo.ProjectRootPath, "pkg/code")
+		codeTargetDir := filepath.Join(g.appInfo.ProjectRootPath, "pkg/code")
 		codeTargetFileName := fmt.Sprintf("%s.go", moduleGenCfg.PackageName)
 
 		// 确保目录存在
@@ -328,14 +330,16 @@ func genModule() error {
 				},
 			},
 		}
+		// 删除本模块独占的错误码文件，避免重复追加导致重复声明
+		removeExclusiveTargets(codeGenParams.ParamsList)
 		if err := gen.Gen(codeGenParams); err != nil {
 			return fmt.Errorf("failed to generate code file: %v", err)
 		}
 
 		// 注册错误码到项目根目录的pkg/code/code.go
 		codeContent := fmt.Sprintf("registerError(%sErrorMsgMap)", gutil.FirstLetterToLower(analysisRes.StructName))
-		codeEnterFilepath := filepath.Join(cfg.appInfo.ProjectRootPath, "pkg/code/code.go")
-		if err := gast.AddContentToFunc(codeEnterFilepath, "init", codeContent); err != nil {
+		codeEnterFilepath := filepath.Join(g.appInfo.ProjectRootPath, "pkg/code/code.go")
+		if err := addContentToFuncIdempotent(codeEnterFilepath, "init", codeContent); err != nil {
 			return fmt.Errorf("code appendContentToFunc error: %v", err)
 		}
 		fmt.Printf("[Module] Registered error code: %sErrorMsgMap\n", gutil.FirstLetterToLower(analysisRes.StructName))

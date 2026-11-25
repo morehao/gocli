@@ -1,4 +1,4 @@
-package generate
+package codegen
 
 import "github.com/morehao/golib/codegen"
 
@@ -28,7 +28,25 @@ type Config struct {
 	Module      ModuleConfig `yaml:"module"`       // 模块生成配置
 	Model       ModelConfig  `yaml:"model"`        // 模型生成配置
 	Api         ApiConfig    `yaml:"api"`          // 控制器生成配置
+	Web         WebSection   `yaml:"web"`          // 前端生成配置
 	appInfo     AppInfo
+}
+
+// WebSection 对应 code_gen.yaml 的 web 段，供前端生成使用。
+type WebSection struct {
+	Enabled      *bool                        `yaml:"enabled"`       // 是否生成前端（nil 视为 true）
+	PageDir      string                       `yaml:"page_dir"`      // 页面目录，缺省 apps/web/src/pages
+	MenuGroup    string                       `yaml:"menu_group"`    // 菜单分组
+	MenuLabel    string                       `yaml:"menu_label"`    // 菜单显示名（缺省用 description）
+	RegisterMenu *bool                        `yaml:"register_menu"` // 是否自动改 App.tsx
+	FieldWidgets map[string]string            `yaml:"field_widgets"` // 列名→控件覆盖（预留）
+	FieldOptions map[string][]FieldOptionYAML `yaml:"field_options"` // 列名→枚举选项（预留）
+}
+
+// FieldOptionYAML 是 web.field_options 里单个选项的 yaml 形态。
+type FieldOptionYAML struct {
+	Value any    `yaml:"value"`
+	Label string `yaml:"label"`
 }
 
 type AppInfo struct {

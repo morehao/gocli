@@ -1,8 +1,7 @@
-package generate
+package codegen
 
 import (
 	"bufio"
-	"bytes"
 	"embed"
 	"fmt"
 	"io/fs"
@@ -10,8 +9,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	golibcodegen "github.com/morehao/golib/codegen"
+	"github.com/morehao/golib/gast"
 	"github.com/morehao/golib/gutil"
-	"github.com/spf13/cobra"
 )
 
 const (
@@ -413,6 +413,11 @@ func getModuleInfo(appRootPath string) (string, string, error) {
 			if len(parts) < 2 {
 				return "", "", fmt.Errorf("invalid module path: %s", modulePath)
 			}
+			// monorepo 布局：模块路径形如 <base>/apps/<app>，此时 base = <base>、appModuleName = apps/<app>，
+			// 这样模板里 {{.BaseModulePath}}/pkg 才能正确解析到仓库根的共享 pkg（而非 apps/pkg）。
+			if idx := strings.LastIndex(modulePath, "/apps/"); idx > 0 {
+				return modulePath[:idx], modulePath[idx+1:], nil
+			}
 			baseModulePath := strings.Join(parts[:len(parts)-1], "/")
 			appModuleName := parts[len(parts)-1]
 			return baseModulePath, appModuleName, nil
@@ -454,16 +459,6 @@ func SnakeToLowerCamelWithID(s string) string {
 	return gutil.SnakeToLowerCamel(s)
 }
 
-// ExecuteCommand 执行命令并捕获输出
-func ExecuteCommand(root *cobra.Command, args ...string) (output string, err error) {
-	buf := new(bytes.Buffer)
-	root.SetOut(buf)
-	root.SetErr(buf)
-	root.SetArgs(args)
-	err = root.Execute()
-	return buf.String(), err
-}
-
 // toKebabCase 将驼峰/帕斯卡命名转为 kebab-case（UserInfo → user-info）
 func toKebabCase(s string) string {
 	return strings.ReplaceAll(gutil.CamelToSnakeCase(s), "_", "-")
@@ -474,10 +469,15 @@ func pluralize(s string) string {
 	if s == "" {
 		return s
 	}
+	// 已经以 s 结尾（大概率已是复数，如表名 shop_goods → ShopGoods）则不再加复数后缀，
+	// 避免 ShopGoods -> ShopGoodses / getShopGoodss 这类双重复数。
+	if strings.HasSuffix(s, "s") {
+		return s
+	}
 	switch {
 	case strings.HasSuffix(s, "y") && len(s) > 2 && !isVowel(s[len(s)-2]):
 		return s[:len(s)-1] + "ies"
-	case strings.HasSuffix(s, "s"), strings.HasSuffix(s, "x"), strings.HasSuffix(s, "z"), strings.HasSuffix(s, "ch"), strings.HasSuffix(s, "sh"):
+	case strings.HasSuffix(s, "x"), strings.HasSuffix(s, "z"), strings.HasSuffix(s, "ch"), strings.HasSuffix(s, "sh"):
 		return s + "es"
 	default:
 		return s + "s"
@@ -490,4 +490,66 @@ func isVowel(c byte) bool {
 		return true
 	}
 	return false
+}
+
+// normalizeAuditFieldTypes 把审计字段（created_by/updated_by/deleted_by）的 Go 类型规范为 uint，
+// 以匹配 gobject.OperatorBaseInfo.CreatedBy / operator.Operator.UserID 的 uint 类型。
+//
+// 背景：PostgreSQL 的 bigint 经 postgresqlDefaultColumnTypeMap 映射为 int64，但审计字段在
+// service 层要直接赋给 uint 型（req.Operator.UserID、OperatorBaseInfo），int64 会导致编译失败。
+// 这是一个不修改 golib 的本地修正：仅在 gocli 侧于分析后改写 ModelFields 的 FieldType。
+func normalizeAuditFieldTypes(res *golibcodegen.ModuleTplAnalysisRes) {
+	if res == nil {
+		return
+	}
+	audit := map[string]struct{}{
+		"CreatedBy": {}, "UpdatedBy": {}, "DeletedBy": {},
+	}
+	for i := range res.TplAnalysisList {
+		fields := res.TplAnalysisList[i].ModelFields
+		for j := range fields {
+			if _, ok := audit[fields[j].FieldName]; !ok {
+				continue
+			}
+			switch fields[j].FieldType {
+			case "int64", "int32", "int16", "int8", "int":
+				fields[j].FieldType = "uint"
+			}
+		}
+	}
+}
+
+// sharedAggregateFiles 是「多表共享、靠 gast 去重」的聚合文件，重生成时不能删除（否则会丢掉其它表的内容）。
+var sharedAggregateFiles = map[string]struct{}{
+	"router.go": {},
+	"code.go":   {},
+	"table.go":  {},
+}
+
+// removeExclusiveTargets 在整文件重生成前，删除本模块「独占」的目标文件，
+// 使 golib codegen 的 createFile 走「文件不存在→整文件写入」分支，而不是追加（追加会导致
+// object/code/controller 等重复声明、编译失败）。共享聚合文件（router.go/code.go/table.go）跳过。
+//
+// 用于 `--force` 重生成与幂等的后端生成路径，确保重复执行不产生重复声明。
+func removeExclusiveTargets(items []golibcodegen.GenParamsItem) {
+	for _, it := range items {
+		if _, shared := sharedAggregateFiles[it.TargetFileName]; shared {
+			continue
+		}
+		p := filepath.Join(it.TargetDir, it.TargetFileName)
+		if gutil.FileExists(p) {
+			_ = os.Remove(p)
+		}
+	}
+}
+
+// addContentToFuncIdempotent 幂等地把 content 追加到 funcName 函数体：若文件已包含该 content 则跳过。
+// 规避 golib gast.AddContentToFunc 重复追加（会导致 router 注册/错误码注册重复执行）。
+func addContentToFuncIdempotent(filepath, funcName, content string) error {
+	if data, err := os.ReadFile(filepath); err == nil {
+		if strings.Contains(string(data), content) {
+			return nil
+		}
+	}
+	return gast.AddContentToFunc(filepath, funcName, content)
 }
